@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ class AnliConfig(tfds.core.BuilderConfig):
     self.round_dir = round_dir
 
 
-class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
+class Builder(tfds.core.GeneratorBasedBuilder):
   """ANLI: Adversarial NLI corpus."""
 
   BUILDER_CONFIGS = [
@@ -84,24 +84,36 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
         tfds.core.SplitGenerator(
             name=tfds.Split.TEST,
             gen_kwargs={
-                "filepath":
-                    os.path.join(dl_dir, EXTRACT_PATH_TOKEN,
-                                 self._builder_config.round_dir, "test.jsonl")
-            }),
+                "filepath": os.path.join(
+                    dl_dir,
+                    EXTRACT_PATH_TOKEN,
+                    self._builder_config.round_dir,  # pytype: disable=attribute-error  # always-use-return-annotations
+                    "test.jsonl",
+                )
+            },
+        ),
         tfds.core.SplitGenerator(
             name=tfds.Split.VALIDATION,
             gen_kwargs={
-                "filepath":
-                    os.path.join(dl_dir, EXTRACT_PATH_TOKEN,
-                                 self._builder_config.round_dir, "dev.jsonl")
-            }),
+                "filepath": os.path.join(
+                    dl_dir,
+                    EXTRACT_PATH_TOKEN,
+                    self._builder_config.round_dir,  # pytype: disable=attribute-error  # always-use-return-annotations
+                    "dev.jsonl",
+                )
+            },
+        ),
         tfds.core.SplitGenerator(
             name=tfds.Split.TRAIN,
             gen_kwargs={
-                "filepath":
-                    os.path.join(dl_dir, EXTRACT_PATH_TOKEN,
-                                 self._builder_config.round_dir, "train.jsonl")
-            })
+                "filepath": os.path.join(
+                    dl_dir,
+                    EXTRACT_PATH_TOKEN,
+                    self._builder_config.round_dir,  # pytype: disable=attribute-error  # always-use-return-annotations
+                    "train.jsonl",
+                )
+            },
+        ),
     ]
 
   def _generate_examples(self, filepath):

@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ class RluAtariCheckpoints(rlu_common.RLUBuilder):
   VERSION = tfds.core.Version('1.1.0')
   RELEASE_NOTES = {
       '1.0.0': 'Initial release.',
-      '1.1.0': 'Removed redundant clipped reward fields.'
+      '1.1.0': 'Removed redundant clipped reward fields.',
   }
 
   BUILDER_CONFIGS = atari_utils.builder_configs()
@@ -66,8 +66,9 @@ class RluAtariCheckpoints(rlu_common.RLUBuilder):
   def get_episode_id(self, episode):
     return atari_utils.episode_id(episode)
 
-  def tf_example_to_step_ds(self,
-                            tf_example: tf.train.Example) -> Dict[str, Any]:
+  def tf_example_to_step_ds(
+      self, tf_example: tf.train.Example
+  ) -> Dict[str, Any]:
     return atari_utils.atari_example_to_rlds(tf_example)
 
   def get_splits(self):

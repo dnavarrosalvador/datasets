@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,18 +19,26 @@ from __future__ import annotations
 
 import os
 
+import numpy as np
 from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
 import tensorflow_datasets.public_api as tfds
 
 _LABELS = [
-    'american', 'australian', 'bangla', 'british', 'indian', 'malayalam',
-    'odiya', 'telugu', 'welsh'
+    'american',
+    'australian',
+    'bangla',
+    'british',
+    'indian',
+    'malayalam',
+    'odiya',
+    'telugu',
+    'welsh',
 ]
 
 _DOWNLOAD_URL = 'https://drive.google.com/uc?export=download&id=1NO1NKQSpyq3DMLEwiqA-BHIqXli8vtIL'
 
 
-class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
+class Builder(tfds.core.GeneratorBasedBuilder):
   """AccentDB dataset."""
 
   VERSION = tfds.core.Version('1.0.0')
@@ -40,7 +48,7 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
         features=tfds.features.FeaturesDict({
             'audio': tfds.features.Audio(file_format='wav', sample_rate=44100),
             'label': tfds.features.ClassLabel(names=_LABELS),
-            'speaker_id': tf.string
+            'speaker_id': np.str_,
         }),
         supervised_keys=('audio', 'label'),
         homepage='https://accentdb.github.io/',

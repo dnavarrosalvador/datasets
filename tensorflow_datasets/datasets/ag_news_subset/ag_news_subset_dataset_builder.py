@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ _DOWNLOAD_URL = "https://drive.google.com/uc?export=download&id=0Bz8a_Dbh9QhbUDN
 _LABEL_NAMES = ["World", "Sports", "Business", "Sci/Tech"]
 
 
-class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
+class Builder(tfds.core.GeneratorBasedBuilder):
   """This is a dataset for classifying news articles into 4 classes."""
 
   VERSION = tfds.core.Version("1.0.0")
@@ -77,7 +77,7 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
         # The values in the csv file do not have quotes
         example = {
             # The class labels start from 1 in this dataset
-            "label": (int(row[0]) - 1),
+            "label": int(row[0]) - 1,
             "title": row[1],
             "description": row[2],
         }

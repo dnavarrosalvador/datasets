@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ Updating the visibility affect the following functions:
 * `tfds.load`
 * `tfds.list_builders`
 * `tfds.core.load.list_full_names`
-
 """
 
 import contextlib
@@ -48,7 +47,11 @@ from absl import app
 
 
 class DatasetType(enum.Enum):
+  """Available visibilities."""
+
+  # Open-source TFDS datasets
   TFDS_PUBLIC = enum.auto()
+  # Community datasets (open-source)
   COMMUNITY_PUBLIC = enum.auto()
 
   def is_available(self) -> bool:
@@ -99,6 +102,7 @@ def _set_default_visibility() -> None:
   to only open-source non-community datasets.
   """
   import __main__  # pytype: disable=import-error  # pylint: disable=g-import-not-at-top
+
   main_file = getattr(__main__, '__file__', None)
   if main_file and 'tensorflow_datasets' in pathlib.Path(main_file).parts:
     # If the script is launched from within a TFDS script, we disable community

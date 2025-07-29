@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import tensorflow_datasets.public_api as tfds
 
 class AnswerEquivalenceTest(tfds.testing.DatasetBuilderTestCase):
   """Tests for answer_equivalence dataset."""
+
   DATASET_CLASS = answer_equivalence_dataset_builder.Builder
   SPLITS = {
       'train': 3,
@@ -37,7 +38,7 @@ class AnswerEquivalenceTest(tfds.testing.DatasetBuilderTestCase):
       'ae_test': 'dummy_data_ae_test.jsonl',
       'dev_xlnet': 'dev_by_system/dummy_data_dev_xlnet.jsonl',
       'dev_luke': 'dev_by_system/dummy_data_dev_luke.jsonl',
-      'dev_bidaf': 'dev_by_system/dummy_data_dev_bidaf.jsonl'
+      'dev_bidaf': 'dev_by_system/dummy_data_dev_bidaf.jsonl',
   }
 
 

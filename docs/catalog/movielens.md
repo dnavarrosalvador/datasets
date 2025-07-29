@@ -154,26 +154,26 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'movie_genres': Sequence(ClassLabel(shape=(), dtype=tf.int64, num_classes=21)),
-    'movie_id': tf.string,
-    'movie_title': tf.string,
-    'timestamp': tf.int64,
-    'user_id': tf.string,
-    'user_rating': tf.float32,
+    'movie_genres': Sequence(ClassLabel(shape=(), dtype=int64, num_classes=21)),
+    'movie_id': string,
+    'movie_title': string,
+    'timestamp': int64,
+    'user_id': string,
+    'user_rating': float32,
 })
 ```
 
 *   **Feature documentation**:
 
-Feature      | Class                | Shape   | Dtype      | Description
-:----------- | :------------------- | :------ | :--------- | :----------
-             | FeaturesDict         |         |            |
-movie_genres | Sequence(ClassLabel) | (None,) | tf.int64   |
-movie_id     | Tensor               |         | tf.string  |
-movie_title  | Tensor               |         | tf.string  |
-timestamp    | Tensor               |         | tf.int64   |
-user_id      | Tensor               |         | tf.string  |
-user_rating  | Tensor               |         | tf.float32 |
+Feature      | Class                | Shape   | Dtype   | Description
+:----------- | :------------------- | :------ | :------ | :----------
+             | FeaturesDict         |         |         |
+movie_genres | Sequence(ClassLabel) | (None,) | int64   |
+movie_id     | Tensor               |         | string  |
+movie_title  | Tensor               |         | string  |
+timestamp    | Tensor               |         | int64   |
+user_id      | Tensor               |         | string  |
+user_rating  | Tensor               |         | float32 |
 
 *   **Examples**
     ([tfds.as_dataframe](https://www.tensorflow.org/datasets/api_docs/python/tfds/as_dataframe)):
@@ -235,20 +235,20 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'movie_genres': Sequence(ClassLabel(shape=(), dtype=tf.int64, num_classes=21)),
-    'movie_id': tf.string,
-    'movie_title': tf.string,
+    'movie_genres': Sequence(ClassLabel(shape=(), dtype=int64, num_classes=21)),
+    'movie_id': string,
+    'movie_title': string,
 })
 ```
 
 *   **Feature documentation**:
 
-Feature      | Class                | Shape   | Dtype     | Description
-:----------- | :------------------- | :------ | :-------- | :----------
-             | FeaturesDict         |         |           |
-movie_genres | Sequence(ClassLabel) | (None,) | tf.int64  |
-movie_id     | Tensor               |         | tf.string |
-movie_title  | Tensor               |         | tf.string |
+Feature      | Class                | Shape   | Dtype  | Description
+:----------- | :------------------- | :------ | :----- | :----------
+             | FeaturesDict         |         |        |
+movie_genres | Sequence(ClassLabel) | (None,) | int64  |
+movie_id     | Tensor               |         | string |
+movie_title  | Tensor               |         | string |
 
 *   **Examples**
     ([tfds.as_dataframe](https://www.tensorflow.org/datasets/api_docs/python/tfds/as_dataframe)):
@@ -316,26 +316,26 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'movie_genres': Sequence(ClassLabel(shape=(), dtype=tf.int64, num_classes=21)),
-    'movie_id': tf.string,
-    'movie_title': tf.string,
-    'timestamp': tf.int64,
-    'user_id': tf.string,
-    'user_rating': tf.float32,
+    'movie_genres': Sequence(ClassLabel(shape=(), dtype=int64, num_classes=21)),
+    'movie_id': string,
+    'movie_title': string,
+    'timestamp': int64,
+    'user_id': string,
+    'user_rating': float32,
 })
 ```
 
 *   **Feature documentation**:
 
-Feature      | Class                | Shape   | Dtype      | Description
-:----------- | :------------------- | :------ | :--------- | :----------
-             | FeaturesDict         |         |            |
-movie_genres | Sequence(ClassLabel) | (None,) | tf.int64   |
-movie_id     | Tensor               |         | tf.string  |
-movie_title  | Tensor               |         | tf.string  |
-timestamp    | Tensor               |         | tf.int64   |
-user_id      | Tensor               |         | tf.string  |
-user_rating  | Tensor               |         | tf.float32 |
+Feature      | Class                | Shape   | Dtype   | Description
+:----------- | :------------------- | :------ | :------ | :----------
+             | FeaturesDict         |         |         |
+movie_genres | Sequence(ClassLabel) | (None,) | int64   |
+movie_id     | Tensor               |         | string  |
+movie_title  | Tensor               |         | string  |
+timestamp    | Tensor               |         | int64   |
+user_id      | Tensor               |         | string  |
+user_rating  | Tensor               |         | float32 |
 
 *   **Examples**
     ([tfds.as_dataframe](https://www.tensorflow.org/datasets/api_docs/python/tfds/as_dataframe)):
@@ -397,20 +397,20 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'movie_genres': Sequence(ClassLabel(shape=(), dtype=tf.int64, num_classes=21)),
-    'movie_id': tf.string,
-    'movie_title': tf.string,
+    'movie_genres': Sequence(ClassLabel(shape=(), dtype=int64, num_classes=21)),
+    'movie_id': string,
+    'movie_title': string,
 })
 ```
 
 *   **Feature documentation**:
 
-Feature      | Class                | Shape   | Dtype     | Description
-:----------- | :------------------- | :------ | :-------- | :----------
-             | FeaturesDict         |         |           |
-movie_genres | Sequence(ClassLabel) | (None,) | tf.int64  |
-movie_id     | Tensor               |         | tf.string |
-movie_title  | Tensor               |         | tf.string |
+Feature      | Class                | Shape   | Dtype  | Description
+:----------- | :------------------- | :------ | :----- | :----------
+             | FeaturesDict         |         |        |
+movie_genres | Sequence(ClassLabel) | (None,) | int64  |
+movie_id     | Tensor               |         | string |
+movie_title  | Tensor               |         | string |
 
 *   **Examples**
     ([tfds.as_dataframe](https://www.tensorflow.org/datasets/api_docs/python/tfds/as_dataframe)):
@@ -477,38 +477,38 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'bucketized_user_age': tf.float32,
-    'movie_genres': Sequence(ClassLabel(shape=(), dtype=tf.int64, num_classes=21)),
-    'movie_id': tf.string,
-    'movie_title': tf.string,
-    'raw_user_age': tf.float32,
-    'timestamp': tf.int64,
-    'user_gender': tf.bool,
-    'user_id': tf.string,
-    'user_occupation_label': ClassLabel(shape=(), dtype=tf.int64, num_classes=22),
-    'user_occupation_text': tf.string,
-    'user_rating': tf.float32,
-    'user_zip_code': tf.string,
+    'bucketized_user_age': float32,
+    'movie_genres': Sequence(ClassLabel(shape=(), dtype=int64, num_classes=21)),
+    'movie_id': string,
+    'movie_title': string,
+    'raw_user_age': float32,
+    'timestamp': int64,
+    'user_gender': bool,
+    'user_id': string,
+    'user_occupation_label': ClassLabel(shape=(), dtype=int64, num_classes=22),
+    'user_occupation_text': string,
+    'user_rating': float32,
+    'user_zip_code': string,
 })
 ```
 
 *   **Feature documentation**:
 
-Feature               | Class                | Shape   | Dtype      | Description
-:-------------------- | :------------------- | :------ | :--------- | :----------
-                      | FeaturesDict         |         |            |
-bucketized_user_age   | Tensor               |         | tf.float32 |
-movie_genres          | Sequence(ClassLabel) | (None,) | tf.int64   |
-movie_id              | Tensor               |         | tf.string  |
-movie_title           | Tensor               |         | tf.string  |
-raw_user_age          | Tensor               |         | tf.float32 |
-timestamp             | Tensor               |         | tf.int64   |
-user_gender           | Tensor               |         | tf.bool    |
-user_id               | Tensor               |         | tf.string  |
-user_occupation_label | ClassLabel           |         | tf.int64   |
-user_occupation_text  | Tensor               |         | tf.string  |
-user_rating           | Tensor               |         | tf.float32 |
-user_zip_code         | Tensor               |         | tf.string  |
+Feature               | Class                | Shape   | Dtype   | Description
+:-------------------- | :------------------- | :------ | :------ | :----------
+                      | FeaturesDict         |         |         |
+bucketized_user_age   | Tensor               |         | float32 |
+movie_genres          | Sequence(ClassLabel) | (None,) | int64   |
+movie_id              | Tensor               |         | string  |
+movie_title           | Tensor               |         | string  |
+raw_user_age          | Tensor               |         | float32 |
+timestamp             | Tensor               |         | int64   |
+user_gender           | Tensor               |         | bool    |
+user_id               | Tensor               |         | string  |
+user_occupation_label | ClassLabel           |         | int64   |
+user_occupation_text  | Tensor               |         | string  |
+user_rating           | Tensor               |         | float32 |
+user_zip_code         | Tensor               |         | string  |
 
 *   **Examples**
     ([tfds.as_dataframe](https://www.tensorflow.org/datasets/api_docs/python/tfds/as_dataframe)):
@@ -570,20 +570,20 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'movie_genres': Sequence(ClassLabel(shape=(), dtype=tf.int64, num_classes=21)),
-    'movie_id': tf.string,
-    'movie_title': tf.string,
+    'movie_genres': Sequence(ClassLabel(shape=(), dtype=int64, num_classes=21)),
+    'movie_id': string,
+    'movie_title': string,
 })
 ```
 
 *   **Feature documentation**:
 
-Feature      | Class                | Shape   | Dtype     | Description
-:----------- | :------------------- | :------ | :-------- | :----------
-             | FeaturesDict         |         |           |
-movie_genres | Sequence(ClassLabel) | (None,) | tf.int64  |
-movie_id     | Tensor               |         | tf.string |
-movie_title  | Tensor               |         | tf.string |
+Feature      | Class                | Shape   | Dtype  | Description
+:----------- | :------------------- | :------ | :----- | :----------
+             | FeaturesDict         |         |        |
+movie_genres | Sequence(ClassLabel) | (None,) | int64  |
+movie_id     | Tensor               |         | string |
+movie_title  | Tensor               |         | string |
 
 *   **Examples**
     ([tfds.as_dataframe](https://www.tensorflow.org/datasets/api_docs/python/tfds/as_dataframe)):
@@ -651,36 +651,36 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'bucketized_user_age': tf.float32,
-    'movie_genres': Sequence(ClassLabel(shape=(), dtype=tf.int64, num_classes=21)),
-    'movie_id': tf.string,
-    'movie_title': tf.string,
-    'timestamp': tf.int64,
-    'user_gender': tf.bool,
-    'user_id': tf.string,
-    'user_occupation_label': ClassLabel(shape=(), dtype=tf.int64, num_classes=22),
-    'user_occupation_text': tf.string,
-    'user_rating': tf.float32,
-    'user_zip_code': tf.string,
+    'bucketized_user_age': float32,
+    'movie_genres': Sequence(ClassLabel(shape=(), dtype=int64, num_classes=21)),
+    'movie_id': string,
+    'movie_title': string,
+    'timestamp': int64,
+    'user_gender': bool,
+    'user_id': string,
+    'user_occupation_label': ClassLabel(shape=(), dtype=int64, num_classes=22),
+    'user_occupation_text': string,
+    'user_rating': float32,
+    'user_zip_code': string,
 })
 ```
 
 *   **Feature documentation**:
 
-Feature               | Class                | Shape   | Dtype      | Description
-:-------------------- | :------------------- | :------ | :--------- | :----------
-                      | FeaturesDict         |         |            |
-bucketized_user_age   | Tensor               |         | tf.float32 |
-movie_genres          | Sequence(ClassLabel) | (None,) | tf.int64   |
-movie_id              | Tensor               |         | tf.string  |
-movie_title           | Tensor               |         | tf.string  |
-timestamp             | Tensor               |         | tf.int64   |
-user_gender           | Tensor               |         | tf.bool    |
-user_id               | Tensor               |         | tf.string  |
-user_occupation_label | ClassLabel           |         | tf.int64   |
-user_occupation_text  | Tensor               |         | tf.string  |
-user_rating           | Tensor               |         | tf.float32 |
-user_zip_code         | Tensor               |         | tf.string  |
+Feature               | Class                | Shape   | Dtype   | Description
+:-------------------- | :------------------- | :------ | :------ | :----------
+                      | FeaturesDict         |         |         |
+bucketized_user_age   | Tensor               |         | float32 |
+movie_genres          | Sequence(ClassLabel) | (None,) | int64   |
+movie_id              | Tensor               |         | string  |
+movie_title           | Tensor               |         | string  |
+timestamp             | Tensor               |         | int64   |
+user_gender           | Tensor               |         | bool    |
+user_id               | Tensor               |         | string  |
+user_occupation_label | ClassLabel           |         | int64   |
+user_occupation_text  | Tensor               |         | string  |
+user_rating           | Tensor               |         | float32 |
+user_zip_code         | Tensor               |         | string  |
 
 *   **Examples**
     ([tfds.as_dataframe](https://www.tensorflow.org/datasets/api_docs/python/tfds/as_dataframe)):
@@ -742,20 +742,20 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'movie_genres': Sequence(ClassLabel(shape=(), dtype=tf.int64, num_classes=21)),
-    'movie_id': tf.string,
-    'movie_title': tf.string,
+    'movie_genres': Sequence(ClassLabel(shape=(), dtype=int64, num_classes=21)),
+    'movie_id': string,
+    'movie_title': string,
 })
 ```
 
 *   **Feature documentation**:
 
-Feature      | Class                | Shape   | Dtype     | Description
-:----------- | :------------------- | :------ | :-------- | :----------
-             | FeaturesDict         |         |           |
-movie_genres | Sequence(ClassLabel) | (None,) | tf.int64  |
-movie_id     | Tensor               |         | tf.string |
-movie_title  | Tensor               |         | tf.string |
+Feature      | Class                | Shape   | Dtype  | Description
+:----------- | :------------------- | :------ | :----- | :----------
+             | FeaturesDict         |         |        |
+movie_genres | Sequence(ClassLabel) | (None,) | int64  |
+movie_id     | Tensor               |         | string |
+movie_title  | Tensor               |         | string |
 
 *   **Examples**
     ([tfds.as_dataframe](https://www.tensorflow.org/datasets/api_docs/python/tfds/as_dataframe)):
@@ -821,26 +821,26 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'movie_genres': Sequence(ClassLabel(shape=(), dtype=tf.int64, num_classes=21)),
-    'movie_id': tf.string,
-    'movie_title': tf.string,
-    'timestamp': tf.int64,
-    'user_id': tf.string,
-    'user_rating': tf.float32,
+    'movie_genres': Sequence(ClassLabel(shape=(), dtype=int64, num_classes=21)),
+    'movie_id': string,
+    'movie_title': string,
+    'timestamp': int64,
+    'user_id': string,
+    'user_rating': float32,
 })
 ```
 
 *   **Feature documentation**:
 
-Feature      | Class                | Shape   | Dtype      | Description
-:----------- | :------------------- | :------ | :--------- | :----------
-             | FeaturesDict         |         |            |
-movie_genres | Sequence(ClassLabel) | (None,) | tf.int64   |
-movie_id     | Tensor               |         | tf.string  |
-movie_title  | Tensor               |         | tf.string  |
-timestamp    | Tensor               |         | tf.int64   |
-user_id      | Tensor               |         | tf.string  |
-user_rating  | Tensor               |         | tf.float32 |
+Feature      | Class                | Shape   | Dtype   | Description
+:----------- | :------------------- | :------ | :------ | :----------
+             | FeaturesDict         |         |         |
+movie_genres | Sequence(ClassLabel) | (None,) | int64   |
+movie_id     | Tensor               |         | string  |
+movie_title  | Tensor               |         | string  |
+timestamp    | Tensor               |         | int64   |
+user_id      | Tensor               |         | string  |
+user_rating  | Tensor               |         | float32 |
 
 *   **Examples**
     ([tfds.as_dataframe](https://www.tensorflow.org/datasets/api_docs/python/tfds/as_dataframe)):
@@ -902,20 +902,20 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'movie_genres': Sequence(ClassLabel(shape=(), dtype=tf.int64, num_classes=21)),
-    'movie_id': tf.string,
-    'movie_title': tf.string,
+    'movie_genres': Sequence(ClassLabel(shape=(), dtype=int64, num_classes=21)),
+    'movie_id': string,
+    'movie_title': string,
 })
 ```
 
 *   **Feature documentation**:
 
-Feature      | Class                | Shape   | Dtype     | Description
-:----------- | :------------------- | :------ | :-------- | :----------
-             | FeaturesDict         |         |           |
-movie_genres | Sequence(ClassLabel) | (None,) | tf.int64  |
-movie_id     | Tensor               |         | tf.string |
-movie_title  | Tensor               |         | tf.string |
+Feature      | Class                | Shape   | Dtype  | Description
+:----------- | :------------------- | :------ | :----- | :----------
+             | FeaturesDict         |         |        |
+movie_genres | Sequence(ClassLabel) | (None,) | int64  |
+movie_id     | Tensor               |         | string |
+movie_title  | Tensor               |         | string |
 
 *   **Examples**
     ([tfds.as_dataframe](https://www.tensorflow.org/datasets/api_docs/python/tfds/as_dataframe)):

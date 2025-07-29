@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import abc
+from collections.abc import Iterable, Sequence
 import dataclasses
 import functools
 import itertools
@@ -26,14 +27,16 @@ import operator
 import os
 import re
 import typing
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Union
 
 from absl import logging
 from etils import epath
+from tensorflow_datasets.core import file_adapters
 from tensorflow_datasets.core import naming
 from tensorflow_datasets.core import proto as proto_lib
 from tensorflow_datasets.core import units
 from tensorflow_datasets.core import utils
+from tensorflow_datasets.core.utils import retry
 from tensorflow_datasets.core.utils import shard_utils
 
 from tensorflow_metadata.proto.v0 import statistics_pb2
@@ -46,7 +49,7 @@ _SUB_SPEC_RE = re.compile(
     r"""^
     (?P<split_name>[\w-]+)
     (\[
-      (?P<split_selector>[\d\w%:-]+)
+      (?P<split_selector>[\d\w%:.-]+)
     \])?
     $""",
     re.X,  # Ignore whitespace
@@ -55,7 +58,7 @@ _SUB_SPEC_RE = re.compile(
 _SLICE_RE = re.compile(
     r"""^
     (
-        (?P<val>-?[\d_]+)
+        (?P<val>-?[\d_.]+)
         (?P<unit>(?:%|shard))?
     )?
     $""",
@@ -68,11 +71,12 @@ _ADDITION_SEP_RE = re.compile(r'\s*\+\s*')
 @dataclasses.dataclass(frozen=True)
 class _AbsoluteInstruction:
   """A machine friendly slice: defined absolute positive boundaries."""
+
   splitname: str
   from_: int  # uint (starting index).
   to: int  # uint (ending index).
 
-  def to_absolute(self, split_infos) -> List['_AbsoluteInstruction']:
+  def to_absolute(self, split_infos) -> list['_AbsoluteInstruction']:
     del split_infos  # unused
     return [self]
 
@@ -85,43 +89,85 @@ class SplitInfo:
     name: Name of the split (e.g. `train`, `test`,...)
     shard_lengths: List of length <number of files> containing the number of
       examples stored in each file.
-    filename_template: the template used to create sharded filenames.
+    filename_template: The template used to create sharded filenames.
     num_examples: Total number of examples (`sum(shard_lengths)`)
     num_shards: Number of files (`len(shard_lengths)`)
     num_bytes: Size of the files (in bytes)
     statistics: Additional statistics of the split.
   """
+
   name: str
-  shard_lengths: List[int]
+  shard_lengths: list[int]
   num_bytes: int
-  filename_template: Optional[naming.ShardedFileTemplate] = None
+  filename_template: naming.ShardedFileTemplate | None = None
   statistics: statistics_pb2.DatasetFeatureStatistics = dataclasses.field(
-      default_factory=statistics_pb2.DatasetFeatureStatistics,)
+      default_factory=statistics_pb2.DatasetFeatureStatistics,
+  )
 
   def __post_init__(self):
-    if (self.filename_template and self.filename_template.split and
-        self.name != self.filename_template.split):
-      raise ValueError(f'Split name {self.name} must be equal to split name '
-                       f'in template {self.filename_template.split}')
-    if (self.filename_template and not self.filename_template.split):
-      super().__setattr__('filename_template',
-                          self.filename_template.replace(split=self.name))
+    if (
+        self.filename_template
+        and self.filename_template.split
+        and self.name != self.filename_template.split
+    ):
+      raise ValueError(
+          f'Split name {self.name} must be equal to split name '
+          f'in template {self.filename_template.split}'
+      )
+    if self.filename_template and not self.filename_template.split:
+      super().__setattr__(
+          'filename_template', self.filename_template.replace(split=self.name)
+      )
     # Normalize bytes
     super().__setattr__('num_bytes', units.Size(self.num_bytes))
+
+  def get_available_shards(
+      self,
+      data_dir: epath.Path | None = None,
+      file_format: str | file_adapters.FileFormat | None = None,
+      strict_matching: bool = True,
+  ) -> list[epath.Path]:
+    """Returns the list of shards that are present in the data dir.
+
+    Args:
+      data_dir: The data directory to look for shards in. If not provided, the
+        data directory from the filename template is used.
+      file_format: The file format to look for shards in. If not provided, the
+        file format from the filename template is used.
+      strict_matching: If True, only shards that match the filename template
+        exactly are returned taking into account the number of shards.
+        Otherwise, shards that match the template with a wildcard for the shard
+        number are returned.
+    """
+    if filename_template := self.filename_template:
+      if file_format:
+        file_format = file_adapters.FileFormat.from_value(file_format)
+        filename_template = filename_template.replace(
+            filetype_suffix=file_format.file_suffix
+        )
+      data_dir = data_dir or filename_template.data_dir
+      if strict_matching:
+        pattern = filename_template.glob_pattern(num_shards=self.num_shards)
+      else:
+        pattern = filename_template.sharded_filepaths_pattern(num_shards=None)
+      return list(retry.retry(data_dir.glob, pattern))
+    else:
+      raise ValueError(f'Filename template for split {self.name} is empty.')
 
   @classmethod
   def from_proto(
       cls,
       proto: proto_lib.SplitInfo,
       filename_template: naming.ShardedFileTemplate,
-  ) -> 'SplitInfo':
+  ) -> SplitInfo:
     """Returns a SplitInfo class instance from a SplitInfo proto."""
     return cls(
         name=proto.name,
         shard_lengths=list(proto.shard_lengths),
         num_bytes=proto.num_bytes,
         filename_template=filename_template.replace(
-            split=proto.name, template=proto.filepath_template),
+            split=proto.name, template=proto.filepath_template
+        ),
         statistics=proto.statistics,
     )
 
@@ -153,7 +199,7 @@ class SplitInfo:
     )
 
   @property
-  def file_instructions(self) -> List[shard_utils.FileInstruction]:
+  def file_instructions(self) -> list[shard_utils.FileInstruction]:
     """Returns the list of dict(filename, take, skip).
 
     This allows for creating your own `tf.data.Dataset` using the low-level
@@ -189,20 +235,45 @@ class SplitInfo:
     )
 
   @property
-  def filenames(self) -> List[str]:
+  def filenames(self) -> list[str]:
     """Returns the list of filenames."""
-    return sorted(
-        self.filename_template.sharded_filenames(len(self.shard_lengths)))
+    if not self.filename_template:
+      raise ValueError('No filename templates available.')
+    return sorted(self.filename_template.sharded_filenames(self.num_shards))
 
   @property
-  def filepaths(self) -> List[epath.Path]:
+  def filepaths(self) -> list[epath.Path]:
     """All the paths for all the files that are part of this split."""
-    return sorted(
-        self.filename_template.sharded_filepaths(len(self.shard_lengths)))
+    if not self.filename_template:
+      raise ValueError('No filename templates available.')
+    return sorted(self.filename_template.sharded_filepaths(self.num_shards))
 
-  def replace(self, **kwargs: Any) -> 'SplitInfo':
+  def replace(self, **kwargs: Any) -> SplitInfo:
     """Returns a copy of the `SplitInfo` with updated attributes."""
     return dataclasses.replace(self, **kwargs)
+
+  def file_spec(
+      self, file_format: str | file_adapters.FileFormat
+  ) -> str | None:
+    """Returns the file spec of the split for the given file format.
+
+    A file spec is the full path with sharded notation, e.g.,
+    `/data/ds/cfg/1.2.3/ds-train@10`.
+
+    Args:
+      file_format: the file format for which to create the file spec for.
+    """
+    file_format = file_adapters.FileFormat.from_value(file_format)
+    if filename_template := self.filename_template:
+      if filename_template.filetype_suffix != file_format.file_suffix:
+        raise ValueError(
+            f'File format {file_format} does not match filename template'
+            f' {filename_template}.'
+        )
+      return filename_template.sharded_filepaths_pattern(
+          num_shards=self.num_shards
+      )
+    return None
 
 
 @dataclasses.dataclass(eq=False, frozen=True)
@@ -211,9 +282,12 @@ class MultiSplitInfo(SplitInfo):
 
   This should only be used to read data and not when producing data.
   """
-  split_infos: List[SplitInfo] = dataclasses.field(default_factory=list)
 
-  def __init__(self, name: str, split_infos: List[SplitInfo]):
+  split_infos: list[SplitInfo | SubSplitInfo] = dataclasses.field(
+      default_factory=list
+  )
+
+  def __init__(self, name: str, split_infos: list[SplitInfo | SubSplitInfo]):
     if not split_infos:
       raise ValueError('Need to pass a non-empty list of SplitInfos')
     object.__setattr__(self, 'split_infos', split_infos)
@@ -230,26 +304,39 @@ class MultiSplitInfo(SplitInfo):
         name=name,
         shard_lengths=shard_lengths,
         num_bytes=num_bytes,
-        filename_template=None)
+        filename_template=None,
+    )
 
   def to_proto(self) -> proto_lib.SplitInfo:
     # The SplitInfo proto only supports a single split.
     raise RuntimeError('to_proto is not supported on MultiSplitInfo')
 
   def __repr__(self) -> str:
-    return (f'{self.__class__.__name__}('
-            f'name={self.name!r}, '
-            f'split_infos={self.split_infos!r})')
+    return (
+        f'{self.__class__.__name__}('
+        f'name={self.name!r}, '
+        f'split_infos={self.split_infos!r})'
+    )
 
   @property
-  def file_instructions(self) -> List[shard_utils.FileInstruction]:
+  def examples_in_shards(self) -> list[int]:
+    result = []
+    for split_info in self.split_infos:
+      if isinstance(split_info, (SubSplitInfo, MultiSplitInfo)):
+        result.extend(split_info.examples_in_shards)
+      else:
+        result.extend(split_info.shard_lengths)
+    return result
+
+  @property
+  def file_instructions(self) -> list[shard_utils.FileInstruction]:
     result = []
     for split_info in self.split_infos:
       result.extend(split_info.file_instructions)
     return result
 
   @property
-  def filenames(self) -> List[str]:
+  def filenames(self) -> list[str]:
     """Returns the list of filenames."""
     result = []
     for split_info in self.split_infos:
@@ -257,18 +344,19 @@ class MultiSplitInfo(SplitInfo):
     return result
 
   @property
-  def filepaths(self) -> List[epath.Path]:
+  def filepaths(self) -> list[epath.Path]:
     """All the paths for all the files that are part of this split."""
     result = []
     for split_info in self.split_infos:
       result.extend(split_info.filepaths)
     return result
 
-  def replace(self, **kwargs: Any) -> 'MultiSplitInfo':
+  def replace(self, **kwargs: Any) -> MultiSplitInfo:
     raise RuntimeError('replace is not supported on MultiSplitInfo')
 
 
-class SubSplitInfo(object):
+@dataclasses.dataclass(eq=False, frozen=True)
+class SubSplitInfo:
   """Wrapper around a sub split info.
 
   This class expose info on the subsplit:
@@ -277,40 +365,49 @@ class SubSplitInfo(object):
   ds, info = tfds.load(..., split='train[75%:]', with_info=True)
   info.splits['train[75%:]'].num_examples
   ```
-
   """
 
-  def __init__(self, file_instructions: List[shard_utils.FileInstruction]):
-    """Constructor.
+  name: str
+  file_instructions: list[shard_utils.FileInstruction]
 
-    Args:
-      file_instructions: List[FileInstruction]
-    """
-    self._file_instructions = file_instructions
+  @property
+  def shard_lengths(self) -> list[int]:
+    return [f.take for f in self.file_instructions]
+
+  @property
+  def examples_in_shards(self) -> list[int]:
+    return [f.examples_in_shard for f in self.file_instructions]
 
   @property
   def num_examples(self) -> int:
     """Returns the number of example in the subsplit."""
-    return sum(f.num_examples for f in self._file_instructions)
+    return sum(self.shard_lengths)
+
+  @property
+  def num_bytes(self) -> int:
+    return 0  # Unknown
 
   @property
   def num_shards(self) -> int:
     return len(self.file_instructions)
 
   @property
-  def file_instructions(self) -> List[shard_utils.FileInstruction]:
-    """Returns the list of dict(filename, take, skip)."""
-    return self._file_instructions
-
-  @property
-  def filenames(self) -> List[str]:
+  def filenames(self) -> list[str]:
     """Returns the list of filenames."""
     return sorted(os.path.basename(f.filename) for f in self.file_instructions)
 
   @property
-  def filepaths(self) -> List[epath.Path]:
+  def filepaths(self) -> list[epath.Path]:
     """Returns the list of filepaths."""
     return sorted(epath.Path(f.filename) for f in self.file_instructions)
+
+  def to_proto(self) -> proto_lib.SplitInfo:
+    return proto_lib.SplitInfo(
+        name=self.name,
+        shard_lengths=self.shard_lengths,
+        num_bytes=self.num_bytes,
+        statistics=None,
+    )
 
 
 # TODO(epot): `: tfds.Split` type should be `Union[str, Split]`
@@ -336,7 +433,7 @@ class Split(str):
   """
 
   def __repr__(self) -> str:
-    return '{}({})'.format(type(self).__name__, super(Split, self).__repr__())  # pytype: disable=wrong-arg-types
+    return f'{type(self).__name__}({super().__repr__()})'
 
 
 Split.TRAIN = Split('train')
@@ -347,7 +444,7 @@ Split.ALL = Split('all')
 if typing.TYPE_CHECKING:
   # For type checking, `tfds.Split` is an alias for `str` with additional
   # `.TRAIN`, `.TEST`,... attributes. All strings are valid split type.
-  Split = Union[Split, str]
+  Split = Split | str
 
 
 class SplitDict(utils.NonMutableDict[str, SplitInfo]):
@@ -355,45 +452,50 @@ class SplitDict(utils.NonMutableDict[str, SplitInfo]):
 
   def __init__(
       self,
-      split_infos: List[SplitInfo],
+      split_infos: Iterable[SplitInfo],
       *,
       # TODO(b/216470058): remove this parameter
-      dataset_name: Optional[str] = None,  # deprecated, please don't use
+      dataset_name: str | None = None,  # deprecated, please don't use
   ):
-    super(SplitDict, self).__init__(
+    super().__init__(
         {split_info.name: split_info for split_info in split_infos},
-        error_msg='Split {key} already present')
+        error_msg='Split {key} already present',
+    )
     if dataset_name:
-      logging.warning('DEPRECATED: SplitDict\'s dataset_name parameter is '
-                      'deprecated and can be removed.')
+      logging.warning(
+          "DEPRECATED: SplitDict's dataset_name parameter is "
+          'deprecated and can be removed.'
+      )
     self._dataset_name = dataset_name  # deprecated, please don't use
 
-  def __getitem__(self, key):
+  def __getitem__(self, key) -> SplitInfo | SubSplitInfo:
     if not self:
       raise KeyError(
           f'Trying to access `splits[{key!r}]` but `splits` is empty. '
-          'This likely indicate the dataset has not been generated yet.')
+          'This likely indicates the dataset has not been generated yet.'
+      )
     # 1st case: The key exists: `info.splits['train']`
     elif str(key) in self.keys():
-      return super(SplitDict, self).__getitem__(str(key))
+      return super().__getitem__(str(key))
     # 2nd case: Uses instructions: `info.splits['train[50%]']`
     else:
       instructions = _make_file_instructions(
           split_infos=list(self.values()),
           instruction=key,
       )
-      return SubSplitInfo(instructions)
+      return SubSplitInfo(name=key, file_instructions=instructions)
 
   @classmethod
   def from_proto(
       cls,
       repeated_split_infos: Iterable[proto_lib.SplitInfo],
       filename_template: naming.ShardedFileTemplate,
-  ) -> 'SplitDict':
+  ) -> SplitDict:
     """Returns a new SplitDict initialized from the `repeated_split_infos`."""
     split_infos = [
         SplitInfo.from_proto(
-            proto=s, filename_template=filename_template.replace(split=s.name))
+            proto=s, filename_template=filename_template.replace(split=s.name)
+        )
         for s in repeated_split_infos
     ]
     return cls(split_infos)
@@ -404,11 +506,11 @@ class SplitDict(utils.NonMutableDict[str, SplitInfo]):
 
   @property
   def total_num_examples(self):
-    """Return the total number of examples."""
+    """Returns the total number of examples."""
     return sum(s.num_examples for s in self.values())
 
   @classmethod
-  def merge_multiple(cls, split_dicts: List['SplitDict']) -> 'SplitDict':
+  def merge_multiple(cls, split_dicts: list[SplitDict]) -> SplitDict:
     info_per_split = []
     for split in set(itertools.chain(*split_dicts)):
       infos_of_split = []
@@ -421,7 +523,8 @@ class SplitDict(utils.NonMutableDict[str, SplitInfo]):
         else:
           infos_of_split.append(split_info)
       info_per_split.append(
-          MultiSplitInfo(name=split, split_infos=infos_of_split))
+          MultiSplitInfo(name=split, split_infos=infos_of_split)
+      )
 
     return cls(split_infos=info_per_split)
 
@@ -429,7 +532,7 @@ class SplitDict(utils.NonMutableDict[str, SplitInfo]):
 def _make_absolute_instructions(
     split_infos: Iterable[SplitInfo],
     instruction: SplitArg,
-) -> List[_AbsoluteInstruction]:
+) -> list[_AbsoluteInstruction]:
   if isinstance(instruction, str):
     instruction = AbstractSplit.from_spec(instruction)
 
@@ -440,25 +543,33 @@ def _make_absolute_instructions(
 
 def _file_instructions_for_split(
     instruction: _AbsoluteInstruction,
-    split_info: SplitInfo,
-) -> List[shard_utils.FileInstruction]:
+    split_info: SplitInfo | SubSplitInfo,
+) -> list[shard_utils.FileInstruction]:
   """Returns the file instructions from the given instruction applied to the given split info."""
   if not split_info.num_examples:
-    raise ValueError(
-        'Shard empty. This might means that dataset hasn\'t been generated '
-        'yet and info not restored from GCS, or that legacy dataset is used.')
+    logging.warning(
+        'Split %s has no examples. Skipping file instructions.',
+        split_info.name,
+    )
+    return []
   to = split_info.num_examples if instruction.to is None else instruction.to
+  if isinstance(split_info, (SubSplitInfo, MultiSplitInfo)):
+    examples_in_shards = split_info.examples_in_shards
+  else:
+    examples_in_shards = None
   return shard_utils.get_file_instructions(
       from_=instruction.from_ or 0,
       to=to,
       filenames=[os.fspath(fp) for fp in split_info.filepaths],
-      shard_lengths=split_info.shard_lengths)
+      shard_lengths=split_info.shard_lengths,
+      examples_in_shards=examples_in_shards,
+  )
 
 
 def _make_file_instructions(
-    split_infos: List[SplitInfo],
+    split_infos: Sequence[SplitInfo],
     instruction: SplitArg,
-) -> List[shard_utils.FileInstruction]:
+) -> list[shard_utils.FileInstruction]:
   """Returns file instructions by applying the given instruction on the given splits.
 
   Args:
@@ -476,14 +587,17 @@ def _make_file_instructions(
   # into a single `ds.take(25).skip(50-25).take(75-50)`
 
   absolute_instructions = _make_absolute_instructions(
-      split_infos=split_infos, instruction=instruction)
+      split_infos=split_infos, instruction=instruction
+  )
   instructions = []
   info_per_split = {split_info.name: split_info for split_info in split_infos}
   for abs_instr in absolute_instructions:
     split_info = info_per_split[str(abs_instr.splitname)]
     instructions.extend(
         _file_instructions_for_split(
-            instruction=abs_instr, split_info=split_info))
+            instruction=abs_instr, split_info=split_info
+        )
+    )
   return instructions
 
 
@@ -494,22 +608,19 @@ class AbstractSplit(abc.ABC):
   `tfds.load(..., split=)` or `builder.as_dataset(split=...)`.
 
   See the guide: https://www.tensorflow.org/datasets/splits
-
   """
 
   @classmethod
-  def from_spec(cls, spec: SplitArg) -> 'AbstractSplit':
+  def from_spec(cls, spec: SplitArg) -> AbstractSplit:
     """Creates a ReadInstruction instance out of a string spec.
 
     Args:
       spec (str): split(s) + optional slice(s) to read. A slice can be
         specified, using absolute numbers (int) or percentages (int). E.g.
-              `test`: test split.
-              `test + validation`: test split + validation split.
-              `test[10:]`: test split, minus its first 10 records.
-              `test[:10%]`: first 10% records of test split.
-              `test[:-5%]+train[40%:60%]`: first 95% of test + middle 20% of
-                train.
+        `test`: test split. `test + validation`: test split + validation split.
+        `test[10:]`: test split, minus its first 10 records. `test[:10%]`: first
+        10% records of test split. `test[:-5%]+train[40%:60%]`: first 95% of
+        test + middle 20% of train.
 
     Returns:
       The split instance.
@@ -522,14 +633,16 @@ class AbstractSplit(abc.ABC):
     subs = _ADDITION_SEP_RE.split(spec)
     if not subs:
       raise ValueError(f'No instructions could be built out of {spec!r}')
-    with utils.try_reraise(f'Error parsing split {spec!r}. See format at: '
-                           'https://www.tensorflow.org/datasets/splits\n'):
+    with utils.try_reraise(
+        f'Error parsing split {spec!r}. See format at: '
+        'https://www.tensorflow.org/datasets/splits\n'
+    ):
       instructions = [_str_to_relative_instruction(s) for s in subs]
     # Merge all splits together (_SplitAll)
     return functools.reduce(operator.add, instructions)
 
   @abc.abstractmethod
-  def to_absolute(self, split_infos) -> List[_AbsoluteInstruction]:
+  def to_absolute(self, split_infos) -> list[_AbsoluteInstruction]:
     """Translate instruction into a list of absolute instructions.
 
     Those absolute instructions are then to be added together.
@@ -543,7 +656,7 @@ class AbstractSplit(abc.ABC):
     """
     raise NotImplementedError
 
-  def __add__(self, other: Union[str, 'AbstractSplit']) -> 'AbstractSplit':
+  def __add__(self, other: str | AbstractSplit) -> AbstractSplit:
     """Sum of 2 splits."""
     if not isinstance(other, (str, AbstractSplit)):
       raise TypeError(f'Adding split {self!r} with non-split value: {other!r}')
@@ -558,24 +671,25 @@ class _SplitAdd(AbstractSplit):
 
   `'train+test'` is equivalent to
   `_SplitAdd(ReadInstruction('train'), ReadInstruction('test'))`
-
   """
+
   left: AbstractSplit
   right: AbstractSplit
 
   def __repr__(self):
     return f'{self.left!r}+{self.right!r}'
 
-  def to_absolute(self, split_infos) -> List[_AbsoluteInstruction]:
+  def to_absolute(self, split_infos) -> list[_AbsoluteInstruction]:
     # Merge instructions from left and right
-    return (self.left.to_absolute(split_infos) +
-            self.right.to_absolute(split_infos))
+    return self.left.to_absolute(split_infos) + self.right.to_absolute(
+        split_infos
+    )
 
 
 class _SplitAll(AbstractSplit):
   """Union of all splits of the dataset."""
 
-  def to_absolute(self, split_infos) -> List[_AbsoluteInstruction]:
+  def to_absolute(self, split_infos) -> list[_AbsoluteInstruction]:
     # Create the union of all splits
     split_names = split_infos.keys()
     split = AbstractSplit.from_spec('+'.join(split_names))
@@ -590,27 +704,25 @@ class ReadInstruction(AbstractSplit):
 
   Attributes:
     split_name: name of the split to read. Eg: 'train'.
-    from_: Starting index, or None if no lower boundary.
-    to: Ending index, or None if no upper boundary.
-    unit: optional, one of:
-      '%': to set the slicing unit as percents of the split size.
-      'abs': to set the slicing unit as absolute numbers.
-      'shard': to set the slicing unit as shard.
+    from_: Starting position, or None if no lower boundary.
+    to: Ending position, or None if no upper boundary.
+    unit: optional, one of: '%': to set the slicing unit as percents of the
+      split size. 'abs': to set the slicing unit as absolute numbers. 'shard':
+      to set the slicing unit as shard.
     rounding: The rounding behaviour to use when percent slicing is used.
-      Ignored when slicing with absolute indices.
-      Possible values:
-       - 'closest' (default): The specified percentages are rounded to the
-         closest value. Use this if you want specified percents to be as much
-         exact as possible.
-       - 'pct1_dropremainder': the specified percentages are treated as
-         multiple of 1%. Use this option if you want consistency. Eg: len(5%) ==
-           5 * len(1%). Using this option, one might not be able to use the full
-           set of examples, if the number of those is not a multiple of 100.
+      Ignored when slicing with absolute indices. Possible values: - 'closest'
+      (default): The specified percentages are rounded to the closest value. Use
+      this if you want specified percents to be as much exact as possible. -
+      'pct1_dropremainder': the specified percentages are treated as multiple of
+      1%. Use this option if you want consistency. Eg: len(5%) == 5 * len(1%).
+      Using this option, one might not be able to use the full set of examples,
+      if the number of those is not a multiple of 100.
   """
+
   split_name: str
   # TODO(py3.10): Add `_ = dataclasses.KW_ONLY`
-  from_: Optional[int] = None
-  to: Optional[int] = None
+  from_: int | float | None = None
+  to: int | float | None = None
   unit: str = 'abs'
   rounding: str = 'closest'
 
@@ -620,27 +732,32 @@ class ReadInstruction(AbstractSplit):
     allowed_rounding = ['closest', 'pct1_dropremainder']
     if self.unit not in allowed_units:
       raise ValueError(
-          f'Unit should be one of {allowed_units}. Got {self.unit!r}')
+          f'Unit should be one of {allowed_units}. Got {self.unit!r}'
+      )
     if self.rounding not in allowed_rounding:
-      raise ValueError(f'Rounding should be one of {allowed_rounding}. '
-                       f'Got: {self.rounding!r}')
+      raise ValueError(
+          f'Rounding should be one of {allowed_rounding}. '
+          f'Got: {self.rounding!r}'
+      )
     if self.unit == '%':
       if abs(self.from_ or 0) > 100 or abs(self.to or 0) > 100:
-        raise ValueError('When unit=%, percent slice boundaries should be '
-                         f'in [-100, 100]. Got: {self}')
+        raise ValueError(
+            'When unit=%, percent slice boundaries should be '
+            f'in [-100, 100]. Got: {self}'
+        )
 
   def __repr__(self) -> str:
     unit = '' if self.unit == 'abs' else self.unit
-    from_ = '' if self.from_ is None else f'{self.from_}{unit}'
-    to = '' if self.to is None else f'{self.to}{unit}'
+    from_ = '' if self.from_ is None else f'{self.from_:g}{unit}'
+    to = '' if self.to is None else f'{self.to:g}{unit}'
     if self.from_ is None and self.to is None:
       slice_str = ''  # Full split selected
     else:
       slice_str = f'[{from_}:{to}]'
     rounding = f', rounding={self.rounding!r}' if self.unit == '%' else ''
-    return f'ReadInstruction(\'{self.split_name}{slice_str}\'{rounding})'
+    return f"ReadInstruction('{self.split_name}{slice_str}'{rounding})"
 
-  def to_absolute(self, split_infos) -> List[_AbsoluteInstruction]:
+  def to_absolute(self, split_infos) -> list[_AbsoluteInstruction]:
     return [_rel_to_abs_instr(self, split_infos)]
 
 
@@ -648,8 +765,10 @@ def _str_to_relative_instruction(spec: str) -> AbstractSplit:
   """Returns ReadInstruction for given string."""
   # <split_name>[<split_selector>] (e.g. `train[54%:]`)
   res = _SUB_SPEC_RE.match(spec)
-  err_msg = (f'Unrecognized split format: {spec!r}. See format at '
-             'https://www.tensorflow.org/datasets/splits')
+  err_msg = (
+      f'Unrecognized split format: {spec!r}. See format at '
+      'https://www.tensorflow.org/datasets/splits'
+  )
   if not res:
     raise ValueError(err_msg)
   split_name = res.group('split_name')
@@ -661,7 +780,8 @@ def _str_to_relative_instruction(spec: str) -> AbstractSplit:
       # `_SliceSplit(split, from_=, to=, unit=)`.
       raise NotImplementedError(
           f'{split_name!r} does not support slice. Please open a github issue '
-          'if you need this feature.')
+          'if you need this feature.'
+      )
     return _SplitAll()
 
   if split_selector is None:  # split='train'
@@ -671,16 +791,18 @@ def _str_to_relative_instruction(spec: str) -> AbstractSplit:
   else:  # split='train[x:y]' or split='train[x]'
     slices = [_SLICE_RE.match(x) for x in split_selector.split(':')]
     # Make sure all slices are valid, and at least one is not empty
-    if not all(slices) or not any(x.group(0) for x in slices):
+    if not all(slices) or not any(
+        x.group(0) for x in slices if x is not None
+    ):  # re-none
       raise ValueError(err_msg)
-    if len(slices) == 1:
-      from_match, = slices
+    if len(slices) == 1:  # split='train[x]'
+      (from_match,) = slices
       from_ = from_match['val']
       to = int(from_) + 1
       unit = from_match['unit'] or 'abs'
       if unit != 'shard':
         raise ValueError('Absolute or percent only support slice syntax.')
-    elif len(slices) == 2:
+    elif len(slices) == 2:  # split='train[x:y]'
       from_match, to_match = slices
       from_ = from_match['val']
       to = to_match['val']
@@ -689,9 +811,9 @@ def _str_to_relative_instruction(spec: str) -> AbstractSplit:
       raise ValueError(err_msg)
 
   if from_ is not None:
-    from_ = int(from_)
+    from_ = float(from_) if unit == '%' else int(from_)
   if to is not None:
-    to = int(to)
+    to = float(to) if unit == '%' else int(to)
 
   return ReadInstruction(
       split_name=split_name,
@@ -705,19 +827,21 @@ def _str_to_relative_instruction(spec: str) -> AbstractSplit:
 def _pct_to_abs_pct1(boundary, num_examples: int):
   # Using math.trunc here, since -99.5% should give -99%, not -100%.
   if num_examples < 100:
-    msg = ('Using "pct1_dropremainder" rounding on a split with less than 100 '
-           'elements is forbidden: it always results in an empty dataset.')
+    msg = (
+        'Using "pct1_dropremainder" rounding on a split with less than 100 '
+        'elements is forbidden: it always results in an empty dataset.'
+    )
     raise ValueError(msg)
-  return boundary * math.trunc(num_examples / 100.)
+  return boundary * math.trunc(num_examples / 100.0)
 
 
 def _pct_to_abs_closest(boundary, num_examples: int) -> int:
-  return int(round(boundary * num_examples / 100.))
+  return int(round(boundary * num_examples / 100.0))
 
 
 def _rel_to_abs_instr(
     rel_instr: ReadInstruction,
-    split_infos: Dict[str, SplitInfo],
+    split_infos: dict[str, SplitInfo],
 ) -> _AbsoluteInstruction:
   """Returns _AbsoluteInstruction instance for given RelativeInstruction.
 
@@ -727,11 +851,14 @@ def _rel_to_abs_instr(
   """
   pct_to_abs = (
       _pct_to_abs_closest
-      if rel_instr.rounding == 'closest' else _pct_to_abs_pct1)
+      if rel_instr.rounding == 'closest'
+      else _pct_to_abs_pct1
+  )
   split = rel_instr.split_name
   if split not in split_infos:
     raise ValueError(
-        f'Unknown split {split!r}. Should be one of {list(split_infos)}.')
+        f'Unknown split {split!r}. Should be one of {list(split_infos)}.'
+    )
   num_examples = split_infos[split].num_examples
   from_ = rel_instr.from_
   to = rel_instr.to
@@ -751,7 +878,10 @@ def _rel_to_abs_instr(
     raise ValueError(f'Invalid split unit: {rel_instr.unit}')
   if abs(from_) > num_examples or abs(to) > num_examples:
     msg = 'Requested slice [%s:%s] incompatible with %s examples.' % (
-        from_ or '', to or '', num_examples)
+        from_ or '',
+        to or '',
+        num_examples,
+    )
     raise ValueError(msg)
   if from_ < 0:
     from_ = num_examples + from_

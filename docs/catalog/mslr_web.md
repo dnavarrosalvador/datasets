@@ -44,8 +44,8 @@ ds = tfds.load("mslr_web")
 *   **Versions**:
 
     *   `1.0.0`: Initial release.
-    *   **`1.1.0`** (default): Bundle features into a single 'float_features'
-        feature.
+    *   `1.1.0`: Bundle features into a single 'float_features' feature.
+    *   **`1.2.0`** (default): Add query and document identifiers.
 
 *   **Auto-cached**
     ([documentation](https://www.tensorflow.org/datasets/performances#auto-caching)):
@@ -55,18 +55,22 @@ ds = tfds.load("mslr_web")
 
 ```python
 FeaturesDict({
-    'float_features': Tensor(shape=(None, 136), dtype=tf.float64),
-    'label': Tensor(shape=(None,), dtype=tf.float64),
+    'doc_id': Tensor(shape=(None,), dtype=int64),
+    'float_features': Tensor(shape=(None, 136), dtype=float64),
+    'label': Tensor(shape=(None,), dtype=float64),
+    'query_id': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature        | Class        | Shape       | Dtype      | Description
-:------------- | :----------- | :---------- | :--------- | :----------
-               | FeaturesDict |             |            |
-float_features | Tensor       | (None, 136) | tf.float64 |
-label          | Tensor       | (None,)     | tf.float64 |
+Feature        | Class        | Shape       | Dtype   | Description
+:------------- | :----------- | :---------- | :------ | :----------
+               | FeaturesDict |             |         |
+doc_id         | Tensor       | (None,)     | int64   |
+float_features | Tensor       | (None, 136) | float64 |
+label          | Tensor       | (None,)     | float64 |
+query_id       | Text         |             | string  |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):
@@ -97,7 +101,7 @@ label          | Tensor       | (None,)     | tf.float64 |
 
 *   **Download size**: `1.15 GiB`
 
-*   **Dataset size**: `307.64 MiB`
+*   **Dataset size**: `310.08 MiB`
 
 *   **Splits**:
 
@@ -117,7 +121,7 @@ Split     | Examples
 <button id="displaydataframe">Display examples...</button>
 <div id="dataframecontent" style="overflow-x:auto"></div>
 <script>
-const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/mslr_web-10k_fold1-1.1.0.html";
+const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/mslr_web-10k_fold1-1.2.0.html";
 const dataButton = document.getElementById('displaydataframe');
 dataButton.addEventListener('click', async () => {
   // Disable the button after clicking (dataframe loaded only once).
@@ -148,7 +152,7 @@ dataButton.addEventListener('click', async () => {
 
 *   **Download size**: `1.15 GiB`
 
-*   **Dataset size**: `307.64 MiB`
+*   **Dataset size**: `310.08 MiB`
 
 *   **Splits**:
 
@@ -168,7 +172,7 @@ Split     | Examples
 <button id="displaydataframe">Display examples...</button>
 <div id="dataframecontent" style="overflow-x:auto"></div>
 <script>
-const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/mslr_web-10k_fold2-1.1.0.html";
+const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/mslr_web-10k_fold2-1.2.0.html";
 const dataButton = document.getElementById('displaydataframe');
 dataButton.addEventListener('click', async () => {
   // Disable the button after clicking (dataframe loaded only once).
@@ -199,7 +203,7 @@ dataButton.addEventListener('click', async () => {
 
 *   **Download size**: `1.15 GiB`
 
-*   **Dataset size**: `307.64 MiB`
+*   **Dataset size**: `310.08 MiB`
 
 *   **Splits**:
 
@@ -219,7 +223,7 @@ Split     | Examples
 <button id="displaydataframe">Display examples...</button>
 <div id="dataframecontent" style="overflow-x:auto"></div>
 <script>
-const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/mslr_web-10k_fold3-1.1.0.html";
+const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/mslr_web-10k_fold3-1.2.0.html";
 const dataButton = document.getElementById('displaydataframe');
 dataButton.addEventListener('click', async () => {
   // Disable the button after clicking (dataframe loaded only once).
@@ -250,7 +254,7 @@ dataButton.addEventListener('click', async () => {
 
 *   **Download size**: `1.15 GiB`
 
-*   **Dataset size**: `307.64 MiB`
+*   **Dataset size**: `310.08 MiB`
 
 *   **Splits**:
 
@@ -270,7 +274,7 @@ Split     | Examples
 <button id="displaydataframe">Display examples...</button>
 <div id="dataframecontent" style="overflow-x:auto"></div>
 <script>
-const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/mslr_web-10k_fold4-1.1.0.html";
+const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/mslr_web-10k_fold4-1.2.0.html";
 const dataButton = document.getElementById('displaydataframe');
 dataButton.addEventListener('click', async () => {
   // Disable the button after clicking (dataframe loaded only once).
@@ -301,7 +305,7 @@ dataButton.addEventListener('click', async () => {
 
 *   **Download size**: `1.15 GiB`
 
-*   **Dataset size**: `307.64 MiB`
+*   **Dataset size**: `310.08 MiB`
 
 *   **Splits**:
 
@@ -321,7 +325,7 @@ Split     | Examples
 <button id="displaydataframe">Display examples...</button>
 <div id="dataframecontent" style="overflow-x:auto"></div>
 <script>
-const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/mslr_web-10k_fold5-1.1.0.html";
+const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/mslr_web-10k_fold5-1.2.0.html";
 const dataButton = document.getElementById('displaydataframe');
 dataButton.addEventListener('click', async () => {
   // Disable the button after clicking (dataframe loaded only once).
@@ -352,7 +356,7 @@ dataButton.addEventListener('click', async () => {
 
 *   **Download size**: `3.59 GiB`
 
-*   **Dataset size**: `956.41 MiB`
+*   **Dataset size**: `964.09 MiB`
 
 *   **Splits**:
 
@@ -372,7 +376,7 @@ Split     | Examples
 <button id="displaydataframe">Display examples...</button>
 <div id="dataframecontent" style="overflow-x:auto"></div>
 <script>
-const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/mslr_web-30k_fold1-1.1.0.html";
+const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/mslr_web-30k_fold1-1.2.0.html";
 const dataButton = document.getElementById('displaydataframe');
 dataButton.addEventListener('click', async () => {
   // Disable the button after clicking (dataframe loaded only once).
@@ -403,7 +407,7 @@ dataButton.addEventListener('click', async () => {
 
 *   **Download size**: `3.59 GiB`
 
-*   **Dataset size**: `956.41 MiB`
+*   **Dataset size**: `964.09 MiB`
 
 *   **Splits**:
 
@@ -423,7 +427,7 @@ Split     | Examples
 <button id="displaydataframe">Display examples...</button>
 <div id="dataframecontent" style="overflow-x:auto"></div>
 <script>
-const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/mslr_web-30k_fold2-1.1.0.html";
+const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/mslr_web-30k_fold2-1.2.0.html";
 const dataButton = document.getElementById('displaydataframe');
 dataButton.addEventListener('click', async () => {
   // Disable the button after clicking (dataframe loaded only once).
@@ -454,7 +458,7 @@ dataButton.addEventListener('click', async () => {
 
 *   **Download size**: `3.59 GiB`
 
-*   **Dataset size**: `956.41 MiB`
+*   **Dataset size**: `964.09 MiB`
 
 *   **Splits**:
 
@@ -474,7 +478,7 @@ Split     | Examples
 <button id="displaydataframe">Display examples...</button>
 <div id="dataframecontent" style="overflow-x:auto"></div>
 <script>
-const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/mslr_web-30k_fold3-1.1.0.html";
+const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/mslr_web-30k_fold3-1.2.0.html";
 const dataButton = document.getElementById('displaydataframe');
 dataButton.addEventListener('click', async () => {
   // Disable the button after clicking (dataframe loaded only once).
@@ -505,7 +509,7 @@ dataButton.addEventListener('click', async () => {
 
 *   **Download size**: `3.59 GiB`
 
-*   **Dataset size**: `956.41 MiB`
+*   **Dataset size**: `964.09 MiB`
 
 *   **Splits**:
 
@@ -525,7 +529,7 @@ Split     | Examples
 <button id="displaydataframe">Display examples...</button>
 <div id="dataframecontent" style="overflow-x:auto"></div>
 <script>
-const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/mslr_web-30k_fold4-1.1.0.html";
+const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/mslr_web-30k_fold4-1.2.0.html";
 const dataButton = document.getElementById('displaydataframe');
 dataButton.addEventListener('click', async () => {
   // Disable the button after clicking (dataframe loaded only once).
@@ -556,7 +560,7 @@ dataButton.addEventListener('click', async () => {
 
 *   **Download size**: `3.59 GiB`
 
-*   **Dataset size**: `956.41 MiB`
+*   **Dataset size**: `964.09 MiB`
 
 *   **Splits**:
 
@@ -576,7 +580,7 @@ Split     | Examples
 <button id="displaydataframe">Display examples...</button>
 <div id="dataframecontent" style="overflow-x:auto"></div>
 <script>
-const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/mslr_web-30k_fold5-1.1.0.html";
+const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/mslr_web-30k_fold5-1.2.0.html";
 const dataButton = document.getElementById('displaydataframe');
 dataButton.addEventListener('click', async () => {
   // Disable the button after clicking (dataframe loaded only once).

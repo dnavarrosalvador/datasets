@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,16 +16,17 @@
 """DAS beamformed phantom images and paired clinical post-processed images."""
 
 import csv
+import datetime
 import os
-
 from etils import epath
 import numpy as np
+from tensorflow_datasets.core.utils import bool_utils
 from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
 import tensorflow_datasets.public_api as tfds
 
 _DATA_URL = {
     'phantom_data': 'https://research.repository.duke.edu/downloads/vt150j912',
-    'mark_data': 'https://research.repository.duke.edu/downloads/4x51hj56d'
+    'mark_data': 'https://research.repository.duke.edu/downloads/4x51hj56d',
 }
 
 _DEFAULT_SPLITS = {
@@ -34,14 +35,19 @@ _DEFAULT_SPLITS = {
     'validation': 'https://research.repository.duke.edu/downloads/dj52w535x',
     'MARK': 'https://research.repository.duke.edu/downloads/wd375w77v',
     'A': 'https://research.repository.duke.edu/downloads/nc580n18d',
-    'B': 'https://research.repository.duke.edu/downloads/7h149q56p'
+    'B': 'https://research.repository.duke.edu/downloads/7h149q56p',
 }
 
 
-class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
+class Builder(tfds.core.GeneratorBasedBuilder):
   """DAS beamformed phantom images and paired post-processed images."""
 
-  VERSION = tfds.core.Version('1.0.0')
+  VERSION = tfds.core.Version('2.0.0')
+  RELEASE_NOTES = {
+      '2.0.0': r'Fix timestamp_id from %Y%m%d%H%M%S to posix timestamp.',
+      '1.0.1': 'Fixes parsing of boolean field `harmonic`.',
+      '1.0.0': 'Initial release.',
+  }
 
   def __init__(self, custom_csv_splits=None, **kwargs):
     """custom_csv_splits is a dictionary of { 'name': 'csvpaths'}."""
@@ -52,28 +58,29 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
     return self.dataset_info_from_configs(
         features=tfds.features.FeaturesDict({
             'das': {
-                'dB': tfds.features.Tensor(shape=(None,), dtype=tf.float32),
-                'real': tfds.features.Tensor(shape=(None,), dtype=tf.float32),
-                'imag': tfds.features.Tensor(shape=(None,), dtype=tf.float32)
+                'dB': tfds.features.Tensor(shape=(None,), dtype=np.float32),
+                'real': tfds.features.Tensor(shape=(None,), dtype=np.float32),
+                'imag': tfds.features.Tensor(shape=(None,), dtype=np.float32),
             },
-            'dtce': tfds.features.Tensor(shape=(None,), dtype=tf.float32),
-            'f0_hz': tfds.features.Tensor(shape=(), dtype=tf.float32),
-            'voltage': tfds.features.Tensor(shape=(), dtype=tf.float32),
-            'focus_cm': tfds.features.Tensor(shape=(), dtype=tf.float32),
-            'height': tfds.features.Tensor(shape=(), dtype=tf.uint32),
-            'width': tfds.features.Tensor(shape=(), dtype=tf.uint32),
-            'initial_radius': tfds.features.Tensor(shape=(), dtype=tf.float32),
-            'final_radius': tfds.features.Tensor(shape=(), dtype=tf.float32),
-            'initial_angle': tfds.features.Tensor(shape=(), dtype=tf.float32),
-            'final_angle': tfds.features.Tensor(shape=(), dtype=tf.float32),
-            'probe': tfds.features.Tensor(shape=(), dtype=tf.string),
-            'scanner': tfds.features.Tensor(shape=(), dtype=tf.string),
-            'target': tfds.features.Tensor(shape=(), dtype=tf.string),
-            'timestamp_id': tfds.features.Tensor(shape=(), dtype=tf.uint32),
-            'harmonic': tfds.features.Tensor(shape=(), dtype=tf.bool)
+            'dtce': tfds.features.Tensor(shape=(None,), dtype=np.float32),
+            'f0_hz': tfds.features.Tensor(shape=(), dtype=np.float32),
+            'voltage': tfds.features.Tensor(shape=(), dtype=np.float32),
+            'focus_cm': tfds.features.Tensor(shape=(), dtype=np.float32),
+            'height': tfds.features.Tensor(shape=(), dtype=np.uint32),
+            'width': tfds.features.Tensor(shape=(), dtype=np.uint32),
+            'initial_radius': tfds.features.Tensor(shape=(), dtype=np.float32),
+            'final_radius': tfds.features.Tensor(shape=(), dtype=np.float32),
+            'initial_angle': tfds.features.Tensor(shape=(), dtype=np.float32),
+            'final_angle': tfds.features.Tensor(shape=(), dtype=np.float32),
+            'probe': tfds.features.Tensor(shape=(), dtype=np.str_),
+            'scanner': tfds.features.Tensor(shape=(), dtype=np.str_),
+            'target': tfds.features.Tensor(shape=(), dtype=np.str_),
+            'timestamp_id': tfds.features.Tensor(shape=(), dtype=np.uint32),
+            'harmonic': tfds.features.Tensor(shape=(), dtype=np.bool_),
         }),
         supervised_keys=('das/dB', 'dtce'),
-        homepage='https://github.com/ouwen/mimicknet')
+        homepage='https://github.com/ouwen/mimicknet',
+    )
 
   def _split_generators(self, dl_manager):
     downloads = _DEFAULT_SPLITS.copy()
@@ -85,20 +92,21 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
             gen_kwargs={
                 'datapath': {
                     'mark_data': dl_paths['mark_data'],
-                    'phantom_data': dl_paths['phantom_data']
+                    'phantom_data': dl_paths['phantom_data'],
                 },
-                'csvpath': dl_paths[name]
-            }) for name, _ in _DEFAULT_SPLITS.items()
+                'csvpath': dl_paths[name],
+            },
+        )
+        for name, _ in _DEFAULT_SPLITS.items()
     ]
 
     for name, csv_path in self.custom_csv_splits.items():
       splits.append(
           tfds.core.SplitGenerator(
               name=name,
-              gen_kwargs={
-                  'datapath': dl_paths['data'],
-                  'csvpath': csv_path
-              }))
+              gen_kwargs={'datapath': dl_paths['data'], 'csvpath': csv_path},
+          )
+      )
 
     return splits
 
@@ -110,17 +118,23 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
 
         filepath = os.path.join(datapath[data_key], row['filename'])
         matfile = tfds.core.lazy_imports.scipy.io.loadmat(
-            tf.io.gfile.GFile(filepath, 'rb'))
+            tf.io.gfile.GFile(filepath, 'rb')
+        )
 
         iq = np.abs(np.reshape(matfile['iq'], -1))
         iq = iq / iq.max()
         iq = 20 * np.log10(iq)
 
+        timestamp_id = datetime.datetime.strptime(
+            row['timestamp_id'], '%Y%m%d%H%M%S'
+        )
+        timestamp = int(timestamp_id.timestamp())
+
         yield row['filename'], {
             'das': {
                 'dB': iq.astype(np.float32),
                 'real': np.reshape(matfile['iq'], -1).real.astype(np.float32),
-                'imag': np.reshape(matfile['iq'], -1).imag.astype(np.float32)
+                'imag': np.reshape(matfile['iq'], -1).imag.astype(np.float32),
             },
             'dtce': np.reshape(matfile['dtce'], -1).astype(np.float32),
             'f0_hz': row['f0'],
@@ -135,6 +149,6 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
             'probe': row['probe'],
             'scanner': row['scanner'],
             'target': row['target'],
-            'timestamp_id': row['timestamp_id'],
-            'harmonic': row['harm']
+            'timestamp_id': timestamp,
+            'harmonic': bool_utils.parse_bool(row['harm']),
         }

@@ -12,12 +12,6 @@
 # `scene_parse150`
 
 
-*   **Visualization**:
-    <a class="button button-with-icon" href="https://knowyourdata-tfds.withgoogle.com/#tab=STATS&dataset=scene_parse150">
-    Explore in Know Your Data
-    <span class="material-icons icon-after" aria-hidden="true"> north_east
-    </span> </a>
-
 *   **Description**:
 
 Scene parsing is to segment and parse an image into different image regions
@@ -43,11 +37,11 @@ evaluation platform for the algorithms of scene parsing.
 
 *   **Download size**: `936.97 MiB`
 
-*   **Dataset size**: `Unknown size`
+*   **Dataset size**: `904.91 MiB`
 
 *   **Auto-cached**
     ([documentation](https://www.tensorflow.org/datasets/performances#auto-caching)):
-    Unknown
+    No
 
 *   **Splits**:
 
@@ -60,18 +54,18 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'annotation': Image(shape=(None, None, 3), dtype=tf.uint8),
-    'image': Image(shape=(None, None, 3), dtype=tf.uint8),
+    'annotation': Image(shape=(None, None, 3), dtype=uint8),
+    'image': Image(shape=(None, None, 3), dtype=uint8),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature    | Class        | Shape           | Dtype    | Description
-:--------- | :----------- | :-------------- | :------- | :----------
-           | FeaturesDict |                 |          |
-annotation | Image        | (None, None, 3) | tf.uint8 |
-image      | Image        | (None, None, 3) | tf.uint8 |
+Feature    | Class        | Shape           | Dtype | Description
+:--------- | :----------- | :-------------- | :---- | :----------
+           | FeaturesDict |                 |       |
+annotation | Image        | (None, None, 3) | uint8 |
+image      | Image        | (None, None, 3) | uint8 |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

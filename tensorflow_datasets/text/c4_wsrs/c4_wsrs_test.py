@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,11 +28,10 @@ class C4WSRSTest(testing.DatasetBuilderTestCase):
 
   DATASET_CLASS = c4_wsrs.C4WSRS
   SPLITS = {
-      'train': 4,  # Number of fake train example
-      'validation': 4,  # Number of fake test example
+      'train': 2,  # Number of fake train example
+      'validation': 2,  # Number of fake test example
   }
 
-  BUILDER_CONFIG_NAMES_TO_TEST = ['deterministic']
   OVERLAPPING_SPLITS = ['train', 'validation']
   SKIP_CHECKSUMS = True
   DL_DOWNLOAD_RESULT = 'abbreviation_expansion_dictionary.csv'
@@ -44,34 +43,44 @@ class C4WSRSTest(testing.DatasetBuilderTestCase):
     beam = tfds.core.lazy_imports.apache_beam
     inputs = [
         tf.nest.map_structure(
-            tf.convert_to_tensor, {
+            tf.convert_to_tensor,
+            {
                 'content-length': 'abc',
                 'content-type': 'text/plain',
-                'text': ('patient in the emergency room with complications. '
-                         'will check in morning.'),
+                'text': (
+                    'patient in the emergency room with complications. '
+                    'will check in morning.'
+                ),
                 'timestamp': 'this is a timestamp',
-                'url': 'http://google.com/1'
-            }),
+                'url': 'http://google.com/1',
+            },
+        ),
         tf.nest.map_structure(
-            tf.convert_to_tensor, {
+            tf.convert_to_tensor,
+            {
                 'content-length': 'abc',
                 'content-type': 'text/plain',
-                'text': ('magnetic resonance imaging test in patient with '
-                         'lower back pain. send for treatment.'),
+                'text': (
+                    'magnetic resonance imaging test in patient with '
+                    'lower back pain. send for treatment.'
+                ),
                 'timestamp': 'this is a timestamp',
-                'url': 'http://google.com/2'
-            })
+                'url': 'http://google.com/2',
+            },
+        ),
     ]
 
     cls._exit_stack = contextlib.ExitStack().__enter__()
     cls._exit_stack.enter_context(
-        mock.patch.object(tfds, 'builder', autospec=True))
+        mock.patch.object(tfds, 'builder', autospec=True)
+    )
     cls._exit_stack.enter_context(
         mock.patch.object(
             tfds.beam,
             'ReadFromTFDS',
             return_value=beam.Create(inputs),
-        ))
+        )
+    )
 
   @classmethod
   def tearDownClass(cls):

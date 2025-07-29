@@ -12,12 +12,6 @@
 # `colorectal_histology_large`
 
 
-*   **Visualization**:
-    <a class="button button-with-icon" href="https://knowyourdata-tfds.withgoogle.com/#tab=STATS&dataset=colorectal_histology_large">
-    Explore in Know Your Data
-    <span class="material-icons icon-after" aria-hidden="true"> north_east
-    </span> </a>
-
 *   **Description**:
 
 10 large 5000 x 5000 textured colorectal cancer histology images
@@ -35,11 +29,11 @@
 
 *   **Download size**: `707.65 MiB`
 
-*   **Dataset size**: `Unknown size`
+*   **Dataset size**: `464.91 MiB`
 
 *   **Auto-cached**
     ([documentation](https://www.tensorflow.org/datasets/performances#auto-caching)):
-    Unknown
+    No
 
 *   **Splits**:
 
@@ -51,18 +45,18 @@ Split    | Examples
 
 ```python
 FeaturesDict({
-    'filename': Text(shape=(), dtype=tf.string),
-    'image': Image(shape=(5000, 5000, 3), dtype=tf.uint8),
+    'filename': Text(shape=(), dtype=string),
+    'image': Image(shape=(5000, 5000, 3), dtype=uint8),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature  | Class        | Shape           | Dtype     | Description
-:------- | :----------- | :-------------- | :-------- | :----------
-         | FeaturesDict |                 |           |
-filename | Text         |                 | tf.string |
-image    | Image        | (5000, 5000, 3) | tf.uint8  |
+Feature  | Class        | Shape           | Dtype  | Description
+:------- | :----------- | :-------------- | :----- | :----------
+         | FeaturesDict |                 |        |
+filename | Text         |                 | string |
+image    | Image        | (5000, 5000, 3) | uint8  |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

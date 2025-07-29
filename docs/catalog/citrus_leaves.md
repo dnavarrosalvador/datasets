@@ -12,12 +12,6 @@
 # `citrus_leaves`
 
 
-*   **Visualization**:
-    <a class="button button-with-icon" href="https://knowyourdata-tfds.withgoogle.com/#tab=STATS&dataset=citrus_leaves">
-    Explore in Know Your Data
-    <span class="material-icons icon-after" aria-hidden="true"> north_east
-    </span> </a>
-
 *   **Description**:
 
 The original citrus dataset contains 759 images of healthy and unhealthy citrus
@@ -60,20 +54,20 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'image': Image(shape=(None, None, 3), dtype=tf.uint8),
-    'image/filename': Text(shape=(), dtype=tf.string),
-    'label': ClassLabel(shape=(), dtype=tf.int64, num_classes=4),
+    'image': Image(shape=(None, None, 3), dtype=uint8),
+    'image/filename': Text(shape=(), dtype=string),
+    'label': ClassLabel(shape=(), dtype=int64, num_classes=4),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature        | Class        | Shape           | Dtype     | Description
-:------------- | :----------- | :-------------- | :-------- | :----------
-               | FeaturesDict |                 |           |
-image          | Image        | (None, None, 3) | tf.uint8  |
-image/filename | Text         |                 | tf.string |
-label          | ClassLabel   |                 | tf.int64  |
+Feature        | Class        | Shape           | Dtype  | Description
+:------------- | :----------- | :-------------- | :----- | :----------
+               | FeaturesDict |                 |        |
+image          | Image        | (None, None, 3) | uint8  |
+image/filename | Text         |                 | string |
+label          | ClassLabel   |                 | int64  |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

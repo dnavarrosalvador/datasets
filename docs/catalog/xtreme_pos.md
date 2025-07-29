@@ -25,7 +25,7 @@ and then browsing the annotation guidelines.
     [https://universaldependencies.org/](https://universaldependencies.org/)
 
 *   **Source code**:
-    [`tfds.text.xtreme_pos.XtremePos`](https://github.com/tensorflow/datasets/tree/master/tensorflow_datasets/text/xtreme_pos/xtreme_pos.py)
+    [`tfds.datasets.xtreme_pos.Builder`](https://github.com/tensorflow/datasets/tree/master/tensorflow_datasets/datasets/xtreme_pos/xtreme_pos_dataset_builder.py)
 
 *   **Versions**:
 
@@ -41,18 +41,18 @@ and then browsing the annotation guidelines.
 
 ```python
 FeaturesDict({
-    'tokens': Sequence(Text(shape=(), dtype=tf.string)),
-    'upos': Sequence(ClassLabel(shape=(), dtype=tf.int64, num_classes=18)),
+    'tokens': Sequence(Text(shape=(), dtype=string)),
+    'upos': Sequence(ClassLabel(shape=(), dtype=int64, num_classes=18)),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature | Class                | Shape   | Dtype     | Description
-:------ | :------------------- | :------ | :-------- | :----------
-        | FeaturesDict         |         |           |
-tokens  | Sequence(Text)       | (None,) | tf.string |
-upos    | Sequence(ClassLabel) | (None,) | tf.int64  |
+Feature | Class                | Shape   | Dtype  | Description
+:------ | :------------------- | :------ | :----- | :----------
+        | FeaturesDict         |         |        |
+tokens  | Sequence(Text)       | (None,) | string |
+upos    | Sequence(ClassLabel) | (None,) | int64  |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

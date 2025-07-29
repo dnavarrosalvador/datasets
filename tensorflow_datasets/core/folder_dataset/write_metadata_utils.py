@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +14,10 @@
 # limitations under the License.
 
 """Util to add metadata into an existing dataset folder."""
+
+from collections.abc import Sequence
 import os
-from typing import List, Union
+from typing import Union
 
 from etils import epath
 from tensorflow_datasets.core import dataset_info
@@ -29,7 +31,8 @@ from tensorflow_datasets.core.folder_dataset import compute_split_utils
 
 
 def _get_file_infos(
-    filename_template: naming.ShardedFileTemplate) -> List[naming.FilenameInfo]:
+    filename_template: naming.ShardedFileTemplate,
+) -> Sequence[naming.FilenameInfo]:
   """Returns the file infos from the files matching the given template."""
   file_infos = []
   for f in filename_template.data_dir.iterdir():
@@ -39,51 +42,64 @@ def _get_file_infos(
   if not file_infos:
     raise ValueError(
         f'Could not find data files in {filename_template.data_dir}. '
-        f'Make sure to follow the pattern: `{filename_template.template}`')
+        f'Make sure to follow the pattern: `{filename_template.template}`'
+    )
   return file_infos
 
 
 def _construct_filename_template(
     data_dir: epath.PathLike,
-    filename_template: Union[None, str, naming.ShardedFileTemplate] = None
+    filename_template: Union[None, str, naming.ShardedFileTemplate] = None,
 ) -> naming.ShardedFileTemplate:
   """Returns a basic filename template based on the given data dir and template."""
   data_dir = epath.Path(data_dir)
   if filename_template is None:
     filename_template = naming.ShardedFileTemplate(
-        data_dir=data_dir, template=naming.DEFAULT_FILENAME_TEMPLATE)
+        data_dir=data_dir, template=naming.DEFAULT_FILENAME_TEMPLATE
+    )
   elif isinstance(filename_template, str):
     filename_template = naming.ShardedFileTemplate(
-        data_dir=data_dir, template=filename_template)
+        data_dir=data_dir, template=filename_template
+    )
   return filename_template.replace(data_dir=data_dir)
 
 
 def _enrich_filename_template(
     filename_template: naming.ShardedFileTemplate,
-    file_infos: List[naming.FilenameInfo],
+    file_infos: Sequence[naming.FilenameInfo],
 ) -> naming.ShardedFileTemplate:
   """Enriches the given template with data from the given file infos."""
   # Use set with tuple expansion syntax to ensure all names are consistent.
-  dataset_name, = {f.dataset_name for f in file_infos}
-  if (filename_template.dataset_name and dataset_name and
-      filename_template.dataset_name != dataset_name):
-    raise ValueError(f'Detected dataset name {dataset_name}, but '
-                     f'{filename_template.dataset_name} was specified '
-                     'in the filename template!')
+  (dataset_name,) = {f.dataset_name for f in file_infos}
+  if (
+      filename_template.dataset_name
+      and dataset_name
+      and filename_template.dataset_name != dataset_name
+  ):
+    raise ValueError(
+        f'Detected dataset name {dataset_name}, but '
+        f'{filename_template.dataset_name} was specified '
+        'in the filename template!'
+    )
   elif dataset_name:
     # dataset_name can be None if the files don't specify the name
     filename_template = filename_template.replace(dataset_name=dataset_name)
 
-  filetype_suffix, = {f.filetype_suffix for f in file_infos}
-  if (filename_template.filetype_suffix and
-      filename_template.filetype_suffix != filetype_suffix):
-    raise ValueError(f'Detected filetype suffix {filetype_suffix}, but '
-                     f'{filename_template.filetype_suffix} was specified '
-                     'in the filename template!')
+  (filetype_suffix,) = {f.filetype_suffix for f in file_infos}
+  if (
+      filename_template.filetype_suffix
+      and filename_template.filetype_suffix != filetype_suffix
+  ):
+    raise ValueError(
+        f'Detected filetype suffix {filetype_suffix}, but '
+        f'{filename_template.filetype_suffix} was specified '
+        'in the filename template!'
+    )
   elif filetype_suffix:
     # filetype_suffix can be None if the files don't specify the name
     filename_template = filename_template.replace(
-        filetype_suffix=filetype_suffix)
+        filetype_suffix=filetype_suffix
+    )
 
   return filename_template
 
@@ -92,7 +108,9 @@ def write_metadata(
     *,
     data_dir: epath.PathLike,
     features: features_lib.feature.FeatureConnectorArg,
-    split_infos: Union[None, epath.PathLike, List[split_lib.SplitInfo]] = None,
+    split_infos: Union[
+        None, epath.PathLike, Sequence[split_lib.SplitInfo]
+    ] = None,
     version: Union[None, str, utils.Version] = None,
     filename_template: Union[None, str, naming.ShardedFileTemplate] = None,
     check_data: bool = True,
@@ -122,7 +140,8 @@ def write_metadata(
       description, homepage,...). Will appear in the doc.
   """
   filename_template = _construct_filename_template(
-      data_dir=data_dir, filename_template=filename_template)
+      data_dir=data_dir, filename_template=filename_template
+  )
   file_infos = _get_file_infos(filename_template=filename_template)
   filename_template = _enrich_filename_template(filename_template, file_infos)
 
@@ -147,7 +166,8 @@ def write_metadata(
       **ds_info_kwargs,
   )
   file_format = file_adapters.file_format_from_suffix(
-      filename_template.filetype_suffix)
+      filename_template.filetype_suffix
+  )
   ds_info.set_file_format(file_format)
 
   # Add the split infos
@@ -164,17 +184,21 @@ def write_metadata(
   # Make sure that the data can be loaded (feature connector matches the actual
   # specs)
   if check_data:
-    utils.print_notebook('Metadata written. Testing by reading first example. '
-                         'Set check_data=False to skip.')
+    utils.print_notebook(
+        'Metadata written. Testing by reading first example. '
+        'Set check_data=False to skip.'
+    )
     builder = read_only_builder.builder_from_directory(data_dir)
     split_name = next(iter(builder.info.splits))
-    _, = builder.as_dataset(split=f'{split_name}[:1]')  # Load the first example
+    (_,) = builder.as_dataset(
+        split=f'{split_name}[:1]'
+    )  # Load the first example
 
 
 def _load_splits(
     *,
-    split_infos: Union[None, epath.PathLike, List[split_lib.SplitInfo]],
-    file_infos: List[naming.FilenameInfo],
+    split_infos: Union[None, epath.PathLike, Sequence[split_lib.SplitInfo]],
+    file_infos: Sequence[naming.FilenameInfo],
     filename_template: naming.ShardedFileTemplate,
 ) -> split_lib.SplitDict:
   """Load the SplitDict which can be passed to DatasetInfo."""
@@ -182,8 +206,9 @@ def _load_splits(
 
   if split_infos is None:  # Auto-compute the split-infos
     split_infos = compute_split_utils.compute_split_info(
-        filename_template=filename_template)
-  # Load the List[SplitInfo]
+        filename_template=filename_template
+    )
+  # Load the Sequence[SplitInfo]
   elif isinstance(split_infos, epath.PathLikeCls):
     split_infos = compute_split_utils.split_infos_from_path(
         split_names=split_names,

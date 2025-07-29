@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,8 @@ class FooDataset:
 class LazyBuilderImportTest(testing.TestCase):
 
   @mock.patch.object(
-      registered, "imported_builder_cls", return_value=FooDataset)
+      registered, "imported_builder_cls", return_value=FooDataset
+  )
   def test_import_on_first_attr_used(self, mock_imported_builder_cls):
     proxy_cls = lazy_builder_import.LazyBuilderImport("foo")
     self.assertFalse(mock_imported_builder_cls.called)
@@ -42,7 +43,8 @@ class LazyBuilderImportTest(testing.TestCase):
     mock_imported_builder_cls.assert_called_once()
 
   @mock.patch.object(
-      registered, "imported_builder_cls", return_value=FooDataset)
+      registered, "imported_builder_cls", return_value=FooDataset
+  )
   def test_import_on_init(self, mock_imported_builder_cls):
     proxy_cls = lazy_builder_import.LazyBuilderImport("foo")
     self.assertFalse(mock_imported_builder_cls.called)

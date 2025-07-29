@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import dataclasses
 import itertools
 from typing import Optional
 
-from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
+import numpy as np
 import tensorflow_datasets.public_api as tfds
 
 
@@ -29,7 +29,7 @@ class BLEWindFieldConfig(tfds.core.BuilderConfig):
   num_fields: Optional[int] = None
 
 
-class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
+class Builder(tfds.core.GeneratorBasedBuilder):
   """DatasetBuilder for the ble_wind_field dataset."""
 
   VERSION = tfds.core.Version('1.0.0')
@@ -40,11 +40,13 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
       BLEWindFieldConfig(
           name='full',
           description='The entire historical wind field dataset.',
-          num_fields=None),
+          num_fields=None,
+      ),
       BLEWindFieldConfig(
           name='small',
           description='Small sample of 256 fields from the dataset.',
-          num_fields=256),
+          num_fields=256,
+      ),
   ]
   GCS_URL = tfds.core.Path('gs://ble-public/downloads')
   GCS_FILENAME = 'historical_wind_fields.zarr'
@@ -52,13 +54,15 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
   def _info(self) -> tfds.core.DatasetInfo:
     """Dataset metadata."""
     return self.dataset_info_from_configs(
-        features=tfds.features.FeaturesDict({
-            'field':
-                tfds.features.Tensor(
+        features=tfds.features.FeaturesDict(
+            {
+                'field': tfds.features.Tensor(
                     shape=(21, 21, 10, 9, 2),
-                    dtype=tf.float32,
-                    encoding=tfds.features.Encoding.ZLIB),
-        }),
+                    dtype=np.float32,
+                    encoding=tfds.features.Encoding.ZLIB,
+                ),
+            }
+        ),
         supervised_keys=None,
         homepage='https://github.com/google/balloon-learning-environment',
     )
@@ -72,14 +76,17 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
     zarr_array = zarr.open_array(
         store=gcsfs_store(f'{self.GCS_URL}/{self.GCS_FILENAME}'),
         mode='r',
-        synchronizer=zarr.ThreadSynchronizer())
+        synchronizer=zarr.ThreadSynchronizer(),
+    )
 
     # During normal execution we don't expect `self.builder_config.num_fields`
     # to have a value larger than `zarr_array.shape[0]`, but for unit tests the
     # Zarr file used has a very small number of fields, so we take the minimum
     # to avoid trying to load more examples than available.
-    num_fields = min(self.builder_config.num_fields or zarr_array.shape[0],
-                     zarr_array.shape[0])
+    num_fields = min(
+        self.builder_config.num_fields or zarr_array.shape[0],
+        zarr_array.shape[0],
+    )
 
     # Zarr arrays are stored as compressed chunks on disk, and by default
     # read/write operations require to load and decompress entire chunks, even
@@ -92,8 +99,10 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
     num_full_chunks = num_fields // chunk_length
     remainder = num_fields % chunk_length
 
-    slices = (slice(i * chunk_length, (i + 1) * chunk_length)
-              for i in range(num_full_chunks))
+    slices = (
+        slice(i * chunk_length, (i + 1) * chunk_length)
+        for i in range(num_full_chunks)
+    )
     if remainder:
       start = num_full_chunks * chunk_length
       slices = itertools.chain(slices, (slice(start, start + remainder),))
@@ -104,11 +113,14 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
     with concurrent.futures.ThreadPoolExecutor() as executor:
       load_fn = lambda next_slice: zarr_array[next_slice]
       # Keep at most 10 submitted loading tasks to reduce resource consumption.
-      futures = {executor.submit(load_fn, next_slice)
-                 for next_slice in itertools.islice(slices, 10)}
+      futures = {
+          executor.submit(load_fn, next_slice)
+          for next_slice in itertools.islice(slices, 10)
+      }
       while futures:
         done, futures = concurrent.futures.wait(
-            futures, return_when=concurrent.futures.FIRST_COMPLETED)
+            futures, return_when=concurrent.futures.FIRST_COMPLETED
+        )
         # Top up the submitted loading tasks.
         for next_slice in itertools.islice(slices, len(done)):
           futures.add(executor.submit(load_fn, next_slice))

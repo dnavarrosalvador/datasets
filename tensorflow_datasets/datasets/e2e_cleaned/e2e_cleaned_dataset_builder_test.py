@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,25 +30,31 @@ class E2eCleanedTest(tfds.testing.DatasetBuilderTestCase):
   DL_EXTRACT_RESULT = {
       'train_path': 'train.csv',
       'dev_path': 'dev.csv',
-      'test_path': 'test.csv'
+      'test_path': 'test.csv',
   }
 
   def test_get_table_from_mr(self):
     mr = 'name[Blue Spice], eatType[coffee shop], area[city centre]'
     self.assertCountEqual(
-        e2e_cleaned_dataset_builder._get_table_from_mr(mr), [{
-            'column_header': 'name',
-            'row_number': 1,
-            'content': 'Blue Spice',
-        }, {
-            'column_header': 'eatType',
-            'row_number': 1,
-            'content': 'coffee shop',
-        }, {
-            'column_header': 'area',
-            'row_number': 1,
-            'content': 'city centre',
-        }])
+        e2e_cleaned_dataset_builder._get_table_from_mr(mr),
+        [
+            {
+                'column_header': 'name',
+                'row_number': 1,
+                'content': 'Blue Spice',
+            },
+            {
+                'column_header': 'eatType',
+                'row_number': 1,
+                'content': 'coffee shop',
+            },
+            {
+                'column_header': 'area',
+                'row_number': 1,
+                'content': 'city centre',
+            },
+        ],
+    )
 
 
 if __name__ == '__main__':

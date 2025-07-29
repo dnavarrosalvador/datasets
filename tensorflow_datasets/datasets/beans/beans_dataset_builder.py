@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ _IMAGE_SHAPE = (_IMAGE_SIZE, _IMAGE_SIZE, 3)
 _LABELS = ["angular_leaf_spot", "bean_rust", "healthy"]
 
 
-class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
+class Builder(tfds.core.GeneratorBasedBuilder):
   """Beans plant leaf images dataset."""
 
   VERSION = tfds.core.Version("0.1.0")
@@ -38,7 +38,7 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
     return self.dataset_info_from_configs(
         features=tfds.features.FeaturesDict({
             "image": tfds.features.Image(shape=_IMAGE_SHAPE),
-            "label": tfds.features.ClassLabel(names=_LABELS)
+            "label": tfds.features.ClassLabel(names=_LABELS),
         }),
         supervised_keys=("image", "label"),
         homepage="https://github.com/AI-Lab-Makerere/ibean/",
@@ -46,7 +46,8 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
 
   def _split_generators(self, dl_manager):
     train_path, val_path, test_path = dl_manager.download(
-        [_TRAIN_URL, _VALIDATION_URL, _TEST_URL])
+        [_TRAIN_URL, _VALIDATION_URL, _TEST_URL]
+    )
 
     return [
         tfds.core.SplitGenerator(

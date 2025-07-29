@@ -39,11 +39,11 @@ There are two features:
 
 *   **Download size**: `11.10 MiB`
 
-*   **Dataset size**: `Unknown size`
+*   **Dataset size**: `14.96 MiB`
 
 *   **Auto-cached**
     ([documentation](https://www.tensorflow.org/datasets/performances#auto-caching)):
-    Unknown
+    Yes
 
 *   **Splits**:
 
@@ -57,18 +57,18 @@ Split          | Examples
 
 ```python
 FeaturesDict({
-    'email_body': Text(shape=(), dtype=tf.string),
-    'subject_line': Text(shape=(), dtype=tf.string),
+    'email_body': Text(shape=(), dtype=string),
+    'subject_line': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature      | Class        | Shape | Dtype     | Description
-:----------- | :----------- | :---- | :-------- | :----------
-             | FeaturesDict |       |           |
-email_body   | Text         |       | tf.string |
-subject_line | Text         |       | tf.string |
+Feature      | Class        | Shape | Dtype  | Description
+:----------- | :----------- | :---- | :----- | :----------
+             | FeaturesDict |       |        |
+email_body   | Text         |       | string |
+subject_line | Text         |       | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

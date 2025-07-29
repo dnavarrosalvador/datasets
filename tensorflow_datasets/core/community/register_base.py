@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 """Base register class."""
 
 import abc
-from typing import Any, Iterable, List, Type
-
+from collections.abc import Sequence
+from typing import Any, Iterable, Type
 from tensorflow_datasets.core import dataset_builder
 from tensorflow_datasets.core import naming
 
@@ -42,7 +42,7 @@ class BaseRegister(abc.ABC):
   """
 
   @abc.abstractmethod
-  def list_builders(self) -> List[str]:
+  def list_builders(self) -> Sequence[str]:
     """Returns the list of registered builders.
 
     Returns:

@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,85 +25,86 @@ Usage outside of TensorFlow is also supported.
 See the README on GitHub for further documentation.
 """
 
-import datetime
 import itertools
 import os
 import sys
 
 import pkg_resources
-from setuptools import find_packages
-from setuptools import setup
-
-if '--nightly' in sys.argv:
-  nightly = True
-  sys.argv.remove('--nightly')
-else:
-  nightly = False
-
-project_name = 'tensorflow-datasets'
+import setuptools
 
 # To enable importing version.py directly, we add its path to sys.path.
 version_path = os.path.join(os.path.dirname(__file__), 'tensorflow_datasets')
 sys.path.append(version_path)
 from version import __version__  # pytype: disable=import-error  # pylint: disable=g-import-not-at-top
 
-if nightly:
+if datestring := os.environ.get('TFDS_NIGHTLY_TIMESTAMP'):
   project_name = 'tfds-nightly'
   # Version as `X.Y.Z.dev199912312459`
-  datestring = (
-      os.environ.get('TFDS_NIGHTLY_TIMESTAMP') or
-      datetime.datetime.now().strftime('%Y%m%d%H%M'))
   curr_version = pkg_resources.parse_version(__version__)
   __version__ = f'{curr_version.base_version}.dev{datestring}'
+else:
+  project_name = 'tensorflow-datasets'
 
 DOCLINES = __doc__.split('\n')
 
 REQUIRED_PKGS = [
     'absl-py',
-    'dill',  # TODO(tfds): move to TESTS_REQUIRE.
+    # Min version of 0.5.0 as old array_record wheel are bugged on all
+    # platform except 'x86_64'. See
+    # https://github.com/google/array_record/issues/71
+    'array_record>=0.5.0;platform_system=="Linux"',
     'dm-tree',
-    'etils[epath]',
+    'etils[edc,enp,epath,epy,etree]>=1.6.0;python_version<"3.11"',
+    'etils[edc,enp,epath,epy,etree]>=1.9.1;python_version>="3.11"',
+    'immutabledict',
     'numpy',
     'promise',
-    'protobuf>=3.12.2',
+    'protobuf>=3.20',
+    'psutil',
+    'pyarrow',
     'requests>=2.19.0',
-    'six',
+    'simple_parsing',
     'tensorflow-metadata',
     'termcolor',
     'toml',
     'tqdm',
+    'wrapt',
     # Standard library backports
-    'dataclasses;python_version<"3.7"',
-    'typing_extensions;python_version<"3.8"',
     'importlib_resources;python_version<"3.9"',
 ]
 
-TESTS_REQUIRE = [
-    'jax[cpu]',
+TESTS_DEPENDENCIES = [
+    'dill',
+    'jax[cpu]==0.4.28',
     'jupyter',
     'pytest',
     'pytest-shard',
     'pytest-xdist',
     # Lazy-deps required by core
+    # TODO(b/418761065): Update to 2.65.0 once the bug is fixed.
+    'apache-beam<2.65.0',
+    'conllu',
+    'mlcroissant>=1.0.9',
     'pandas',
     'pydub',
-    'apache_beam',
-    'conllu',
-    # TODO(b/142892342): Re-enable
-    # 'tensorflow-docs @ git+https://github.com/tensorflow/docs#egg=tensorflow-docs',  # pylint: disable=line-too-long
     # Required by scripts/documentation/
     'pyyaml',
 ]
 
 # Additional deps for formatting
-DEV_REQUIRE = [
+DEV_DEPENDENCIES = [
     'pylint>=2.6.0',
     'yapf',
 ]
 
 # Static files needed by datasets.
 DATASET_FILES = [
-    'graphs/ogbg_molpcba/ogbg_molpcba_tasks.txt',
+    'datasets/imagenet2012/labels.txt',
+    'datasets/imagenet2012/validation_labels.txt',
+    'datasets/lvis/classes.txt',
+    'datasets/ogbg_molpcba/tasks.txt',
+    'datasets/quickdraw/labels.txt',
+    'datasets/smartwatch_gestures/labels.txt',
     'image_classification/caltech101_labels.txt',
     'image_classification/categories_places365.txt',
     'image_classification/cbis_ddsm_calc_distributions.txt',
@@ -117,26 +118,20 @@ DATASET_FILES = [
     'image_classification/i_naturalist2018/inaturalist2018_supercategories.txt',
     'image_classification/i_naturalist2021/i_naturalist2021_labels.txt',
     'image_classification/i_naturalist2021/i_naturalist2021_supercategories.txt',
-    'image_classification/imagenet2012_labels.txt',
-    'image_classification/imagenet2012_validation_labels.txt',
     'image_classification/imagenet_resized_labels.txt',
     'image_classification/imagenette_labels.txt',
     'image_classification/imagewang_labels.txt',
     'image_classification/inaturalist_labels.txt',
     'image_classification/inaturalist_supercategories.txt',
     'image_classification/placesfull/categories_placesfull.txt',
-    'image_classification/plant_leaves_urls.txt',
     'image_classification/plantae_k_urls.txt',
-    'image_classification/quickdraw_labels.txt',
     'image_classification/sun397_labels.txt',
     'image_classification/sun397_tfds_te.txt',
     'image_classification/sun397_tfds_tr.txt',
     'image_classification/sun397_tfds_va.txt',
-    'object_detection/lvis/lvis_classes.txt',
     'object_detection/open_images_classes_all.txt',
     'object_detection/open_images_classes_boxable.txt',
     'object_detection/open_images_classes_trainable.txt',
-    'time_series/smartwatch_gestures/class_labels.txt',
     'video/tao/labels.txt',
     'video/ucf101_labels.txt',
     'video/youtube_vis/labels.txt',
@@ -146,10 +141,17 @@ DATASET_FILES = [
 DATASET_EXTRAS = {
     # In alphabetical order
     'aflw2k3d': ['scipy'],
-    'beir': ['apache_beam'],
-    'ble_wind_field': ['gcsfs', 'zarr'],
-    'c4': ['apache_beam', 'gcld3', 'langdetect', 'nltk', 'tldextract'],
-    'c4_wsrs': ['apache_beam'],
+    'beir': ['apache-beam<2.65.0'],
+    'ble_wind_field': ['gcsfs', 'zarr<3.0.0'],
+    'c4': [
+        'apache-beam<2.65.0',
+        'gcld3',
+        'langdetect',
+        # nltk==3.8.2 is broken: https://github.com/nltk/nltk/issues/3293
+        'nltk==3.8.1',
+        'tldextract',
+    ],
+    'c4_wsrs': ['apache-beam<2.65.0'],
     'cats_vs_dogs': ['matplotlib'],
     'colorectal_histology': ['Pillow'],
     'common_voice': ['pydub'],  # and ffmpeg installed
@@ -162,52 +164,69 @@ DATASET_EXTRAS = {
         # route to install OpenCV
         'opencv-python',
         'scikit-image',
-        'scipy'
+        'scipy',
     ],
     'librispeech': ['pydub'],  # and ffmpeg installed
-    'lsun': ['tensorflow-io'],
+    'lsun': ['tensorflow-io[tensorflow]'],
     # sklearn version required to avoid conflict with librosa from
     # https://github.com/scikit-learn/scikit-learn/issues/14485
     # See https://github.com/librosa/librosa/issues/1160
     'nsynth': ['crepe>=0.0.11', 'librosa', 'scikit-learn==0.20.3'],
     'ogbg_molpcba': ['pandas', 'networkx'],
     'pet_finder': ['pandas'],
+    'qm9': ['pandas'],
     'robonet': ['h5py'],  # and ffmpeg installed
-    'robosuite_panda_pick_place_can': ['envlogger'],
+    # envlogger is not available for Python versions >= 3.11 or non Linux
+    # platforms: https://pypi.org/project/envlogger/#files
+    'locomotion': ['envlogger;python_version<"3.11" and sys_platform=="linux"'],
+    'robosuite_panda_pick_place_can': [
+        'envlogger;python_version<"3.11" and sys_platform=="linux"'
+    ],
     'smartwatch_gestures': ['pandas'],
+    'speech_commands': ['pydub'],
     'svhn': ['scipy'],
     'the300w_lp': ['scipy'],
+    'wake_vision': ['pandas'],
     'wider_face': ['Pillow'],
-    'wiki_dialog': ['apache_beam'],
-    'wikipedia': ['mwparserfromhell', 'apache_beam'],
+    'wiki_dialog': ['apache-beam<2.65.0'],
+    'wikipedia': ['apache-beam<2.65.0', 'mwparserfromhell', 'mwxml'],
     'wsc273': ['bs4', 'lxml'],
     'youtube_vis': ['pycocotools'],
 }
 
 # Those datasets have dependencies which conflict with the rest of TFDS, so
 # running them in an isolated environments.
-# See `./oss_scripts/oss_tests.sh` for the isolated test.
 ISOLATED_DATASETS = ('nsynth', 'lsun')
 
 # Extra dataset deps are required for the tests
-all_dataset_extras = list(
+all_dataset_dependencies = list(
     itertools.chain.from_iterable(
-        deps for ds_name, deps in DATASET_EXTRAS.items()
-        if ds_name not in ISOLATED_DATASETS))
+        deps
+        for ds_name, deps in DATASET_EXTRAS.items()
+        if ds_name not in ISOLATED_DATASETS
+    )
+)
 
-EXTRAS_REQUIRE = {
+TESTS_ALL_DEPENDENCIES = TESTS_DEPENDENCIES + all_dataset_dependencies
+# `datasets` needs to be installed separately in Python >= 3.10 due to
+# conflicts between `multiprocess` and `apache-beam` libraries. See
+# https://github.com/uqfoundation/multiprocess/issues/125
+HUGGINGFACE_ALL_DEPENDENCIES = [
+    dep for dep in TESTS_ALL_DEPENDENCIES if not dep.startswith('apache-beam')
+] + ['datasets']
+
+EXTRAS = {
     'matplotlib': ['matplotlib'],
     'tensorflow': ['tensorflow>=2.1'],
+    'tf-nightly': ['tf-nightly'],
     'tensorflow-data-validation': ['tensorflow-data-validation'],
-
-    # Tests dependencies are installed in ./oss_scripts/oss_pip_install.sh
-    # and run in ./oss_scripts/oss_tests.sh
-    'tests-all': TESTS_REQUIRE + all_dataset_extras,
-    'dev': TESTS_REQUIRE + DEV_REQUIRE,
+    'tests-all': TESTS_ALL_DEPENDENCIES,
+    'dev': TESTS_DEPENDENCIES + DEV_DEPENDENCIES,
+    'huggingface': HUGGINGFACE_ALL_DEPENDENCIES,
 }
-EXTRAS_REQUIRE.update(DATASET_EXTRAS)
+EXTRAS.update(DATASET_EXTRAS)
 
-setup(
+setuptools.setup(
     name=project_name,
     version=__version__,
     description=DOCLINES[0],
@@ -217,28 +236,30 @@ setup(
     url='https://github.com/tensorflow/datasets',
     download_url='https://github.com/tensorflow/datasets/tags',
     license='Apache 2.0',
-    packages=find_packages(),
+    packages=setuptools.find_packages(),
     package_data={
-        'tensorflow_datasets':
-            DATASET_FILES + [
-                # Bundle `datasets/` folder in PyPI releases
-                'datasets/*/*',
-                'core/utils/colormap.csv',
-                'scripts/documentation/templates/*',
-                'url_checksums/*',
-                'checksums.tsv',
-                'community-datasets.toml',
-                'dataset_collections/*/*.md',
-                'dataset_collections/*/*.bib',
-            ],
+        'tensorflow_datasets': DATASET_FILES + [
+            # Bundle `datasets/` folder in PyPI releases
+            'datasets/*/*',
+            'core/utils/colormap.csv',
+            'scripts/documentation/templates/*',
+            'url_checksums/*',
+            'checksums.tsv',
+            'community-datasets.toml',
+            'dataset_collections/*/*.md',
+            'dataset_collections/*/*.bib',
+            'core/valid_tags.txt',
+        ],
     },
     exclude_package_data={
-        'tensorflow_datasets': ['dummy_data/*',],
+        'tensorflow_datasets': [
+            'dummy_data/*',
+        ],
     },
     scripts=[],
     install_requires=REQUIRED_PKGS,
-    python_requires='>=3.7',
-    extras_require=EXTRAS_REQUIRE,
+    python_requires='>=3.10',
+    extras_require=EXTRAS,
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',

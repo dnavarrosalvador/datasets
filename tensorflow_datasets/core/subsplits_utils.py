@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ from tensorflow_datasets.core import splits as splits_lib
 @dataclasses.dataclass(frozen=True)
 class _EvenSplit(splits_lib.AbstractSplit):
   """Split matching a subsplit of the given split."""
+
   split: splits_lib.SplitArg
   index: int
   count: int
@@ -72,8 +73,12 @@ class _EvenSplit(splits_lib.AbstractSplit):
     assert num_unused_examples < self.count, num_unused_examples
     if num_unused_examples > 0:
       if self.drop_remainder:
-        logging.warning('Dropping %d examples of %d examples (host count: %d).',
-                        num_unused_examples, num_examples, self.count)
+        logging.warning(
+            'Dropping %d examples of %d examples (host count: %d).',
+            num_unused_examples,
+            num_examples,
+            self.count,
+        )
       else:
         split_start += min(self.index, num_unused_examples)
         split_end += min(self.index + 1, num_unused_examples)
@@ -114,7 +119,7 @@ def even_splits(
       not evenly divisible by `n`. If `False`, examples are distributed evenly
       across subsplits, starting by the first. For example, if there is 11
       examples with `n=3`, splits will contain `[4, 4, 3]` examples
-      respectivelly.
+      respectively.
 
   Returns:
     The list of subsplits. Those splits can be combined together (with
@@ -164,7 +169,7 @@ def split_for_jax_process(
       not evenly divisible by `n`. If `False`, examples are distributed evenly
       across subsplits, starting by the first. For example, if there is 11
       examples with `n=3`, splits will contain `[4, 4, 3]` examples
-      respectivelly.
+      respectively.
 
   Returns:
     subsplit: The sub-split of the given `split` for the current

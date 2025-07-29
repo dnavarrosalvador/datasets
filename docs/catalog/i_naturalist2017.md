@@ -12,12 +12,6 @@
 # `i_naturalist2017`
 
 
-*   **Visualization**:
-    <a class="button button-with-icon" href="https://knowyourdata-tfds.withgoogle.com/#tab=STATS&dataset=i_naturalist2017">
-    Explore in Know Your Data
-    <span class="material-icons icon-after" aria-hidden="true"> north_east
-    </span> </a>
-
 *   **Description**:
 
 This dataset contains a total of 5,089 categories, across 579,184 training
@@ -48,11 +42,11 @@ the test images (label = -1).
 
 *   **Download size**: `237.35 GiB`
 
-*   **Dataset size**: `Unknown size`
+*   **Dataset size**: `238.10 GiB`
 
 *   **Auto-cached**
     ([documentation](https://www.tensorflow.org/datasets/performances#auto-caching)):
-    Unknown
+    No
 
 *   **Splits**:
 
@@ -66,22 +60,22 @@ Split          | Examples
 
 ```python
 FeaturesDict({
-    'id': Text(shape=(), dtype=tf.string),
-    'image': Image(shape=(None, None, 3), dtype=tf.uint8),
-    'label': ClassLabel(shape=(), dtype=tf.int64, num_classes=5089),
-    'supercategory': ClassLabel(shape=(), dtype=tf.int64, num_classes=13),
+    'id': Text(shape=(), dtype=string),
+    'image': Image(shape=(None, None, 3), dtype=uint8),
+    'label': ClassLabel(shape=(), dtype=int64, num_classes=5089),
+    'supercategory': ClassLabel(shape=(), dtype=int64, num_classes=13),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature       | Class        | Shape           | Dtype     | Description
-:------------ | :----------- | :-------------- | :-------- | :----------
-              | FeaturesDict |                 |           |
-id            | Text         |                 | tf.string |
-image         | Image        | (None, None, 3) | tf.uint8  |
-label         | ClassLabel   |                 | tf.int64  |
-supercategory | ClassLabel   |                 | tf.int64  |
+Feature       | Class        | Shape           | Dtype  | Description
+:------------ | :----------- | :-------------- | :----- | :----------
+              | FeaturesDict |                 |        |
+id            | Text         |                 | string |
+image         | Image        | (None, None, 3) | uint8  |
+label         | ClassLabel   |                 | int64  |
+supercategory | ClassLabel   |                 | int64  |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

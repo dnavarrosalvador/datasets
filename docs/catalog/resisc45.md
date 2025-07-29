@@ -31,7 +31,7 @@ images in each class.
     [http://www.escience.cn/people/JunweiHan/NWPU-RESISC45.html](http://www.escience.cn/people/JunweiHan/NWPU-RESISC45.html)
 
 *   **Source code**:
-    [`tfds.image_classification.Resisc45`](https://github.com/tensorflow/datasets/tree/master/tensorflow_datasets/image_classification/resisc45.py)
+    [`tfds.datasets.resisc45.Builder`](https://github.com/tensorflow/datasets/tree/master/tensorflow_datasets/datasets/resisc45/resisc45_dataset_builder.py)
 
 *   **Versions**:
 
@@ -39,7 +39,7 @@ images in each class.
 
 *   **Download size**: `Unknown size`
 
-*   **Dataset size**: `Unknown size`
+*   **Dataset size**: `407.97 MiB`
 
 *   **Manual download instructions**: This dataset requires you to
     download the source data manually into `download_config.manual_dir`
@@ -50,7 +50,7 @@ images in each class.
 
 *   **Auto-cached**
     ([documentation](https://www.tensorflow.org/datasets/performances#auto-caching)):
-    Unknown
+    No
 
 *   **Splits**:
 
@@ -62,20 +62,20 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'filename': Text(shape=(), dtype=tf.string),
-    'image': Image(shape=(256, 256, 3), dtype=tf.uint8),
-    'label': ClassLabel(shape=(), dtype=tf.int64, num_classes=45),
+    'filename': Text(shape=(), dtype=string),
+    'image': Image(shape=(256, 256, 3), dtype=uint8),
+    'label': ClassLabel(shape=(), dtype=int64, num_classes=45),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature  | Class        | Shape         | Dtype     | Description
-:------- | :----------- | :------------ | :-------- | :----------
-         | FeaturesDict |               |           |
-filename | Text         |               | tf.string |
-image    | Image        | (256, 256, 3) | tf.uint8  |
-label    | ClassLabel   |               | tf.int64  |
+Feature  | Class        | Shape         | Dtype  | Description
+:------- | :----------- | :------------ | :----- | :----------
+         | FeaturesDict |               |        |
+filename | Text         |               | string |
+image    | Image        | (256, 256, 3) | uint8  |
+label    | ClassLabel   |               | int64  |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ Displayed in https://www.tensorflow.org/datasets/catalog/.
 """
 
 import abc
+import datetime
 import html
 import os
 import re
@@ -49,6 +50,7 @@ class Block(str):
   <block>
   ```
   """
+
   pass
 
 
@@ -114,7 +116,6 @@ class Section(abc.ABC):
 
 
 class HomepageSection(Section):
-
   NAME = 'Homepage'
 
   def get_key(self, builder: tfds.core.DatasetBuilder):
@@ -126,7 +127,6 @@ class HomepageSection(Section):
 
 
 class DatasetDescriptionSection(Section):
-
   NAME = 'Description'
 
   def get_key(self, builder: tfds.core.DatasetBuilder):
@@ -137,7 +137,6 @@ class DatasetDescriptionSection(Section):
 
 
 class ConfigDescriptionSection(Section):
-
   NAME = 'Config description'
 
   def get_key(self, builder: tfds.core.DatasetBuilder):
@@ -150,7 +149,6 @@ class ConfigDescriptionSection(Section):
 
 
 class SourceCodeSection(Section):
-
   NAME = 'Source code'
 
   def get_key(self, _):
@@ -168,11 +166,14 @@ class SourceCodeSection(Section):
 
 
 def _get_read_only_builder_source_code_link(
-    builder: tfds.core.DatasetBuilder) -> str:
+    builder: tfds.core.DatasetBuilder,
+) -> str:
   """Extract the source code for read-only builder."""
   if 'read_only_builder' in builder.__module__:  # module unknown
-    return ('Missing (dataset generated before '
-            '[#2813](https://github.com/tensorflow/datasets/issues/2813))')
+    return (
+        'Missing (dataset generated before '
+        '[#2813](https://github.com/tensorflow/datasets/issues/2813))'
+    )
   url_title = builder.__module__
   module_url = 'https://github.com/tensorflow/datasets'
   # TODO(epot): For datasets built with `tfds build` __module__ correspond
@@ -181,7 +182,6 @@ def _get_read_only_builder_source_code_link(
 
 
 class LocationSection(Section):
-
   NAME = 'Path'
 
   def get_key(self, _):
@@ -189,10 +189,12 @@ class LocationSection(Section):
 
   def content(self, builder: tfds.core.DatasetBuilder):
     # Path is only documented for community datasets
-    if (not isinstance(builder, tfds.core.read_only_builder.ReadOnlyBuilder)
+    if (
+        not isinstance(builder, tfds.core.read_only_builder.ReadOnlyBuilder)
         # If datasets have not yet been regenerated after update, even TFDS
         # datasets can be ReadOnlyBuilder
-        or builder.__module__.startswith('tensorflow_datasets')):
+        or builder.__module__.startswith('tensorflow_datasets')
+    ):
       return _SKIP_SECTION
 
     # /.../ds/config/1.0.0/ -> /.../ds/
@@ -206,7 +208,6 @@ class LocationSection(Section):
 
 
 class VersionSection(Section):
-
   NAME = 'Versions'
 
   def __init__(self, nightly_doc_util: Optional[doc_utils.NightlyDocUtil]):
@@ -224,9 +225,11 @@ class VersionSection(Section):
         version_name = '**`{}`** (default)'.format(str(v))
       else:
         version_name = '`{}`'.format(str(v))
-      if (v in curr_versions  # Filter versions only present in RELEASE_NOTES
-          and self._nightly_doc_util and
-          self._nightly_doc_util.is_version_nightly(builder, str(v))):
+      if (
+          v in curr_versions  # Filter versions only present in RELEASE_NOTES
+          and self._nightly_doc_util
+          and self._nightly_doc_util.is_version_nightly(builder, str(v))
+      ):
         nightly_str = ' ' + self._nightly_doc_util.icon
       else:
         nightly_str = ''
@@ -242,7 +245,6 @@ class VersionSection(Section):
 
 
 class DownloadSizeSection(Section):
-
   NAME = 'Download size'
 
   def get_key(self, builder: tfds.core.DatasetBuilder):
@@ -253,7 +255,6 @@ class DownloadSizeSection(Section):
 
 
 class DatasetSizeSection(Section):
-
   NAME = 'Dataset size'
 
   def get_key(self, builder: tfds.core.DatasetBuilder):
@@ -264,7 +265,6 @@ class DatasetSizeSection(Section):
 
 
 class ManualDatasetSection(Section):
-
   NAME = 'Manual download instructions'
 
   def get_key(self, builder: tfds.core.DatasetBuilder):
@@ -284,11 +284,11 @@ class ManualDatasetSection(Section):
 
 
 class AutocacheSection(Section):
-
   NAME = 'Auto-cached'
   EXTRA_DOC = (
       ' ([documentation]'
-      '(https://www.tensorflow.org/datasets/performances#auto-caching))')
+      '(https://www.tensorflow.org/datasets/performances#auto-caching))'
+  )
 
   def _build_autocached_info(self, builder: tfds.core.DatasetBuilder):
     """Returns the auto-cache information string."""
@@ -298,13 +298,11 @@ class AutocacheSection(Section):
     for split_name in sorted(builder.info.splits.keys()):
       split_name = str(split_name)
       cache_shuffled = builder._should_cache_ds(  # pylint: disable=protected-access
-          split_name,
-          shuffle_files=True,
-          read_config=tfds.ReadConfig())
+          split_name, shuffle_files=True, read_config=tfds.ReadConfig()
+      )
       cache_unshuffled = builder._should_cache_ds(  # pylint: disable=protected-access
-          split_name,
-          shuffle_files=False,
-          read_config=tfds.ReadConfig())
+          split_name, shuffle_files=False, read_config=tfds.ReadConfig()
+      )
 
       if all((cache_shuffled, cache_unshuffled)):
         always_cached[split_name] = None
@@ -331,7 +329,8 @@ class AutocacheSection(Section):
       if unshuffle_cached:
         split_names_str = ', '.join(unshuffle_cached)
         autocached_info_parts.append(
-            'Only when `shuffle_files=False` ({})'.format(split_names_str))
+            'Only when `shuffle_files=False` ({})'.format(split_names_str)
+        )
       autocached_info = ', '.join(autocached_info_parts)
     return autocached_info
 
@@ -343,7 +342,6 @@ class AutocacheSection(Section):
 
 
 class SplitInfoSection(Section):
-
   NAME = 'Splits'
 
   def _get_num_examples(self, split_info):
@@ -352,16 +350,18 @@ class SplitInfoSection(Section):
     return 'Not computed'
 
   def get_key(self, builder: tfds.core.DatasetBuilder):
-    return tuple((str(s.name), int(s.num_examples))
-                 for s in builder.info.splits.values())
+    return tuple(
+        (str(s.name), int(s.num_examples)) for s in builder.info.splits.values()
+    )
 
   def content(self, builder: tfds.core.DatasetBuilder):
-    splits_str = ('\n').join([
-        f'`\'{split_name}\'` | {self._get_num_examples(split_info)}'
-        for split_name, split_info in sorted(builder.info.splits.items())
-    ])
-    return Block(
-        textwrap.dedent(f"""
+    splits_str = ('\n').join(
+        [
+            f"`'{split_name}'` | {self._get_num_examples(split_info)}"
+            for split_name, split_info in sorted(builder.info.splits.items())
+        ]
+    )
+    return Block(textwrap.dedent(f"""
             Split  | Examples
             :----- | -------:
             {tfds.core.utils.indent(splits_str, '            ')}
@@ -369,7 +369,6 @@ class SplitInfoSection(Section):
 
 
 class FeatureInfoSection(Section):
-
   NAME = 'Feature structure'
 
   def get_key(self, builder: tfds.core.DatasetBuilder):
@@ -388,7 +387,6 @@ class FeatureInfoSection(Section):
 
 
 class FeatureDocumentationSection(Section):
-
   NAME = 'Feature documentation'
 
   def get_key(self, builder: tfds.core.DatasetBuilder):
@@ -404,7 +402,11 @@ class FeatureDocumentationSection(Section):
     def format_row(doc: feature_lib.CatalogFeatureDocumentation) -> str:
       if doc.tensor_info:
         shape = str(doc.tensor_info.shape) if doc.tensor_info.shape else ''
-        dtype = repr(doc.tensor_info.dtype) if doc.tensor_info.dtype else ''
+        dtype = (
+            feature_lib.dtype_to_str(doc.tensor_info.np_dtype)
+            if doc.tensor_info.dtype
+            else ''
+        )
       else:
         shape = ''
         dtype = ''
@@ -420,8 +422,8 @@ class FeatureDocumentationSection(Section):
     return rows
 
   def _should_show_value_range(
-      self,
-      feature_docs: List[feature_lib.CatalogFeatureDocumentation]) -> bool:
+      self, feature_docs: List[feature_lib.CatalogFeatureDocumentation]
+  ) -> bool:
     return any(doc.value_range for doc in feature_docs)
 
   def _format_block(
@@ -430,15 +432,19 @@ class FeatureDocumentationSection(Section):
   ) -> Block:
     """Formats a block containing all the feature documentation."""
     should_show_value_range = self._should_show_value_range(feature_docs)
-    feature_rows = self._format_feature_rows(feature_docs,
-                                             should_show_value_range)
+    feature_rows = self._format_feature_rows(
+        feature_docs, should_show_value_range
+    )
     header = ['Feature', 'Class', 'Shape', 'Dtype', 'Description']
     if should_show_value_range:
       header.append('Value range')
     header_line = map(lambda h: ':' + ('-' * (len(h) - 1)), header)
     col_sep = ' | '
-    return Block('\n'.join(
-        [col_sep.join(header), col_sep.join(header_line)] + feature_rows))
+    return Block(
+        '\n'.join(
+            [col_sep.join(header), col_sep.join(header_line)] + feature_rows
+        )
+    )
 
   def content(self, builder: tfds.core.DatasetBuilder) -> str:
     if builder.info is None or builder.info.features is None:
@@ -447,11 +453,11 @@ class FeatureDocumentationSection(Section):
 
 
 class SupervisedKeySection(Section):
-
   NAME = 'Supervised keys'
   EXTRA_DOC = (
       ' (See [`as_supervised` doc]'
-      '(https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args))')
+      '(https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args))'
+  )
 
   def get_key(self, builder: tfds.core.DatasetBuilder) -> Key:
     # get_key() must return a Key (str/int), but supervised_keys can be a tuple
@@ -464,7 +470,6 @@ class SupervisedKeySection(Section):
 
 
 class DatasetCitationSection(Section):
-
   NAME = 'Citation'
 
   def get_key(self, builder: tfds.core.DatasetBuilder):
@@ -473,42 +478,14 @@ class DatasetCitationSection(Section):
   def content(self, builder: tfds.core.DatasetBuilder):
     if not builder.info.citation:
       return ''
-    return Block(
-        textwrap.dedent(f"""
+    return Block(textwrap.dedent(f"""
             ```
             {tfds.core.utils.indent(builder.info.citation, '            ')}
             ```
             """))
 
 
-class KnowYourDataSection(Section):
-
-  NAME = 'Visualization'
-
-  def __init__(self):
-    super().__init__()
-    self._catalog_urls = {}
-
-  def get_key(self, builder: tfds.core.DatasetBuilder):
-    return None  # Single url for all configs
-
-  def content(self, builder: tfds.core.DatasetBuilder):
-    url = self._catalog_urls.get(builder.name)
-    if url:
-      return f"""
-        <a class="button button-with-icon" href="{url}">
-          Explore in Know Your Data
-          <span class="material-icons icon-after" aria-hidden="true">
-            north_east
-          </span>
-        </a>
-      """
-    else:
-      return _SKIP_SECTION
-
-
 class PapersWithCodeSection(Section):
-
   NAME = 'Additional Documentation'
 
   def __init__(self, tfds_to_pwc_links: Optional[Mapping[str, str]] = None):
@@ -537,7 +514,6 @@ class PapersWithCodeSection(Section):
 
 
 class DatasetVisualizationSection(Section):
-
   NAME = 'Figure'
   EXTRA_DOC = (
       ' ([tfds.show_examples](https://www.tensorflow.org/datasets/api_docs/python/tfds/visualization/show_examples))'
@@ -558,7 +534,6 @@ class DatasetVisualizationSection(Section):
 
 
 class DatasetDataframeSection(Section):
-
   NAME = 'Examples'
   EXTRA_DOC = (
       ' ([tfds.as_dataframe](https://www.tensorflow.org/datasets/api_docs/python/tfds/as_dataframe))'
@@ -630,8 +605,10 @@ def _display_all_builders(
         namespace=namespace,
         name=builder.name,
     )
-    unique_builder_str.append(f'## {ds_name}/{builder.builder_config.name}'
-                              f'{header_suffix}{nightly_str}\n')
+    unique_builder_str.append(
+        f'## {ds_name}/{builder.builder_config.name}'
+        f'{header_suffix}{nightly_str}\n'
+    )
     unique_builder_str.append(_display_builder(builder, unique_sections))
   unique_builder_str = '\n'.join(unique_builder_str)
 
@@ -646,6 +623,7 @@ def _display_dataset_heading(
     builder: tfds.core.DatasetBuilder,
 ) -> str:
   ds_name = tfds.core.naming.DatasetName(namespace=namespace, name=builder.name)
+  reviewed = datetime.datetime.now().strftime('%Y-%m-%d')
   return f"""
       # `{ds_name}`
 
@@ -774,7 +752,6 @@ def get_markdown_string(
   """Build the dataset markdown."""
 
   all_sections = [
-      KnowYourDataSection(),
       DatasetDescriptionSection(),
       PapersWithCodeSection(),
       ConfigDescriptionSection(),

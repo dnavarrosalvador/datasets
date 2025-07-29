@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, Generator, Tuple
 
+import numpy as np
 from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
 import tensorflow_datasets.public_api as tfds
 
@@ -43,69 +44,60 @@ _BUILDER_CONFIGS = [
     tfds.core.BuilderConfig(
         name='rlds',
         description=(
-            'This dataset contains task episodes collected across a'
-            'fleet of real robots. It follows the [RLDS format](https://github.com/google-research/rlds)'
-            'to represent steps and episodes.')),
+            'This dataset contains task episodes collected across afleet of'
+            ' real robots. It follows the [RLDS'
+            ' format](https://github.com/google-research/rlds)to represent'
+            ' steps and episodes.'
+        ),
+    ),
     tfds.core.BuilderConfig(
         name='sd',
-        description='The success detectors dataset that contains human curated definitions of tasks completion.'
-    )
+        description=(
+            'The success detectors dataset that contains human curated'
+            ' definitions of tasks completion.'
+        ),
+    ),
 ]
 
 
 def _steps_features():
   return tfds.features.FeaturesDict({
-      'action':
-          tfds.features.FeaturesDict({
-              'close_gripper':
-                  tf.bool,
-              'open_gripper':
-                  tf.bool,
-              'target_pose':
-                  tfds.features.Tensor(
-                      shape=(7,),
-                      dtype=tf.float32,
-                      encoding=tfds.features.Encoding.ZLIB),
-              'terminate':
-                  tf.bool,
-          }),
-      'is_first':
-          tf.bool,
-      'is_last':
-          tf.bool,
-      'is_terminal':
-          tf.bool,
-      'observation':
-          tfds.features.FeaturesDict({
-              'gripper_closed':
-                  tf.bool,
-              'height_to_bottom':
-                  tf.float32,
-              'image':
-                  tfds.features.Image(shape=(512, 640, 3), dtype=tf.uint8),
-              'state_dense':
-                  tfds.features.Tensor(
-                      shape=(7,),
-                      dtype=tf.float32,
-                      encoding=tfds.features.Encoding.ZLIB),
-          }),
+      'action': tfds.features.FeaturesDict({
+          'close_gripper': np.bool_,
+          'open_gripper': np.bool_,
+          'target_pose': tfds.features.Tensor(
+              shape=(7,), dtype=np.float32, encoding=tfds.features.Encoding.ZLIB
+          ),
+          'terminate': np.bool_,
+      }),
+      'is_first': np.bool_,
+      'is_last': np.bool_,
+      'is_terminal': np.bool_,
+      'observation': tfds.features.FeaturesDict({
+          'gripper_closed': np.bool_,
+          'height_to_bottom': np.float32,
+          'image': tfds.features.Image(shape=(512, 640, 3), dtype=np.uint8),
+          'state_dense': tfds.features.Tensor(
+              shape=(7,), dtype=np.float32, encoding=tfds.features.Encoding.ZLIB
+          ),
+      }),
   })
 
 
 def _name_to_features(config_name: str):
   if config_name == 'rlds':
     return tfds.features.FeaturesDict({
-        'episode_id': tf.string,
-        'skill': tf.uint8,
+        'episode_id': np.str_,
+        'skill': np.uint8,
         'steps': tfds.features.Dataset(_steps_features()),
-        'task_code': tf.string,
+        'task_code': np.str_,
     })
   return tfds.features.FeaturesDict({
-      'image_0': tfds.features.Image(shape=(512, 640, 3), dtype=tf.uint8),
-      'image_1': tfds.features.Image(shape=(480, 640, 3), dtype=tf.uint8),
-      'image_2': tfds.features.Image(shape=(480, 640, 3), dtype=tf.uint8),
-      'success': tf.bool,
-      'task_code': tf.string,
+      'image_0': tfds.features.Image(shape=(512, 640, 3), dtype=np.uint8),
+      'image_1': tfds.features.Image(shape=(480, 640, 3), dtype=np.uint8),
+      'image_2': tfds.features.Image(shape=(480, 640, 3), dtype=np.uint8),
+      'success': np.bool_,
+      'task_code': np.str_,
   })
 
 
@@ -114,17 +106,17 @@ def _name_to_features(config_name: str):
 def _name_to_features_encode(config_name: str):
   if config_name == 'rlds':
     return tfds.features.FeaturesDict({
-        'episode_id': tf.string,
-        'skill': tf.uint8,
+        'episode_id': np.str_,
+        'skill': np.uint8,
         'steps': tfds.features.Sequence(_steps_features()),
-        'task_code': tf.string,
+        'task_code': np.str_,
     })
   return tfds.features.FeaturesDict({
-      'image_0': tfds.features.Image(shape=(512, 640, 3), dtype=tf.uint8),
-      'image_1': tfds.features.Image(shape=(480, 640, 3), dtype=tf.uint8),
-      'image_2': tfds.features.Image(shape=(480, 640, 3), dtype=tf.uint8),
-      'success': tf.bool,
-      'task_code': tf.string,
+      'image_0': tfds.features.Image(shape=(512, 640, 3), dtype=np.uint8),
+      'image_1': tfds.features.Image(shape=(480, 640, 3), dtype=np.uint8),
+      'image_2': tfds.features.Image(shape=(480, 640, 3), dtype=np.uint8),
+      'success': np.bool_,
+      'task_code': np.str_,
   })
 
 
@@ -141,7 +133,8 @@ _NAME_TO_SPLITS = {
 
 def _filename(prefix: str, num_shards: int, shard_id: int):
   return os.fspath(
-      tfds.core.Path(f'{prefix}-{shard_id:05d}-of-{num_shards:05d}'))
+      tfds.core.Path(f'{prefix}-{shard_id:05d}-of-{num_shards:05d}')
+  )
 
 
 def _get_files(prefix: str, ds_name: str, split: str, num_shards: int):
@@ -177,14 +170,16 @@ class MtOpt(tfds.core.GeneratorBasedBuilder):
     splits = {}
     for split, shards in _NAME_TO_SPLITS[ds_name].items():
       paths = {
-          'file_paths':
-              _get_files(self._INPUT_FILE_PREFIX, ds_name, split, shards)
+          'file_paths': _get_files(
+              self._INPUT_FILE_PREFIX, ds_name, split, shards
+          )
       }
       splits[split] = self._generate_examples(paths)
     return splits
 
   def _generate_examples_one_file(
-      self, path) -> Generator[Tuple[str, Dict[str, Any]], None, None]:
+      self, path
+  ) -> Generator[Tuple[str, Dict[str, Any]], None, None]:
     """Yields examples from one file."""
     # Dataset of tf.Examples containing full episodes.
     example_ds = tf.data.TFRecordDataset(filenames=str(path))
@@ -210,4 +205,5 @@ class MtOpt(tfds.core.GeneratorBasedBuilder):
     file_paths = paths['file_paths']
 
     return beam.Create(file_paths) | beam.FlatMap(
-        self._generate_examples_one_file)
+        self._generate_examples_one_file
+    )

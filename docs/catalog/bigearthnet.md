@@ -12,12 +12,6 @@
 # `bigearthnet`
 
 
-*   **Visualization**:
-    <a class="button button-with-icon" href="https://knowyourdata-tfds.withgoogle.com/#tab=STATS&dataset=bigearthnet">
-    Explore in Know Your Data
-    <span class="material-icons icon-after" aria-hidden="true"> north_east
-    </span> </a>
-
 *   **Description**:
 
 The BigEarthNet is a new large-scale Sentinel-2 benchmark archive, consisting of
@@ -71,11 +65,9 @@ URL: http://bigearth.net/
 
 *   **Download size**: `65.22 GiB`
 
-*   **Dataset size**: `Unknown size`
-
 *   **Auto-cached**
     ([documentation](https://www.tensorflow.org/datasets/performances#auto-caching)):
-    Unknown
+    No
 
 *   **Splits**:
 
@@ -100,44 +92,46 @@ Split     | Examples
 
 *   **Config description**: Sentinel-2 RGB channels
 
+*   **Dataset size**: `14.07 GiB`
+
 *   **Feature structure**:
 
 ```python
 FeaturesDict({
-    'filename': Text(shape=(), dtype=tf.string),
-    'image': Image(shape=(120, 120, 3), dtype=tf.uint8),
-    'labels': Sequence(ClassLabel(shape=(), dtype=tf.int64, num_classes=43)),
+    'filename': Text(shape=(), dtype=string),
+    'image': Image(shape=(120, 120, 3), dtype=uint8),
+    'labels': Sequence(ClassLabel(shape=(), dtype=int64, num_classes=43)),
     'metadata': FeaturesDict({
-        'acquisition_date': Text(shape=(), dtype=tf.string),
+        'acquisition_date': Text(shape=(), dtype=string),
         'coordinates': FeaturesDict({
-            'lrx': tf.int64,
-            'lry': tf.int64,
-            'ulx': tf.int64,
-            'uly': tf.int64,
+            'lrx': int64,
+            'lry': int64,
+            'ulx': int64,
+            'uly': int64,
         }),
-        'projection': Text(shape=(), dtype=tf.string),
-        'tile_source': Text(shape=(), dtype=tf.string),
+        'projection': Text(shape=(), dtype=string),
+        'tile_source': Text(shape=(), dtype=string),
     }),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature                   | Class                | Shape         | Dtype     | Description
-:------------------------ | :------------------- | :------------ | :-------- | :----------
-                          | FeaturesDict         |               |           |
-filename                  | Text                 |               | tf.string |
-image                     | Image                | (120, 120, 3) | tf.uint8  |
-labels                    | Sequence(ClassLabel) | (None,)       | tf.int64  |
-metadata                  | FeaturesDict         |               |           |
-metadata/acquisition_date | Text                 |               | tf.string |
-metadata/coordinates      | FeaturesDict         |               |           |
-metadata/coordinates/lrx  | Tensor               |               | tf.int64  |
-metadata/coordinates/lry  | Tensor               |               | tf.int64  |
-metadata/coordinates/ulx  | Tensor               |               | tf.int64  |
-metadata/coordinates/uly  | Tensor               |               | tf.int64  |
-metadata/projection       | Text                 |               | tf.string |
-metadata/tile_source      | Text                 |               | tf.string |
+Feature                   | Class                | Shape         | Dtype  | Description
+:------------------------ | :------------------- | :------------ | :----- | :----------
+                          | FeaturesDict         |               |        |
+filename                  | Text                 |               | string |
+image                     | Image                | (120, 120, 3) | uint8  |
+labels                    | Sequence(ClassLabel) | (None,)       | int64  |
+metadata                  | FeaturesDict         |               |        |
+metadata/acquisition_date | Text                 |               | string |
+metadata/coordinates      | FeaturesDict         |               |        |
+metadata/coordinates/lrx  | Tensor               |               | int64  |
+metadata/coordinates/lry  | Tensor               |               | int64  |
+metadata/coordinates/ulx  | Tensor               |               | int64  |
+metadata/coordinates/uly  | Tensor               |               | int64  |
+metadata/projection       | Text                 |               | string |
+metadata/tile_source      | Text                 |               | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):
@@ -189,66 +183,68 @@ dataButton.addEventListener('click', async () => {
 
 *   **Config description**: 13 Sentinel-2 channels
 
+*   **Dataset size**: `176.63 GiB`
+
 *   **Feature structure**:
 
 ```python
 FeaturesDict({
-    'B01': Tensor(shape=(20, 20), dtype=tf.float32),
-    'B02': Tensor(shape=(120, 120), dtype=tf.float32),
-    'B03': Tensor(shape=(120, 120), dtype=tf.float32),
-    'B04': Tensor(shape=(120, 120), dtype=tf.float32),
-    'B05': Tensor(shape=(60, 60), dtype=tf.float32),
-    'B06': Tensor(shape=(60, 60), dtype=tf.float32),
-    'B07': Tensor(shape=(60, 60), dtype=tf.float32),
-    'B08': Tensor(shape=(120, 120), dtype=tf.float32),
-    'B09': Tensor(shape=(20, 20), dtype=tf.float32),
-    'B11': Tensor(shape=(60, 60), dtype=tf.float32),
-    'B12': Tensor(shape=(60, 60), dtype=tf.float32),
-    'B8A': Tensor(shape=(60, 60), dtype=tf.float32),
-    'filename': Text(shape=(), dtype=tf.string),
-    'labels': Sequence(ClassLabel(shape=(), dtype=tf.int64, num_classes=43)),
+    'B01': Tensor(shape=(20, 20), dtype=float32),
+    'B02': Tensor(shape=(120, 120), dtype=float32),
+    'B03': Tensor(shape=(120, 120), dtype=float32),
+    'B04': Tensor(shape=(120, 120), dtype=float32),
+    'B05': Tensor(shape=(60, 60), dtype=float32),
+    'B06': Tensor(shape=(60, 60), dtype=float32),
+    'B07': Tensor(shape=(60, 60), dtype=float32),
+    'B08': Tensor(shape=(120, 120), dtype=float32),
+    'B09': Tensor(shape=(20, 20), dtype=float32),
+    'B11': Tensor(shape=(60, 60), dtype=float32),
+    'B12': Tensor(shape=(60, 60), dtype=float32),
+    'B8A': Tensor(shape=(60, 60), dtype=float32),
+    'filename': Text(shape=(), dtype=string),
+    'labels': Sequence(ClassLabel(shape=(), dtype=int64, num_classes=43)),
     'metadata': FeaturesDict({
-        'acquisition_date': Text(shape=(), dtype=tf.string),
+        'acquisition_date': Text(shape=(), dtype=string),
         'coordinates': FeaturesDict({
-            'lrx': tf.int64,
-            'lry': tf.int64,
-            'ulx': tf.int64,
-            'uly': tf.int64,
+            'lrx': int64,
+            'lry': int64,
+            'ulx': int64,
+            'uly': int64,
         }),
-        'projection': Text(shape=(), dtype=tf.string),
-        'tile_source': Text(shape=(), dtype=tf.string),
+        'projection': Text(shape=(), dtype=string),
+        'tile_source': Text(shape=(), dtype=string),
     }),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature                   | Class                | Shape      | Dtype      | Description
-:------------------------ | :------------------- | :--------- | :--------- | :----------
-                          | FeaturesDict         |            |            |
-B01                       | Tensor               | (20, 20)   | tf.float32 |
-B02                       | Tensor               | (120, 120) | tf.float32 |
-B03                       | Tensor               | (120, 120) | tf.float32 |
-B04                       | Tensor               | (120, 120) | tf.float32 |
-B05                       | Tensor               | (60, 60)   | tf.float32 |
-B06                       | Tensor               | (60, 60)   | tf.float32 |
-B07                       | Tensor               | (60, 60)   | tf.float32 |
-B08                       | Tensor               | (120, 120) | tf.float32 |
-B09                       | Tensor               | (20, 20)   | tf.float32 |
-B11                       | Tensor               | (60, 60)   | tf.float32 |
-B12                       | Tensor               | (60, 60)   | tf.float32 |
-B8A                       | Tensor               | (60, 60)   | tf.float32 |
-filename                  | Text                 |            | tf.string  |
-labels                    | Sequence(ClassLabel) | (None,)    | tf.int64   |
-metadata                  | FeaturesDict         |            |            |
-metadata/acquisition_date | Text                 |            | tf.string  |
-metadata/coordinates      | FeaturesDict         |            |            |
-metadata/coordinates/lrx  | Tensor               |            | tf.int64   |
-metadata/coordinates/lry  | Tensor               |            | tf.int64   |
-metadata/coordinates/ulx  | Tensor               |            | tf.int64   |
-metadata/coordinates/uly  | Tensor               |            | tf.int64   |
-metadata/projection       | Text                 |            | tf.string  |
-metadata/tile_source      | Text                 |            | tf.string  |
+Feature                   | Class                | Shape      | Dtype   | Description
+:------------------------ | :------------------- | :--------- | :------ | :----------
+                          | FeaturesDict         |            |         |
+B01                       | Tensor               | (20, 20)   | float32 |
+B02                       | Tensor               | (120, 120) | float32 |
+B03                       | Tensor               | (120, 120) | float32 |
+B04                       | Tensor               | (120, 120) | float32 |
+B05                       | Tensor               | (60, 60)   | float32 |
+B06                       | Tensor               | (60, 60)   | float32 |
+B07                       | Tensor               | (60, 60)   | float32 |
+B08                       | Tensor               | (120, 120) | float32 |
+B09                       | Tensor               | (20, 20)   | float32 |
+B11                       | Tensor               | (60, 60)   | float32 |
+B12                       | Tensor               | (60, 60)   | float32 |
+B8A                       | Tensor               | (60, 60)   | float32 |
+filename                  | Text                 |            | string  |
+labels                    | Sequence(ClassLabel) | (None,)    | int64   |
+metadata                  | FeaturesDict         |            |         |
+metadata/acquisition_date | Text                 |            | string  |
+metadata/coordinates      | FeaturesDict         |            |         |
+metadata/coordinates/lrx  | Tensor               |            | int64   |
+metadata/coordinates/lry  | Tensor               |            | int64   |
+metadata/coordinates/ulx  | Tensor               |            | int64   |
+metadata/coordinates/uly  | Tensor               |            | int64   |
+metadata/projection       | Text                 |            | string  |
+metadata/tile_source      | Text                 |            | string  |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

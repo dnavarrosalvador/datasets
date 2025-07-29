@@ -44,22 +44,22 @@ compared to the ground truth, and evaluated in terms of the F1 measure.
 
 ```python
 FeaturesDict({
-    'source_id': Text(shape=(), dtype=tf.string),
-    'source_sentence': Text(shape=(), dtype=tf.string),
-    'target_id': Text(shape=(), dtype=tf.string),
-    'target_sentence': Text(shape=(), dtype=tf.string),
+    'source_id': Text(shape=(), dtype=string),
+    'source_sentence': Text(shape=(), dtype=string),
+    'target_id': Text(shape=(), dtype=string),
+    'target_sentence': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature         | Class        | Shape | Dtype     | Description
-:-------------- | :----------- | :---- | :-------- | :----------
-                | FeaturesDict |       |           |
-source_id       | Text         |       | tf.string |
-source_sentence | Text         |       | tf.string |
-target_id       | Text         |       | tf.string |
-target_sentence | Text         |       | tf.string |
+Feature         | Class        | Shape | Dtype  | Description
+:-------------- | :----------- | :---- | :----- | :----------
+                | FeaturesDict |       |        |
+source_id       | Text         |       | string |
+source_sentence | Text         |       | string |
+target_id       | Text         |       | string |
+target_sentence | Text         |       | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

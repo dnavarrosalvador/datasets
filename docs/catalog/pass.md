@@ -12,12 +12,6 @@
 # `pass`
 
 
-*   **Visualization**:
-    <a class="button button-with-icon" href="https://knowyourdata-tfds.withgoogle.com/#tab=STATS&dataset=pass">
-    Explore in Know Your Data
-    <span class="material-icons icon-after" aria-hidden="true"> north_east
-    </span> </a>
-
 *   **Description**:
 
 PASS is a large-scale image dataset that does not include any humans, human
@@ -68,26 +62,26 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'image': Image(shape=(None, None, 3), dtype=tf.uint8),
-    'image/creator_uname': Text(shape=(), dtype=tf.string),
-    'image/date_taken': Text(shape=(), dtype=tf.string),
-    'image/gps_lat': tf.float32,
-    'image/gps_lon': tf.float32,
-    'image/hash': Text(shape=(), dtype=tf.string),
+    'image': Image(shape=(None, None, 3), dtype=uint8),
+    'image/creator_uname': Text(shape=(), dtype=string),
+    'image/date_taken': Text(shape=(), dtype=string),
+    'image/gps_lat': float32,
+    'image/gps_lon': float32,
+    'image/hash': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature             | Class        | Shape           | Dtype      | Description
-:------------------ | :----------- | :-------------- | :--------- | :----------
-                    | FeaturesDict |                 |            |
-image               | Image        | (None, None, 3) | tf.uint8   |
-image/creator_uname | Text         |                 | tf.string  |
-image/date_taken    | Text         |                 | tf.string  |
-image/gps_lat       | Tensor       |                 | tf.float32 |
-image/gps_lon       | Tensor       |                 | tf.float32 |
-image/hash          | Text         |                 | tf.string  |
+Feature             | Class        | Shape           | Dtype   | Description
+:------------------ | :----------- | :-------------- | :------ | :----------
+                    | FeaturesDict |                 |         |
+image               | Image        | (None, None, 3) | uint8   |
+image/creator_uname | Text         |                 | string  |
+image/date_taken    | Text         |                 | string  |
+image/gps_lat       | Tensor       |                 | float32 |
+image/gps_lon       | Tensor       |                 | float32 |
+image/hash          | Text         |                 | string  |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

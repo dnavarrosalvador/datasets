@@ -58,24 +58,24 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'answer': Text(shape=(), dtype=tf.string),
-    'passage': Text(shape=(), dtype=tf.string),
-    'query_id': Text(shape=(), dtype=tf.string),
-    'question': Text(shape=(), dtype=tf.string),
-    'validated_answers': Sequence(Text(shape=(), dtype=tf.string)),
+    'answer': Text(shape=(), dtype=string),
+    'passage': Text(shape=(), dtype=string),
+    'query_id': Text(shape=(), dtype=string),
+    'question': Text(shape=(), dtype=string),
+    'validated_answers': Sequence(Text(shape=(), dtype=string)),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature           | Class          | Shape   | Dtype     | Description
-:---------------- | :------------- | :------ | :-------- | :----------
-                  | FeaturesDict   |         |           |
-answer            | Text           |         | tf.string |
-passage           | Text           |         | tf.string |
-query_id          | Text           |         | tf.string |
-question          | Text           |         | tf.string |
-validated_answers | Sequence(Text) | (None,) | tf.string |
+Feature           | Class          | Shape   | Dtype  | Description
+:---------------- | :------------- | :------ | :----- | :----------
+                  | FeaturesDict   |         |        |
+answer            | Text           |         | string |
+passage           | Text           |         | string |
+query_id          | Text           |         | string |
+question          | Text           |         | string |
+validated_answers | Sequence(Text) | (None,) | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

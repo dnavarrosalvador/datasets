@@ -12,12 +12,6 @@
 # `cifar10_1`
 
 
-*   **Visualization**:
-    <a class="button button-with-icon" href="https://knowyourdata-tfds.withgoogle.com/#tab=STATS&dataset=cifar10_1">
-    Explore in Know Your Data
-    <span class="material-icons icon-after" aria-hidden="true"> north_east
-    </span> </a>
-
 *   **Description**:
 
 The CIFAR-10.1 dataset is a new test set for CIFAR-10. CIFAR-10.1 contains
@@ -47,18 +41,18 @@ v4 and v6.
 
 ```python
 FeaturesDict({
-    'image': Image(shape=(32, 32, 3), dtype=tf.uint8),
-    'label': ClassLabel(shape=(), dtype=tf.int64, num_classes=10),
+    'image': Image(shape=(32, 32, 3), dtype=uint8),
+    'label': ClassLabel(shape=(), dtype=int64, num_classes=10),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature | Class        | Shape       | Dtype    | Description
-:------ | :----------- | :---------- | :------- | :----------
-        | FeaturesDict |             |          |
-image   | Image        | (32, 32, 3) | tf.uint8 |
-label   | ClassLabel   |             | tf.int64 |
+Feature | Class        | Shape       | Dtype | Description
+:------ | :----------- | :---------- | :---- | :----------
+        | FeaturesDict |             |       |
+image   | Image        | (32, 32, 3) | uint8 |
+label   | ClassLabel   |             | int64 |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

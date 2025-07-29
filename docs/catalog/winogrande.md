@@ -32,9 +32,10 @@ hardness of the dataset.
 
 *   **Versions**:
 
-    *   **`1.1.0`** (default): No release notes.
+    *   **`1.2.0`** (default): Updated source file with more data and new
+        checksums.
 
-*   **Download size**: `2.67 MiB`
+*   **Download size**: `3.24 MiB`
 
 *   **Dataset size**: `9.97 MiB`
 
@@ -58,22 +59,22 @@ Split          | Examples
 
 ```python
 FeaturesDict({
-    'label': ClassLabel(shape=(), dtype=tf.int64, num_classes=2),
-    'option1': Text(shape=(), dtype=tf.string),
-    'option2': Text(shape=(), dtype=tf.string),
-    'sentence': Text(shape=(), dtype=tf.string),
+    'label': ClassLabel(shape=(), dtype=int64, num_classes=2),
+    'option1': Text(shape=(), dtype=string),
+    'option2': Text(shape=(), dtype=string),
+    'sentence': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature  | Class        | Shape | Dtype     | Description
-:------- | :----------- | :---- | :-------- | :----------
-         | FeaturesDict |       |           |
-label    | ClassLabel   |       | tf.int64  |
-option1  | Text         |       | tf.string |
-option2  | Text         |       | tf.string |
-sentence | Text         |       | tf.string |
+Feature  | Class        | Shape | Dtype  | Description
+:------- | :----------- | :---- | :----- | :----------
+         | FeaturesDict |       |        |
+label    | ClassLabel   |       | int64  |
+option1  | Text         |       | string |
+option2  | Text         |       | string |
+sentence | Text         |       | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):
@@ -93,7 +94,7 @@ sentence | Text         |       | tf.string |
 <button id="displaydataframe">Display examples...</button>
 <div id="dataframecontent" style="overflow-x:auto"></div>
 <script>
-const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/winogrande-1.1.0.html";
+const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/winogrande-1.2.0.html";
 const dataButton = document.getElementById('displaydataframe');
 dataButton.addEventListener('click', async () => {
   // Disable the button after clicking (dataframe loaded only once).

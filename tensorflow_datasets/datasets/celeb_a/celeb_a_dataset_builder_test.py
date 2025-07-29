@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ class CelebATest(testing.DatasetBuilderTestCase):
       "list_eval_partition": "list_eval_partition.txt",
       "list_attr_celeba": "list_attr_celeba.txt",
       "landmarks_celeba": "list_landmarks_align_celeba.txt",
+      "identity_celeba": "identity_CelebA.txt",
   }
 
 

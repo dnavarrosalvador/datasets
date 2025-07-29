@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,10 +24,9 @@ import uuid
 
 from absl import logging
 from etils import epath
-from tensorflow_datasets.core.utils import tree_utils
-from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
 import tensorflow_datasets.public_api as tfds
 from tensorflow_datasets.text import c4_utils
+import tree
 
 PageFeatures = c4_utils.PageFeatures
 
@@ -65,7 +64,7 @@ _SUPPORTED_VERSIONS = [
     tfds.core.Version("2.2.0"),
 ]
 RELEASE_NOTES = {
-    "3.1.0":
+    "3.1.0": (
         "All: Select newest timestamp when deduping by URL (vs random); escape "
         "badword regexes."
         "Multilingual: Expand complete list of CC dumps (as of Aug 17, 2022); "
@@ -73,7 +72,8 @@ RELEASE_NOTES = {
         "Japanese when matching bad words (similar to Thai and Chinese); "
         "up minimum language detection threshold to 0.95 (from 0.7); allow "
         "badwords that filter >10% of documents for a given non-spaced "
-        "language due to being common subwords.",
+        "language due to being common subwords."
+    ),
     "3.0.1": "Remove mC4 languages with less than 10k pages.",
     "3.0.0": "Add multilingual version (mC4). Deterministic URL deduplication.",
     "2.3.1": "Hashing change.",
@@ -82,7 +82,9 @@ RELEASE_NOTES = {
 }
 
 _DOWNLOAD_HOST = "https://data.commoncrawl.org"
-_WET_PATH_URL = "https://data.commoncrawl.org/crawl-data/CC-MAIN-{cc_version}/wet.paths.gz"
+_WET_PATH_URL = (
+    "https://data.commoncrawl.org/crawl-data/CC-MAIN-{cc_version}/wet.paths.gz"
+)
 _REALNEWS_DOMAINS_URL = "https://raw.githubusercontent.com/rowanz/grover/38f7184bd87237ae2d3bc330b99f1e2e246f6d51/realnews/domain_to_allowed_subdomains.json"
 _OPENWEBTEXT_URLS_ZIP = "OpenWebText.zip"
 _OPENWEBTEXT_URLS_URL = "https://mega.nz/#F!EZZD0YwJ!9_PlEQzdMVLaNdKv_ICNVQ"
@@ -90,9 +92,34 @@ _OPENWEBTEXT_URLS_FILE_PATTERN = "OpenWebText/Version 1/URLs/*.txt"
 _EN_BADWORDS_URL = "https://raw.githubusercontent.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/25e679f03d96baa721cde20db9944649e8d0a844/en"
 _BADWORDS_URL = "https://raw.githubusercontent.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/5faf2ba42d7b1c0977169ec3611df25a3c08eb13/{lang}"
 _BADWORDS_LANGS = [
-    "ar", "cs", "da", "de", "en", "eo", "es", "fa", "fi", "fil", "fr",
-    "fr-CA-u-sd-caqc", "hi", "hu", "it", "ja", "kab", "ko", "nl", "no", "pl",
-    "pt", "ru", "sv", "th", "tlh", "tr", "zh"
+    "ar",
+    "cs",
+    "da",
+    "de",
+    "en",
+    "eo",
+    "es",
+    "fa",
+    "fi",
+    "fil",
+    "fr",
+    "fr-CA-u-sd-caqc",
+    "hi",
+    "hu",
+    "it",
+    "ja",
+    "kab",
+    "ko",
+    "nl",
+    "no",
+    "pl",
+    "pt",
+    "ru",
+    "sv",
+    "th",
+    "tlh",
+    "tr",
+    "zh",
 ]
 # Words that are allowed since they are common subwords in languages without
 # spaces. These each filter >10% of documents of their language when disallowed.
@@ -112,7 +139,8 @@ OPENWEBTEXT_CC_VERSIONS = (  # August 2018 - July 2019
     "2018-47",
     "2018-43",
     "2018-39",
-    "2018-34")
+    "2018-34",
+)
 
 ALL_CC_VERSIONS = (  # as of August 1, 2022
     "2013-20",
@@ -211,33 +239,132 @@ _KNOWN_CORRUPT_WET_FILES = (  # as of August 12, 2022
 # Limited to languages in CLD3 that produce at least 10k pages when using the
 # "multilingual" config below.
 MC4_LANGUAGES = [
-    "af", "am", "ar", "az", "be", "bg", "bg-Latn", "bn", "ca", "ceb", "co",
-    "cs", "cy", "da", "de", "el", "el-Latn", "en", "eo", "es", "et", "eu", "fa",
-    "fi", "fil", "fr", "fy", "ga", "gd", "gl", "gu", "ha", "haw", "hi",
-    "hi-Latn", "hmn", "ht", "hu", "hy", "id", "ig", "is", "it", "iw", "ja",
-    "ja-Latn", "jv", "ka", "kk", "km", "kn", "ko", "ku", "ky", "la", "lb", "lo",
-    "lt", "lv", "mg", "mi", "mk", "ml", "mn", "mr", "ms", "mt", "my", "ne",
-    "nl", "no", "ny", "pa", "pl", "ps", "pt", "ro", "ru", "ru-Latn", "sd", "si",
-    "sk", "sl", "sm", "sn", "so", "sq", "sr", "st", "su", "sv", "sw", "ta",
-    "te", "tg", "th", "tr", "uk", "ur", "uz", "vi", "xh", "yi", "yo", "zh",
-    "zh-Latn", "zu"
+    "af",
+    "am",
+    "ar",
+    "az",
+    "be",
+    "bg",
+    "bg-Latn",
+    "bn",
+    "ca",
+    "ceb",
+    "co",
+    "cs",
+    "cy",
+    "da",
+    "de",
+    "el",
+    "el-Latn",
+    "en",
+    "eo",
+    "es",
+    "et",
+    "eu",
+    "fa",
+    "fi",
+    "fil",
+    "fr",
+    "fy",
+    "ga",
+    "gd",
+    "gl",
+    "gu",
+    "ha",
+    "haw",
+    "hi",
+    "hi-Latn",
+    "hmn",
+    "ht",
+    "hu",
+    "hy",
+    "id",
+    "ig",
+    "is",
+    "it",
+    "iw",
+    "ja",
+    "ja-Latn",
+    "jv",
+    "ka",
+    "kk",
+    "km",
+    "kn",
+    "ko",
+    "ku",
+    "ky",
+    "la",
+    "lb",
+    "lo",
+    "lt",
+    "lv",
+    "mg",
+    "mi",
+    "mk",
+    "ml",
+    "mn",
+    "mr",
+    "ms",
+    "mt",
+    "my",
+    "ne",
+    "nl",
+    "no",
+    "ny",
+    "pa",
+    "pl",
+    "ps",
+    "pt",
+    "ro",
+    "ru",
+    "ru-Latn",
+    "sd",
+    "si",
+    "sk",
+    "sl",
+    "sm",
+    "sn",
+    "so",
+    "sq",
+    "sr",
+    "st",
+    "su",
+    "sv",
+    "sw",
+    "ta",
+    "te",
+    "tg",
+    "th",
+    "tr",
+    "uk",
+    "ur",
+    "uz",
+    "vi",
+    "xh",
+    "yi",
+    "yo",
+    "zh",
+    "zh-Latn",
+    "zu",
 ]
 
 
 class C4Config(tfds.core.BuilderConfig):
   """BuilderConfig for C4 dataset."""
 
-  def __init__(self,
-               name: str,
-               languages: Sequence[str],
-               cc_versions: Optional[Sequence[str]] = None,
-               clean: bool = False,
-               badwords_filter_fraction: float = 0.0,
-               paragraph_filter: bool = False,
-               dedupe: bool = True,
-               realnewslike: bool = False,
-               webtextlike: bool = False,
-               **kwargs):
+  def __init__(
+      self,
+      name: str,
+      languages: Sequence[str],
+      cc_versions: Optional[Sequence[str]] = None,
+      clean: bool = False,
+      badwords_filter_fraction: float = 0.0,
+      paragraph_filter: bool = False,
+      dedupe: bool = True,
+      realnewslike: bool = False,
+      webtextlike: bool = False,
+      **kwargs,
+  ):
     """BuilderConfig for C4.
 
     Args:
@@ -262,15 +389,18 @@ class C4Config(tfds.core.BuilderConfig):
         name=name,
         version=_VERSION,
         supported_versions=_SUPPORTED_VERSIONS,
-        **kwargs)
+        **kwargs,
+    )
 
     if clean and tuple(languages) != ("en",):
       logging.warning(
-          "C4 cleaning is only expected to work reliably for English pages.")
+          "C4 cleaning is only expected to work reliably for English pages."
+      )
 
     if not 0.0 <= badwords_filter_fraction <= 1.0:
       raise ValueError(
-          "`badwords_filter_fraction` must be between 0.0 and 1.0.")
+          "`badwords_filter_fraction` must be between 0.0 and 1.0."
+      )
 
     self.languages = languages
     self.cc_versions = cc_versions or (DEFAULT_CC_VERSION,)
@@ -298,15 +428,19 @@ class C4(tfds.core.BeamBasedBuilder):
           clean=True,
           dedupe=True,
           badwords_filter_fraction=1.0,
-          description="English C4 dataset."),
+          description="English C4 dataset.",
+      ),
       C4Config(
           "en.noclean",
           languages=["en"],
           clean=False,
           dedupe=False,
           badwords_filter_fraction=0.0,
-          description="Disables all cleaning (deduplication, removal based on bad words, "
-          "etc.)"),
+          description=(
+              "Disables all cleaning (deduplication, removal based on bad"
+              " words, etc.)"
+          ),
+      ),
       C4Config(
           "realnewslike",
           languages=["en"],
@@ -314,8 +448,11 @@ class C4(tfds.core.BeamBasedBuilder):
           clean=True,
           dedupe=True,
           badwords_filter_fraction=1.0,
-          description="Filters from the default config to only include content from the "
-          "domains used in the 'RealNews' dataset (Zellers et al., 2019)."),
+          description=(
+              "Filters from the default config to only include content from the"
+              " domains used in the 'RealNews' dataset (Zellers et al., 2019)."
+          ),
+      ),
       C4Config(
           "webtextlike",
           languages=["en"],
@@ -324,8 +461,12 @@ class C4(tfds.core.BeamBasedBuilder):
           clean=True,
           dedupe=True,
           badwords_filter_fraction=1.0,
-          description="Filters from the default config to only include content from the "
-          "URLs in OpenWebText (https://github.com/jcpeterson/openwebtext)."),
+          description=(
+              "Filters from the default config to only include content from the"
+              " URLs in OpenWebText"
+              " (https://github.com/jcpeterson/openwebtext)."
+          ),
+      ),
       C4Config(
           "multilingual",
           languages=MC4_LANGUAGES,
@@ -334,8 +475,11 @@ class C4(tfds.core.BeamBasedBuilder):
           paragraph_filter=True,
           dedupe=True,
           badwords_filter_fraction=0.999,
-          description="Multilingual C4 (mC4) has 101 languages and is generated from 86 "
-          "Common Crawl dumps."),
+          description=(
+              "Multilingual C4 (mC4) has 101 languages and is generated from 86"
+              " Common Crawl dumps."
+          ),
+      ),
   ]
 
   def _info(self):
@@ -354,7 +498,9 @@ class C4(tfds.core.BeamBasedBuilder):
         homepage="https://github.com/google-research/text-to-text-transfer-transformer#datasets",
     )
 
-  def _split_generators(self, dl_manager, pipeline):
+  def _split_generators(
+      self, dl_manager: tfds.download.DownloadManager, pipeline
+  ):
     # We will automatically download the first default CC version, but others
     # need to be manually downloaded.
     cc_versions = set(self.builder_config.cc_versions)
@@ -376,23 +522,28 @@ class C4(tfds.core.BeamBasedBuilder):
     file_paths = dl_manager.download_and_extract(files_to_download)
 
     if self.builder_config.webtextlike:
-      owt_path = os.path.join(dl_manager.manual_dir, _OPENWEBTEXT_URLS_ZIP)
-      if not tf.io.gfile.exists(owt_path):
+      owt_path = dl_manager.manual_dir / _OPENWEBTEXT_URLS_ZIP
+      if not owt_path.exists():
         raise AssertionError(
             "For the WebText-like config, you must manually download the "
             "following file from {0} and place it in {1}: {2}".format(
-                _OPENWEBTEXT_URLS_URL, dl_manager.manual_dir,
-                _OPENWEBTEXT_URLS_ZIP))
+                _OPENWEBTEXT_URLS_URL,
+                dl_manager.manual_dir,
+                _OPENWEBTEXT_URLS_ZIP,
+            )
+        )
       file_paths["openwebtext_urls_zip"] = dl_manager.extract(owt_path)
 
-    file_paths = tree_utils.map_structure(os.fspath, file_paths)
+    file_paths = tree.map_structure(os.fspath, file_paths)
 
-    pages_pcollection = self._get_pages_pcollection(pipeline, file_paths,
-                                                    dl_manager)
+    pages_pcollection = self._get_pages_pcollection(
+        pipeline, file_paths, dl_manager
+    )
 
     def _filter(page, lang, predicate_fn):
-      return (page.language == lang and
-              c4_utils.get_hashed_url_filter_fn(predicate_fn)(page))
+      return page.language == lang and c4_utils.get_hashed_url_filter_fn(
+          predicate_fn
+      )(page)
 
     train_predicate_fn = lambda x: x % 1000 != 0  # 99.9%
     validation_predicate_fn = lambda x: x % 1000 == 0  # 00.1%
@@ -406,7 +557,9 @@ class C4(tfds.core.BeamBasedBuilder):
                   split="train",
                   pages=pages_pcollection,
                   split_filter_fn=c4_utils.get_hashed_url_filter_fn(
-                      predicate_fn=train_predicate_fn)),
+                      predicate_fn=train_predicate_fn
+                  ),
+              ),
           ),
           tfds.core.SplitGenerator(
               name=tfds.Split.VALIDATION,
@@ -414,7 +567,9 @@ class C4(tfds.core.BeamBasedBuilder):
                   split="validation",
                   pages=pages_pcollection,
                   split_filter_fn=c4_utils.get_hashed_url_filter_fn(
-                      predicate_fn=validation_predicate_fn)),
+                      predicate_fn=validation_predicate_fn
+                  ),
+              ),
           ),
       ]
 
@@ -427,16 +582,22 @@ class C4(tfds.core.BeamBasedBuilder):
                   split=lang,
                   pages=pages_pcollection,
                   split_filter_fn=functools.partial(
-                      _filter, lang=lang, predicate_fn=train_predicate_fn),
-              )),
+                      _filter, lang=lang, predicate_fn=train_predicate_fn
+                  ),
+              ),
+          ),
           tfds.core.SplitGenerator(
               name=f"{lang}-validation",
               gen_kwargs=dict(
                   split=f"{lang}-validation",
                   pages=pages_pcollection,
                   split_filter_fn=functools.partial(
-                      _filter, lang=lang, predicate_fn=validation_predicate_fn),
-              ))
+                      _filter,
+                      lang=lang,
+                      predicate_fn=validation_predicate_fn,
+                  ),
+              ),
+          ),
       ])
     return splits
 
@@ -446,24 +607,25 @@ class C4(tfds.core.BeamBasedBuilder):
 
     def download_wet_file(path, dl_dir):
       url = f"{_DOWNLOAD_HOST}/{path}"
-      out_path = f"{dl_dir}/{path}"
+      out_path = epath.Path(dl_dir) / path
 
-      if tf.io.gfile.exists(out_path):
+      if out_path.exists():
         c4_utils.get_counter_inc_fn("download_wet_url")("exists")
         return out_path
 
-      tmp_dir = f"{out_path}.incomplete{uuid.uuid4().hex}"
+      tmp_dir = epath.Path(
+          f"{os.fspath(out_path)}.incomplete{uuid.uuid4().hex}"
+      )
       try:
-        tf.io.gfile.makedirs(tmp_dir)
+        tmp_dir.mkdir(parents=True, exist_ok=True)
         downloader = tfds.download.download_manager.get_downloader()
         with downloader.tqdm():
           # TODO(slebedev): Investigate why pytype infers Promise[Future[...]].
           dl_path = downloader.download(url, tmp_dir).get().path  # type: ignore
-        tf.io.gfile.rename(os.fspath(dl_path), out_path, overwrite=True)
+          dl_path = epath.Path(dl_path)
+        dl_path.rename(out_path)
       finally:
-        if tf.io.gfile.exists(tmp_dir):
-          tf.io.gfile.rmtree(tmp_dir)
-
+        tmp_dir.rmtree(missing_ok=True)
         c4_utils.get_counter_inc_fn("download_wet_url")("downloaded")
       return out_path
 
@@ -471,26 +633,30 @@ class C4(tfds.core.BeamBasedBuilder):
         pipeline
         | "create_wet_path_urls" >> beam.Create(file_paths["wet_path_urls"])
         | beam.io.ReadAllFromText(
-            compression_type=beam.io.filesystem.CompressionTypes.UNCOMPRESSED)
+            compression_type=beam.io.filesystem.CompressionTypes.UNCOMPRESSED
+        )
         # Increase parallelism.
         | beam.Reshuffle()
-        | "filter_corrupt_wet_files" >>
-        beam.Filter(lambda p: p not in _KNOWN_CORRUPT_WET_FILES)
+        | "filter_corrupt_wet_files"
+        >> beam.Filter(lambda p: p not in _KNOWN_CORRUPT_WET_FILES)
         | beam.Map(
             download_wet_file,
-            dl_dir=os.path.join(dl_manager.download_dir, "c4_wet_files")))
+            dl_dir=os.path.join(dl_manager.download_dir, "c4_wet_files"),
+        )
+    )
 
     # Parse WET files and filter by length.
     # Output: [PageFeatures]
     pages = (
         wet_file_paths
         | beam.FlatMap(c4_utils.split_wet_file)
-        | beam.Filter(c4_utils.is_valid_length))
+        | beam.Filter(c4_utils.is_valid_length)
+    )
 
     # Optionally filter for RealNews domains.
     # Output: [PageFeatures]
     if self.builder_config.realnewslike:
-      with tf.io.gfile.GFile(file_paths["realnews_domains"]) as f:
+      with epath.Path(file_paths["realnews_domains"]).open() as f:
         realnews_domains = json.load(f)
       pages |= beam.Filter(c4_utils.is_realnews_domain, realnews_domains)
 
@@ -500,38 +666,48 @@ class C4(tfds.core.BeamBasedBuilder):
         pages
         | "normalize_url" >> beam.Map(lambda p: (p.normalized_url, p))
         | "select_newest" >> beam.CombinePerKey(c4_utils.select_newest_page)
-        | beam.Values())
+        | beam.Values()
+    )
 
     # Optionally filter for WebText-like URLs.
     # Output: [PageFeatures]
     if self.builder_config.webtextlike:
       webtextlike_urls = (
           pipeline
-          | "read_webtextlike_urls" >> beam.io.ReadFromText(
-              os.path.join(file_paths["openwebtext_urls_zip"],
-                           _OPENWEBTEXT_URLS_FILE_PATTERN))
-          | "add_dummy_page" >>
-          beam.Map(lambda url: (c4_utils.normalize_url(url), PageFeatures())))
-      pages = ({
-          "pages": pages | beam.Map(lambda p: (p.normalized_url, p)),
-          "webtextlike_urls": webtextlike_urls
-      }
-               | "group_webtextlike_urls" >> beam.CoGroupByKey()
-               | beam.FlatMap(c4_utils.filter_by_webtextlike))
+          | "read_webtextlike_urls"
+          >> beam.io.ReadFromText(
+              os.path.join(
+                  file_paths["openwebtext_urls_zip"],
+                  _OPENWEBTEXT_URLS_FILE_PATTERN,
+              )
+          )
+          | "add_dummy_page"
+          >> beam.Map(lambda url: (c4_utils.normalize_url(url), PageFeatures()))
+      )
+      pages = (
+          {
+              "pages": pages | beam.Map(lambda p: (p.normalized_url, p)),
+              "webtextlike_urls": webtextlike_urls,
+          }
+          | "group_webtextlike_urls" >> beam.CoGroupByKey()
+          | beam.FlatMap(c4_utils.filter_by_webtextlike)
+      )
 
     if self.builder_config.paragraph_filter:
       pages |= beam.Filter(c4_utils.paragraph_filter)
 
     if self.builder_config.clean:
-      pages |= ("clean_pages" >> beam.FlatMap(c4_utils.get_clean_page_fn()))
+      pages |= "clean_pages" >> beam.FlatMap(c4_utils.get_clean_page_fn())
 
     if self.builder_config.dedupe:
       pages = (
           # Also removes documents with too few sentences after deduplication.
           c4_utils.remove_duplicate_text(pages)  # pylint:disable=g-long-ternary
-          if self.builder_config.clean else
+          if self.builder_config.clean
+          else
           # If we are not cleaning, do not remove too-few-sentence documents.
-          c4_utils.remove_duplicate_text(pages, min_num_sentences=0))
+          c4_utils.remove_duplicate_text(pages, min_num_sentences=0)
+      )
 
     # Add detected language.
     if self.builder_config.languages == ["en"]:
@@ -539,7 +715,8 @@ class C4(tfds.core.BeamBasedBuilder):
       pages |= beam.FlatMap(c4_utils.detect_english)
     else:
       pages = c4_utils.detect_languages(
-          pages, valid_languages=self.builder_config.languages)
+          pages, valid_languages=self.builder_config.languages
+      )
 
     if self.builder_config.badwords_filter_fraction > 0.0:
       # Create dictionary of badwords regex for each available language.
@@ -555,7 +732,9 @@ class C4(tfds.core.BeamBasedBuilder):
       pages |= beam.Filter(
           c4_utils.get_badwords_filter_fn(
               badwords,
-              filter_fraction=self.builder_config.badwords_filter_fraction))
+              filter_fraction=self.builder_config.badwords_filter_fraction,
+          )
+      )
 
     return pages
 
@@ -569,7 +748,7 @@ class C4(tfds.core.BeamBasedBuilder):
           "text": page.text,
           "content-type": page.content_type,
           "content-length": page.content_length,
-          "timestamp": page.timestamp
+          "timestamp": page.timestamp,
       }
 
-    return (pages | beam.Filter(split_filter_fn) | beam.Map(_emit_examples))
+    return pages | beam.Filter(split_filter_fn) | beam.Map(_emit_examples)

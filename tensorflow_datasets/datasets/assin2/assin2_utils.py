@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 """Utilities for the assin2 dataset."""
 
 import dataclasses
-from typing import List
+from typing import List, Optional
 from xml.etree import cElementTree as ET
 
 _VALID_ENTAILMENT = ('Entailment', 'None')
@@ -31,10 +31,10 @@ class Pair:
   similarity: float
 
 
-def get_element_text(xml_pair: ET.Element, tag: str) -> str:
+def get_element_text(xml_pair: ET.Element, tag: str) -> Optional[str]:
   """Returns the text associated with a given tag."""
   element = xml_pair.find(tag)
-  assert element is not None, (f'The tag "{tag}" was not found.')
+  assert element is not None, f'The tag "{tag}" was not found.'
   return element.text
 
 
@@ -65,12 +65,15 @@ def parse_xml_string(xml_str: str) -> List[Pair]:
     # Assert valid fields.
     if entailment not in _VALID_ENTAILMENT:
       raise ValueError(
-          f'Entailment should be in {_VALID_ENTAILMENT}, got {entailment}.')
+          f'Entailment should be in {_VALID_ENTAILMENT}, got {entailment}.'
+      )
     pairs.append(
         Pair(
             text=text,
             hypothesis=hypothesis,
             id=id_,
             entailment=entailment,
-            similarity=similarity))
+            similarity=similarity,
+        )
+    )
   return pairs

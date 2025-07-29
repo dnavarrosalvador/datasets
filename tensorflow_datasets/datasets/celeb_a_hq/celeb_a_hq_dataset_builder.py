@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,18 +35,19 @@ class CelebaHQConfig(tfds.core.BuilderConfig):
     v2 = tfds.core.Version("2.0.0")
     super(CelebaHQConfig, self).__init__(
         name="%d" % resolution,
-        description=("CelebaHQ images in %d x %d resolution" %
-                     (resolution, resolution)),
+        description="CelebaHQ images in %d x %d resolution"
+        % (resolution, resolution),
         version=v2,
         release_notes={
             "2.0.0": "New split API (https://tensorflow.org/datasets/splits)",
         },
-        **kwargs)
+        **kwargs,
+    )
     self.resolution = resolution
     self.file_name = "data%dx%d.tar" % (resolution, resolution)
 
 
-class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
+class Builder(tfds.core.GeneratorBasedBuilder):
   """Celeba_HQ Dataset."""
 
   MANUAL_DOWNLOAD_INSTRUCTIONS = """\
@@ -74,21 +75,25 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
     return self.dataset_info_from_configs(
         features=tfds.features.FeaturesDict(
             {
-                "image":
-                    tfds.features.Image(
-                        shape=(self.builder_config.resolution,
-                               self.builder_config.resolution, 3),
-                        encoding_format="png"),
-                "image/filename":
-                    tfds.features.Text(),
-            },),
+                "image": tfds.features.Image(
+                    shape=(
+                        self.builder_config.resolution,
+                        self.builder_config.resolution,
+                        3,
+                    ),
+                    encoding_format="png",
+                ),
+                "image/filename": tfds.features.Text(),
+            },
+        ),
         homepage="https://github.com/tkarras/progressive_growing_of_gans",
     )
 
   def _split_generators(self, dl_manager):
     """Returns SplitGenerators."""
-    image_tar_file = os.path.join(dl_manager.manual_dir,
-                                  self.builder_config.file_name)
+    image_tar_file = os.path.join(
+        dl_manager.manual_dir, self.builder_config.file_name
+    )
     if not tf.io.gfile.exists(image_tar_file):
       # The current celebahq generation code depends on a concrete version of
       # pillow library and cannot be easily ported into tfds.

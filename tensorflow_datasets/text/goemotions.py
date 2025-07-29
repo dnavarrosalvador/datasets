@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,11 +55,34 @@ _URL_TEST = 'https://github.com/google-research/google-research/raw/master/goemo
 
 _TEXT_LABEL = 'comment_text'
 _EMOTION_LABELS = [
-    'admiration', 'amusement', 'anger', 'annoyance', 'approval', 'caring',
-    'confusion', 'curiosity', 'desire', 'disappointment', 'disapproval',
-    'disgust', 'embarrassment', 'excitement', 'fear', 'gratitude', 'grief',
-    'joy', 'love', 'nervousness', 'optimism', 'pride', 'realization', 'relief',
-    'remorse', 'sadness', 'surprise', 'neutral'
+    'admiration',
+    'amusement',
+    'anger',
+    'annoyance',
+    'approval',
+    'caring',
+    'confusion',
+    'curiosity',
+    'desire',
+    'disappointment',
+    'disapproval',
+    'disgust',
+    'embarrassment',
+    'excitement',
+    'fear',
+    'gratitude',
+    'grief',
+    'joy',
+    'love',
+    'nervousness',
+    'optimism',
+    'pride',
+    'realization',
+    'relief',
+    'remorse',
+    'sadness',
+    'surprise',
+    'neutral',
 ]
 
 

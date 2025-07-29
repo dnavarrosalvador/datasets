@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +31,9 @@ class BeansTest(tfds_test.DatasetBuilderTestCase):
   }
 
   DL_EXTRACT_RESULT = [
-      'beans_train.zip', 'beans_validation.zip', 'beans_test.zip'
+      'beans_train.zip',
+      'beans_validation.zip',
+      'beans_test.zip',
   ]
 
 

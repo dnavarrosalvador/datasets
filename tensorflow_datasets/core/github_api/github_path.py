@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,11 +20,12 @@ import functools
 import os
 import pathlib
 import posixpath
+import sys
 from typing import Iterator, Mapping, MutableMapping, Optional, Set, Tuple
 
 from etils import epath
-import requests
 from tensorflow_datasets.core import utils
+from tensorflow_datasets.core.utils.lazy_imports_utils import requests
 
 JsonValue = utils.JsonValue
 
@@ -41,9 +42,11 @@ def _get_token():
 def get_content(url: str) -> bytes:
   resp = requests.get(url)
   if resp.status_code != 200:
-    raise FileNotFoundError(f'Request failed for {url}\n'
-                            f' Error: {resp.status_code}\n'
-                            f' Reason: {resp.content}')
+    raise FileNotFoundError(
+        f'Request failed for {url}\n'
+        f' Error: {resp.status_code}\n'
+        f' Reason: {resp.content}'
+    )
   return resp.content
 
 
@@ -61,10 +64,13 @@ class GithubApi:
     resp = requests.get(url, headers=headers)
     if resp.status_code != 200:
       raise FileNotFoundError(
-          f'Request failed:\n'
-          f' Request: {url}\n'
-          f' Error: {resp.status_code}\n'
-          f' Reason: {resp.content}',)
+          (
+              'Request failed:\n'
+              f' Request: {url}\n'
+              f' Error: {resp.status_code}\n'
+              f' Reason: {resp.content}'
+          ),
+      )
     return resp.json()
 
   def query_tree(self, repo: str, branch: str) -> JsonValue:
@@ -114,13 +120,15 @@ class _GithubElement:
     name: the name of this element, e.g. the file name or the folder name.
     is_folder: whether this element is a folder or not.
   """
+
   parent_folder: str
   name: str
   is_folder: bool
 
   @classmethod
-  def from_path(cls, path: pathlib.PurePosixPath,
-                is_folder: bool) -> '_GithubElement':
+  def from_path(
+      cls, path: pathlib.PurePosixPath, is_folder: bool
+  ) -> '_GithubElement':
     parent_folder = _get_parent_folder(path)
     name = path.name
     return cls(parent_folder=parent_folder, name=name, is_folder=is_folder)
@@ -129,6 +137,7 @@ class _GithubElement:
 @dataclasses.dataclass(frozen=True)
 class _GithubTree:
   """A Github tree of a repository."""
+
   files_per_folder: Mapping[str, Set[_GithubElement]]
 
   def is_folder(self, path: str) -> bool:
@@ -140,7 +149,8 @@ class _GithubTree:
     if not files:
       return False
     file = _GithubElement(
-        parent_folder=parent_folder, name=path.name, is_folder=False)
+        parent_folder=parent_folder, name=path.name, is_folder=False
+    )
     return file in files
 
   @classmethod
@@ -153,7 +163,8 @@ class _GithubTree:
     for element in value['tree']:
       github_element = _GithubElement.from_path(
           path=pathlib.PurePosixPath(element['path']),
-          is_folder=(element['type'] == 'tree'))
+          is_folder=(element['type'] == 'tree'),
+      )
       if element['type'] in {'blob', 'tree'}:
         files_per_folder.setdefault(github_element.parent_folder, set())
         files_per_folder[github_element.parent_folder].add(github_element)
@@ -174,6 +185,7 @@ class _GithubTree:
 @dataclasses.dataclass(frozen=True, eq=True)
 class _PathMetadata:
   """Github metadata of a file or directory."""
+
   path: str
   repo: str  # e.g. `tensorflow/datasets`
   branch: str  # e.g. `master`
@@ -206,12 +218,24 @@ class GithubPath(pathlib.PurePosixPath):
   ```
   """
 
-  def __new__(cls, *parts: epath.PathLike) -> 'GithubPath':
-    full_path = '/'.join(os.fspath(p) for p in parts)
-    _parse_github_path(full_path)
-    return super().__new__(cls, full_path.replace(_URI_PREFIX, '/github/', 1))
+  if sys.version_info < (3, 12):
 
-  @utils.memoized_property
+    def __new__(cls, *parts: epath.PathLike) -> 'GithubPath':
+      full_path = '/'.join(os.fspath(p) for p in parts)
+      _parse_github_path(full_path)
+      return super().__new__(cls, full_path.replace(_URI_PREFIX, '/github/', 1))
+
+  else:
+
+    def __init__(self, *parts: epath.PathLike):
+      full_path = '/'.join(os.fspath(p) for p in parts)
+      if full_path.startswith(_URI_PREFIX):
+        # If we already converted the prefix github:// -> /github, we don't do
+        # the check again.
+        _parse_github_path(full_path)
+      super().__init__(full_path.replace(_URI_PREFIX, '/github/', 1))
+
+  @functools.cached_property
   def _path_str(self) -> str:
     return posixpath.join(_URI_PREFIX, *self.parts[2:])
 
@@ -235,7 +259,7 @@ class GithubPath(pathlib.PurePosixPath):
     """
     return cls(f'github://{repo}/tree/{branch}')
 
-  @utils.memoized_property
+  @functools.cached_property
   def _metadata(self) -> _PathMetadata:
     return _PathMetadata.from_path(os.fspath(self))
 
@@ -260,8 +284,10 @@ class GithubPath(pathlib.PurePosixPath):
 
   def as_raw_url(self) -> str:
     """Returns the raw content url (https://raw.githubusercontent.com)."""
-    return ('https://raw.githubusercontent.com/'
-            f'{self.repo}/{self.branch}/{self.subpath}')
+    return (
+        'https://raw.githubusercontent.com/'
+        f'{self.repo}/{self.branch}/{self.subpath}'
+    )
 
   def as_human_friendly_url(self) -> str:
     """Returns the human friendly url."""
@@ -340,20 +366,22 @@ def _parse_github_path(path: str) -> Tuple[str, str, str]:
   Raises:
     ValueError: If the path is invalid
   """
-  err_msg = (f'Invalid github path: {path}. Expected format: '
-             '`github://<owner>/<name>/tree/<branch>[/<path>]`.')
+  err_msg = (
+      f'Invalid github path: {path}. Expected format: '
+      '`github://<owner>/<name>/tree/<branch>[/<path>]`.'
+  )
 
   if not path.startswith(_URI_PREFIX):
     raise ValueError(err_msg)
   if path.endswith('/'):
     raise ValueError(err_msg + ' Trailing `/` not supported.')
-  parts = path[len(_URI_PREFIX):].split('/')
+  parts = path[len(_URI_PREFIX) :].split('/')
   if len(parts) < 4:
     raise ValueError(err_msg)
 
   # 'tensorflow', 'datasets', 'tree', 'master', ...
   owner, repo, tree, branch, *subpath = parts
   if tree != 'tree':
-    raise ValueError(err_msg + '. `/blob/` isn\'t accepted. Only `/tree/`.')
+    raise ValueError(err_msg + ". `/blob/` isn't accepted. Only `/tree/`.")
 
   return f'{owner}/{repo}', branch, '/'.join(subpath)

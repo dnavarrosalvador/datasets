@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,10 +30,12 @@ def _try_import(module_name):
     mod = importlib.import_module(module_name)
     return mod
   except ImportError as e:
-    err_msg = ("Failed importing {name}. This likely means that the dataset "
-               "requires additional dependencies that have to be "
-               "manually installed (usually with `pip install {name}`). See "
-               "setup.py extras_require.").format(name=module_name)
+    err_msg = (
+        "Failed importing {name}. This likely means that the dataset "
+        "requires additional dependencies that have to be "
+        "manually installed (usually with `pip install {name}`). See "
+        "setup.py extras_require."
+    ).format(name=module_name)
     utils.reraise(e, suffix=err_msg)
 
 
@@ -44,6 +46,7 @@ class LazyImporter(object):
   the default installation to remain lean, those heavy dependencies are
   lazily imported here.
   """
+
 
   @utils.classproperty
   @classmethod
@@ -64,11 +67,6 @@ class LazyImporter(object):
   @classmethod
   def cv2(cls):
     return _try_import("cv2")
-
-  @utils.classproperty
-  @classmethod
-  def datasets(cls):
-    return _try_import("datasets")
 
   @utils.classproperty
   @classmethod
@@ -120,6 +118,11 @@ class LazyImporter(object):
   @classmethod
   def mwparserfromhell(cls):
     return _try_import("mwparserfromhell")
+
+  @utils.classproperty
+  @classmethod
+  def mwxml(cls):
+    return _try_import("mwxml")
 
   @utils.classproperty
   @classmethod

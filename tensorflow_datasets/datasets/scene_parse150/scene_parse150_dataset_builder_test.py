@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ from tensorflow_datasets.datasets.scene_parse150 import scene_parse150_dataset_b
 
 
 class SceneParse150Test(testing.DatasetBuilderTestCase):
-
   DATASET_CLASS = scene_parse150_dataset_builder.Builder
 
   SPLITS = {

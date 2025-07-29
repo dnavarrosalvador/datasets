@@ -32,7 +32,7 @@ comprehension.
     [https://www.cs.cmu.edu/~glai1/data/race/](https://www.cs.cmu.edu/~glai1/data/race/)
 
 *   **Source code**:
-    [`tfds.text.race.Race`](https://github.com/tensorflow/datasets/tree/master/tensorflow_datasets/text/race/race.py)
+    [`tfds.datasets.race.Builder`](https://github.com/tensorflow/datasets/tree/master/tensorflow_datasets/datasets/race/race_dataset_builder.py)
 
 *   **Versions**:
 
@@ -49,24 +49,24 @@ comprehension.
 
 ```python
 FeaturesDict({
-    'answers': Sequence(Text(shape=(), dtype=tf.string)),
-    'article': Text(shape=(), dtype=tf.string),
-    'example_id': Text(shape=(), dtype=tf.string),
-    'options': Sequence(Sequence(Text(shape=(), dtype=tf.string))),
-    'questions': Sequence(Text(shape=(), dtype=tf.string)),
+    'answers': Sequence(Text(shape=(), dtype=string)),
+    'article': Text(shape=(), dtype=string),
+    'example_id': Text(shape=(), dtype=string),
+    'options': Sequence(Sequence(Text(shape=(), dtype=string))),
+    'questions': Sequence(Text(shape=(), dtype=string)),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature    | Class                    | Shape        | Dtype     | Description
-:--------- | :----------------------- | :----------- | :-------- | :----------
-           | FeaturesDict             |              |           |
-answers    | Sequence(Text)           | (None,)      | tf.string |
-article    | Text                     |              | tf.string |
-example_id | Text                     |              | tf.string |
-options    | Sequence(Sequence(Text)) | (None, None) | tf.string |
-questions  | Sequence(Text)           | (None,)      | tf.string |
+Feature    | Class                    | Shape        | Dtype  | Description
+:--------- | :----------------------- | :----------- | :----- | :----------
+           | FeaturesDict             |              |        |
+answers    | Sequence(Text)           | (None,)      | string |
+article    | Text                     |              | string |
+example_id | Text                     |              | string |
+options    | Sequence(Sequence(Text)) | (None, None) | string |
+questions  | Sequence(Text)           | (None,)      | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

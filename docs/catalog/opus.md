@@ -36,7 +36,7 @@ builder = tfds.builder("opus", config=config)
 *   **Homepage**: [http://opus.nlpl.eu/](http://opus.nlpl.eu/)
 
 *   **Source code**:
-    [`tfds.translate.Opus`](https://github.com/tensorflow/datasets/tree/master/tensorflow_datasets/translate/opus.py)
+    [`tfds.datasets.opus.Builder`](https://github.com/tensorflow/datasets/tree/master/tensorflow_datasets/datasets/opus/opus_dataset_builder.py)
 
 *   **Versions**:
 
@@ -46,18 +46,18 @@ builder = tfds.builder("opus", config=config)
 
 ```python
 Translation({
-    'de': Text(shape=(), dtype=tf.string),
-    'en': Text(shape=(), dtype=tf.string),
+    'de': Text(shape=(), dtype=string),
+    'en': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature | Class       | Shape | Dtype     | Description
-:------ | :---------- | :---- | :-------- | :----------
-        | Translation |       |           |
-de      | Text        |       | tf.string |
-en      | Text        |       | tf.string |
+Feature | Class       | Shape | Dtype  | Description
+:------ | :---------- | :---- | :----- | :----------
+        | Translation |       |        |
+de      | Text        |       | string |
+en      | Text        |       | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

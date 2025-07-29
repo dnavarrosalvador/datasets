@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,10 +23,12 @@ import tensorflow_datasets.public_api as tfds
 
 _DATASET_URL = "https://drive.google.com/uc?export=download&id=0B7OEHD3T4eCkVGs0TkhUWFN6N1k"
 
-_PROJECT_URL = "http://www.cbsr.ia.ac.cn/users/xiangyuzhu/projects/3DDFA/main.htm"
+_PROJECT_URL = (
+    "http://www.cbsr.ia.ac.cn/users/xiangyuzhu/projects/3DDFA/main.htm"
+)
 
 
-class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
+class Builder(tfds.core.GeneratorBasedBuilder):
   """300W-LP dataset."""
 
   VERSION = tfds.core.Version("1.0.0")
@@ -34,29 +36,27 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
   def _info(self):
     return self.dataset_info_from_configs(
         features=tfds.features.FeaturesDict({
-            "image":
-                tfds.features.Image(
-                    shape=(450, 450, 3), encoding_format="jpeg"),
-            "landmarks_origin":
-                tfds.features.Tensor(shape=(68, 2), dtype=tf.float32),
-            "landmarks_2d":
-                tfds.features.Tensor(shape=(68, 2), dtype=tf.float32),
-            "landmarks_3d":
-                tfds.features.Tensor(shape=(68, 2), dtype=tf.float32),
-            "roi":
-                tfds.features.Tensor(shape=(4,), dtype=tf.float32),
-            "illum_params":
-                tfds.features.Tensor(shape=(10,), dtype=tf.float32),
-            "color_params":
-                tfds.features.Tensor(shape=(7,), dtype=tf.float32),
-            "tex_params":
-                tfds.features.Tensor(shape=(199,), dtype=tf.float32),
-            "shape_params":
-                tfds.features.Tensor(shape=(199,), dtype=tf.float32),
-            "exp_params":
-                tfds.features.Tensor(shape=(29,), dtype=tf.float32),
-            "pose_params":
-                tfds.features.Tensor(shape=(7,), dtype=tf.float32)
+            "image": tfds.features.Image(
+                shape=(450, 450, 3), encoding_format="jpeg"
+            ),
+            "landmarks_origin": tfds.features.Tensor(
+                shape=(68, 2), dtype=np.float32
+            ),
+            "landmarks_2d": tfds.features.Tensor(
+                shape=(68, 2), dtype=np.float32
+            ),
+            "landmarks_3d": tfds.features.Tensor(
+                shape=(68, 2), dtype=np.float32
+            ),
+            "roi": tfds.features.Tensor(shape=(4,), dtype=np.float32),
+            "illum_params": tfds.features.Tensor(shape=(10,), dtype=np.float32),
+            "color_params": tfds.features.Tensor(shape=(7,), dtype=np.float32),
+            "tex_params": tfds.features.Tensor(shape=(199,), dtype=np.float32),
+            "shape_params": tfds.features.Tensor(
+                shape=(199,), dtype=np.float32
+            ),
+            "exp_params": tfds.features.Tensor(shape=(29,), dtype=np.float32),
+            "pose_params": tfds.features.Tensor(shape=(7,), dtype=np.float32),
         }),
         homepage=_PROJECT_URL,
     )
@@ -69,20 +69,23 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
             name=tfds.Split.TRAIN,
             gen_kwargs={
                 "image_dir_path": os.path.join(extracted_path, "300W_LP"),
-            }),
+            },
+        ),
     ]
 
   def _generate_examples(self, image_dir_path):
     """Yields examples."""
     image_files = tf.io.gfile.glob(
-        pattern=os.path.join(image_dir_path, "[!Code]*[!_Flip]/[!_]*.jpg"))
+        pattern=os.path.join(image_dir_path, "[!Code]*[!_Flip]/[!_]*.jpg")
+    )
     label_files = [s.replace("jpg", "mat") for s in image_files]
     landmark_files = [
         s.replace("300W_LP", "300W_LP/landmarks").replace(".jpg", "_pts.mat")
         for s in image_files
     ]
-    for image_file, label_file, landmark_file in zip(image_files, label_files,
-                                                     landmark_files):
+    for image_file, label_file, landmark_file in zip(
+        image_files, label_files, landmark_files
+    ):
       with tf.io.gfile.GFile(label_file, "rb") as f:
         mat = tfds.core.lazy_imports.scipy.io.loadmat(f)
       pt2d_origin = mat["pt2d"].T
@@ -109,6 +112,6 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
           "tex_params": tex_params,
           "shape_params": shape_params,
           "exp_params": exp_params,
-          "pose_params": pose_params
+          "pose_params": pose_params,
       }
       yield os.path.basename(image_file), record

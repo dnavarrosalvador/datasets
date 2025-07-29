@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,7 +39,8 @@ class BLEWindFieldTest(tfds.testing.DatasetBuilderTestCase):
         mock.patch(f'{module_name}.{class_name}.GCS_FILENAME', 'array.zarr'),
         mock.patch(
             'tensorflow_datasets.public_api.core.lazy_imports.gcsfs_store',
-            lambda s: s),
+            lambda s: s,
+        ),
     ]
     for patcher in patchers:
       patcher.start()

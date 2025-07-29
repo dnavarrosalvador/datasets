@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,13 +39,16 @@ def _parse_flags(_) -> argparse.Namespace:
   )
   parser.add_argument(
       '--datasets',
-      help='Comma separated list of datasets to document. None for all '
-      'datasets.',
+      help=(
+          'Comma separated list of datasets to document. None for all datasets.'
+      ),
   )
   parser.add_argument(
       '--ds_collections',
-      help='Comma separated list of dataset collections to document. None for '
-      'all datasets.',
+      help=(
+          'Comma separated list of dataset collections to document. None for '
+          'all datasets.'
+      ),
   )
   parser.add_argument(
       '--catalog_dir',
@@ -66,8 +69,9 @@ def main(args: argparse.Namespace):
 
   build_catalog(
       datasets=args.datasets.split(',') if args.datasets else None,
-      ds_collections=(args.ds_collections.split(',')
-                      if args.ds_collections else None),
+      ds_collections=(
+          args.ds_collections.split(',') if args.ds_collections else None
+      ),
       catalog_dir=catalog_dir,
   )
 
@@ -80,14 +84,16 @@ def _create_datasets_section_toc(
   heading = '\n### `%s`\n' % section
   nightly_suffix = ' ' + doc_utils.NightlyDocUtil.icon
   entries = [
-      f' * [`{doc.name}`]({doc.filestem}.md)' +
-      (doc.is_nightly and nightly_suffix or '') for doc in builder_docs
+      f' * [`{doc.name}`]({doc.filestem}.md)'
+      + (doc.is_nightly and nightly_suffix or '')
+      for doc in builder_docs
   ]
   return '\n'.join([heading] + entries)
 
 
 def _create_collections_section_toc(
-    collection_docs: List[document_datasets.CollectionDocumentation],) -> str:
+    collection_docs: List[document_datasets.CollectionDocumentation],
+) -> str:
   """Creates the section of the overview.md table of content for collections."""
   heading = '\n## `Dataset Collections`\n'
   entries = [f' * [`{doc.name}`]({doc.name}.md)' for doc in collection_docs]
@@ -130,13 +136,15 @@ def build_catalog(
 
   catalog_dir = tfds.core.Path(catalog_dir)
   index_template = index_template or tfds.core.tfds_path(
-      'scripts/documentation/templates/catalog_overview.md')
+      'scripts/documentation/templates/catalog_overview.md'
+  )
   index_template = tfds.core.Path(index_template)
 
   # Iterate over the builder documentations
   section_to_builder_docs = collections.defaultdict(list)
   for builder_doc in document_datasets.iter_documentation_builders(
-      datasets, doc_util_paths=doc_util_paths or doc_utils.DocUtilPaths()):
+      datasets, doc_util_paths=doc_util_paths or doc_utils.DocUtilPaths()
+  ):
     # Write the builder documentation
     dataset_file = catalog_dir / f'{builder_doc.filestem}.md'
     dataset_file.write_text(builder_doc.content)
@@ -148,7 +156,8 @@ def build_catalog(
   if include_collections:
     # Iterate over the dataset collection documentations
     for collection_doc in document_datasets.iter_collections_documentation(
-        ds_collections):
+        ds_collections
+    ):
       # Write the dataset collection documentation
       collection_file = catalog_dir / f'{collection_doc.name}.md'
       collection_file.write_text(collection_doc.content)
@@ -168,10 +177,12 @@ def build_catalog(
 
 def _save_table_of_content(
     catalog_dir: tfds.core.Path,
-    section_to_builder_docs: Dict[str,
-                                  List[document_datasets.BuilderDocumentation]],
+    section_to_builder_docs: Dict[
+        str, List[document_datasets.BuilderDocumentation]
+    ],
     section_to_collection_docs: Dict[
-        str, List[document_datasets.CollectionDocumentation]],
+        str, List[document_datasets.CollectionDocumentation]
+    ],
     toc_relative_path: str,
     index_template: tfds.core.Path,
     index_filename: str,
@@ -198,7 +209,7 @@ def _save_table_of_content(
       for doc in collection_docs:
         sidebar_item = {
             'path': os.path.join(toc_relative_path, doc.name),
-            'title': doc.name
+            'title': doc.name,
         }
         sec_dict['section'].append(sidebar_item)
       toc_yaml['toc'].append(sec_dict)
@@ -209,15 +220,13 @@ def _save_table_of_content(
   # All builder documented, save the table of content
   for section, builder_docs in sorted(section_to_builder_docs.items()):
     builder_docs = sorted(builder_docs, key=lambda doc: doc.name)
-    # `object_detection` -> `Object detection`
-    section_str = section.replace('_', ' ').capitalize()
 
     # Add `_toc.yaml` section
-    sec_dict = {'title': section_str, 'section': []}
+    sec_dict = {'title': section, 'section': []}
     for doc in builder_docs:
       sidebar_item = {
           'path': os.path.join(toc_relative_path, doc.filestem),
-          'title': doc.name + (' (manual)' if doc.is_manual else '')
+          'title': doc.name + (' (manual)' if doc.is_manual else ''),
       }
       if doc.is_nightly:
         sidebar_item['status'] = 'nightly'
@@ -225,7 +234,7 @@ def _save_table_of_content(
     toc_yaml['toc'].append(sec_dict)
 
     # Add `overview.md` section
-    toc_overview.append(_create_datasets_section_toc(section_str, builder_docs))
+    toc_overview.append(_create_datasets_section_toc(section, builder_docs))
 
   # Write the `overview.md` page
   index_str = index_template.read_text().format(toc='\n'.join(toc_overview))

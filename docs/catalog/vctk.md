@@ -48,26 +48,26 @@ Note that the 'p315' text was lost due to a hard disk error.
 
 ```python
 FeaturesDict({
-    'accent': ClassLabel(shape=(), dtype=tf.int64, num_classes=13),
-    'gender': ClassLabel(shape=(), dtype=tf.int64, num_classes=2),
-    'id': tf.string,
-    'speaker': ClassLabel(shape=(), dtype=tf.int64, num_classes=110),
-    'speech': Audio(shape=(None,), dtype=tf.int16),
-    'text': Text(shape=(), dtype=tf.string),
+    'accent': ClassLabel(shape=(), dtype=int64, num_classes=13),
+    'gender': ClassLabel(shape=(), dtype=int64, num_classes=2),
+    'id': string,
+    'speaker': ClassLabel(shape=(), dtype=int64, num_classes=110),
+    'speech': Audio(shape=(None,), dtype=int16),
+    'text': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature | Class        | Shape   | Dtype     | Description
-:------ | :----------- | :------ | :-------- | :----------
-        | FeaturesDict |         |           |
-accent  | ClassLabel   |         | tf.int64  |
-gender  | ClassLabel   |         | tf.int64  |
-id      | Tensor       |         | tf.string |
-speaker | ClassLabel   |         | tf.int64  |
-speech  | Audio        | (None,) | tf.int16  |
-text    | Text         |         | tf.string |
+Feature | Class        | Shape   | Dtype  | Description
+:------ | :----------- | :------ | :----- | :----------
+        | FeaturesDict |         |        |
+accent  | ClassLabel   |         | int64  |
+gender  | ClassLabel   |         | int64  |
+id      | Tensor       |         | string |
+speaker | ClassLabel   |         | int64  |
+speech  | Audio        | (None,) | int16  |
+text    | Text         |         | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

@@ -12,10 +12,6 @@
 # `c4_wsrs`
 
 
-Note: This dataset was added recently and is only available in our
-`tfds-nightly` package
-<span class="material-icons" title="Available only in the tfds-nightly package">nights_stay</span>.
-
 *   **Description**:
 
 A medical abbreviation expansion dataset which applies web-scale reverse
@@ -23,6 +19,8 @@ substitution (wsrs) to the C4 dataset, which is a colossal, cleaned version of
 Common Crawl's web crawl corpus.
 
 The original source is the Common Crawl dataset: https://commoncrawl.org
+
+*   **Config description**: Default C4-WSRS dataset.
 
 *   **Homepage**:
     [https://github.com/google-research/google-research/tree/master/deciphering_clinical_abbreviations](https://github.com/google-research/google-research/tree/master/deciphering_clinical_abbreviations)
@@ -34,35 +32,37 @@ The original source is the Common Crawl dataset: https://commoncrawl.org
 
     *   **`1.0.0`** (default): Initial release.
 
-*   **Download size**: `Unknown size`
+*   **Download size**: `143.01 KiB`
 
-*   **Dataset size**: `Unknown size`
+*   **Dataset size**: `5.84 GiB`
 
 *   **Auto-cached**
     ([documentation](https://www.tensorflow.org/datasets/performances#auto-caching)):
-    Unknown
+    No
 
 *   **Splits**:
 
-Split | Examples
-:---- | -------:
+Split          | Examples
+:------------- | --------:
+`'train'`      | 9,575,852
+`'validation'` | 991,422
 
 *   **Feature structure**:
 
 ```python
 FeaturesDict({
-    'abbreviated_snippet': Text(shape=(), dtype=tf.string),
-    'original_snippet': Text(shape=(), dtype=tf.string),
+    'abbreviated_snippet': Text(shape=(), dtype=string),
+    'original_snippet': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature             | Class        | Shape | Dtype     | Description
-:------------------ | :----------- | :---- | :-------- | :----------
-                    | FeaturesDict |       |           |
-abbreviated_snippet | Text         |       | tf.string |
-original_snippet    | Text         |       | tf.string |
+Feature             | Class        | Shape | Dtype  | Description
+:------------------ | :----------- | :---- | :----- | :----------
+                    | FeaturesDict |       |        |
+abbreviated_snippet | Text         |       | string |
+original_snippet    | Text         |       | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):
@@ -74,15 +74,42 @@ original_snippet    | Text         |       | tf.string |
 
 *   **Examples**
     ([tfds.as_dataframe](https://www.tensorflow.org/datasets/api_docs/python/tfds/as_dataframe)):
-    Missing.
+
+<!-- mdformat off(HTML should not be auto-formatted) -->
+
+{% framebox %}
+
+<button id="displaydataframe">Display examples...</button>
+<div id="dataframecontent" style="overflow-x:auto"></div>
+<script>
+const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/c4_wsrs-default-1.0.0.html";
+const dataButton = document.getElementById('displaydataframe');
+dataButton.addEventListener('click', async () => {
+  // Disable the button after clicking (dataframe loaded only once).
+  dataButton.disabled = true;
+
+  const contentPane = document.getElementById('dataframecontent');
+  try {
+    const response = await fetch(url);
+    // Error response codes don't throw an error, so force an error to show
+    // the error message.
+    if (!response.ok) throw Error(response.statusText);
+
+    const data = await response.text();
+    contentPane.innerHTML = data;
+  } catch (e) {
+    contentPane.innerHTML =
+        'Error loading examples. If the error persist, please open '
+        + 'a new issue.';
+  }
+});
+</script>
+
+{% endframebox %}
+
+<!-- mdformat on -->
 
 *   **Citation**:
 
 
 ## c4_wsrs/default (default config)
-
-*   **Config description**: Default C4-WSRS dataset.
-
-## c4_wsrs/deterministic
-
-*   **Config description**: Deterministic C4-WSRS dataset.

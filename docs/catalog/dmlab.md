@@ -12,12 +12,6 @@
 # `dmlab`
 
 
-*   **Visualization**:
-    <a class="button button-with-icon" href="https://knowyourdata-tfds.withgoogle.com/#tab=STATS&dataset=dmlab">
-    Explore in Know Your Data
-    <span class="material-icons icon-after" aria-hidden="true"> north_east
-    </span> </a>
-
 *   **Description**:
 
 The Dmlab dataset contains frames observed by the agent acting in the DeepMind
@@ -58,20 +52,20 @@ Split          | Examples
 
 ```python
 FeaturesDict({
-    'filename': Text(shape=(), dtype=tf.string),
-    'image': Image(shape=(360, 480, 3), dtype=tf.uint8),
-    'label': ClassLabel(shape=(), dtype=tf.int64, num_classes=6),
+    'filename': Text(shape=(), dtype=string),
+    'image': Image(shape=(360, 480, 3), dtype=uint8),
+    'label': ClassLabel(shape=(), dtype=int64, num_classes=6),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature  | Class        | Shape         | Dtype     | Description
-:------- | :----------- | :------------ | :-------- | :----------
-         | FeaturesDict |               |           |
-filename | Text         |               | tf.string |
-image    | Image        | (360, 480, 3) | tf.uint8  |
-label    | ClassLabel   |               | tf.int64  |
+Feature  | Class        | Shape         | Dtype  | Description
+:------- | :----------- | :------------ | :----- | :----------
+         | FeaturesDict |               |        |
+filename | Text         |               | string |
+image    | Image        | (360, 480, 3) | uint8  |
+label    | ClassLabel   |               | int64  |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

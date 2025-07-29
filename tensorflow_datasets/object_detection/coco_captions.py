@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import os
 
 from absl import logging
 from etils import epath
-from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
+import numpy as np
 from tensorflow_datasets.object_detection import coco
 import tensorflow_datasets.public_api as tfds
 
@@ -66,8 +66,8 @@ class CocoCaptions(coco.Coco):
 
     features = dict(coco_info.features)
     features['captions'] = tfds.features.Sequence({
-        'text': tf.string,
-        'id': tf.int64,
+        'text': np.str_,
+        'id': np.int64,
     })
     return tfds.core.DatasetInfo(
         builder=self,
@@ -91,12 +91,14 @@ class CocoCaptions(coco.Coco):
     urls = {}
     urls['karpathy_and_li_splits'] = (
         'https://cs.stanford.edu/people/karpathy/deepimagesent/'
-        'caption_datasets.zip')
+        'caption_datasets.zip'
+    )
     extracted_paths = dl_manager.download_and_extract(urls)
 
     # Load split definitions.
-    captions_json_path = os.path.join(extracted_paths['karpathy_and_li_splits'],
-                                      'dataset_coco.json')
+    captions_json_path = os.path.join(
+        extracted_paths['karpathy_and_li_splits'], 'dataset_coco.json'
+    )
     with epath.Path(captions_json_path).open() as f:
       annotations = json.load(f)['images']
 
@@ -112,22 +114,30 @@ class CocoCaptions(coco.Coco):
             'train',
             gen_kwargs=dict(
                 image_filename_to_annotations=annotation_maps['train'],
-                coco_gen_kwargs=coco_train_split.gen_kwargs)),
+                coco_gen_kwargs=coco_train_split.gen_kwargs,
+            ),
+        ),
         tfds.core.SplitGenerator(
             'val',
             gen_kwargs=dict(
                 image_filename_to_annotations=annotation_maps['val'],
-                coco_gen_kwargs=coco_val_split.gen_kwargs)),
+                coco_gen_kwargs=coco_val_split.gen_kwargs,
+            ),
+        ),
         tfds.core.SplitGenerator(
             'test',
             gen_kwargs=dict(
                 image_filename_to_annotations=annotation_maps['test'],
-                coco_gen_kwargs=coco_val_split.gen_kwargs)),
+                coco_gen_kwargs=coco_val_split.gen_kwargs,
+            ),
+        ),
         tfds.core.SplitGenerator(
             'restval',
             gen_kwargs=dict(
                 image_filename_to_annotations=annotation_maps['restval'],
-                coco_gen_kwargs=coco_val_split.gen_kwargs))
+                coco_gen_kwargs=coco_val_split.gen_kwargs,
+            ),
+        ),
     ]
 
   def _generate_examples(self, image_filename_to_annotations, coco_gen_kwargs):
@@ -143,8 +153,9 @@ class CocoCaptions(coco.Coco):
     """
 
     num_generated = 0
-    for key, example in super(CocoCaptions,
-                              self)._generate_examples(**coco_gen_kwargs):
+    for key, example in super(CocoCaptions, self)._generate_examples(
+        **coco_gen_kwargs
+    ):
       captions = image_filename_to_annotations.get(example['image/filename'])
       if captions is None:
         # Example not in this split.

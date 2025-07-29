@@ -45,20 +45,20 @@ lexical relations.
 
 ```python
 FeaturesDict({
-    'lhs': Text(shape=(), dtype=tf.string),
-    'relation': Text(shape=(), dtype=tf.string),
-    'rhs': Text(shape=(), dtype=tf.string),
+    'lhs': Text(shape=(), dtype=string),
+    'relation': Text(shape=(), dtype=string),
+    'rhs': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature  | Class        | Shape | Dtype     | Description
-:------- | :----------- | :---- | :-------- | :----------
-         | FeaturesDict |       |           |
-lhs      | Text         |       | tf.string |
-relation | Text         |       | tf.string |
-rhs      | Text         |       | tf.string |
+Feature  | Class        | Shape | Dtype  | Description
+:------- | :----------- | :---- | :----- | :----------
+         | FeaturesDict |       |        |
+lhs      | Text         |       | string |
+relation | Text         |       | string |
+rhs      | Text         |       | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

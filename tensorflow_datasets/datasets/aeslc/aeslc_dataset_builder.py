@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,17 +27,16 @@ _DOCUMENT = "email_body"
 _SUMMARY = "subject_line"
 
 
-class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
+class Builder(tfds.core.GeneratorBasedBuilder):
   """Annotated Enron Subject Line Corpus Dataset."""
 
   VERSION = tfds.core.Version("1.0.0")
 
   def _info(self):
     return self.dataset_info_from_configs(
-        features=tfds.features.FeaturesDict({
-            _DOCUMENT: tfds.features.Text(),
-            _SUMMARY: tfds.features.Text()
-        }),
+        features=tfds.features.FeaturesDict(
+            {_DOCUMENT: tfds.features.Text(), _SUMMARY: tfds.features.Text()}
+        ),
         supervised_keys=(_DOCUMENT, _SUMMARY),
         homepage="https://github.com/ryanzhumich/AESLC",
     )

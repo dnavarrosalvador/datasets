@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -60,14 +60,13 @@ from tensorflow_datasets.text.paws_x_wiki import PawsXWiki
 from tensorflow_datasets.text.pg19 import Pg19
 from tensorflow_datasets.text.piqa import PIQA
 from tensorflow_datasets.text.qa4mre import Qa4mre
+from tensorflow_datasets.text.qrecc import QReCC
 from tensorflow_datasets.text.quac import Quac
 from tensorflow_datasets.text.quality import Quality
 from tensorflow_datasets.text.race import Race
 from tensorflow_datasets.text.reddit_disentanglement import RedditDisentanglement
 from tensorflow_datasets.text.salient_span_wikipedia import SalientSpanWikipedia
-from tensorflow_datasets.text.salient_span_wikipedia import SalientSpanWikipediaConfig
 from tensorflow_datasets.text.scan import Scan
-from tensorflow_datasets.text.scan import ScanConfig
 from tensorflow_datasets.text.schema_guided_dialogue import SchemaGuidedDialogue
 from tensorflow_datasets.text.scicite import Scicite
 from tensorflow_datasets.text.scitail import SciTail
@@ -82,6 +81,7 @@ from tensorflow_datasets.text.tiny_shakespeare import TinyShakespeare
 from tensorflow_datasets.text.trec import Trec
 from tensorflow_datasets.text.unifiedqa import UnifiedQA
 from tensorflow_datasets.text.universal_dependencies import UniversalDependencies
+from tensorflow_datasets.text.unnatural_instructions import UnnaturalInstructions
 from tensorflow_datasets.text.userlibri_lm_data import UserLibriText
 from tensorflow_datasets.text.wiki40b import Wiki40b
 from tensorflow_datasets.text.wiki_dialog import WikiDialog

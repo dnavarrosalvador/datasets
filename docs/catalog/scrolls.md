@@ -29,22 +29,22 @@
 
 ```python
 FeaturesDict({
-    'id': Text(shape=(), dtype=tf.string),
-    'input': Text(shape=(), dtype=tf.string),
-    'output': Text(shape=(), dtype=tf.string),
-    'pid': Text(shape=(), dtype=tf.string),
+    'id': Text(shape=(), dtype=string),
+    'input': Text(shape=(), dtype=string),
+    'output': Text(shape=(), dtype=string),
+    'pid': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature | Class        | Shape | Dtype     | Description
-:------ | :----------- | :---- | :-------- | :----------
-        | FeaturesDict |       |           |
-id      | Text         |       | tf.string |
-input   | Text         |       | tf.string |
-output  | Text         |       | tf.string |
-pid     | Text         |       | tf.string |
+Feature | Class        | Shape | Dtype  | Description
+:------ | :----------- | :---- | :----- | :----------
+        | FeaturesDict |       |        |
+id      | Text         |       | string |
+input   | Text         |       | string |
+output  | Text         |       | string |
+pid     | Text         |       | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

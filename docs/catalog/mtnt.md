@@ -36,18 +36,18 @@ MTNT: Machine Translation of Noisy Text
 
 ```python
 FeaturesDict({
-    'dst': Text(shape=(), dtype=tf.string),
-    'src': Text(shape=(), dtype=tf.string),
+    'dst': Text(shape=(), dtype=string),
+    'src': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature | Class        | Shape | Dtype     | Description
-:------ | :----------- | :---- | :-------- | :----------
-        | FeaturesDict |       |           |
-dst     | Text         |       | tf.string |
-src     | Text         |       | tf.string |
+Feature | Class        | Shape | Dtype  | Description
+:------ | :----------- | :---- | :----- | :----------
+        | FeaturesDict |       |        |
+dst     | Text         |       | string |
+src     | Text         |       | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

@@ -12,12 +12,6 @@
 # `kitti`
 
 
-*   **Visualization**:
-    <a class="button button-with-icon" href="https://knowyourdata-tfds.withgoogle.com/#tab=STATS&dataset=kitti">
-    Explore in Know Your Data
-    <span class="material-icons icon-after" aria-hidden="true"> north_east
-    </span> </a>
-
 *   **Description**:
 
 Kitti contains a suite of vision tasks built using an autonomous driving
@@ -38,7 +32,7 @@ the Kitti homepage.
     [http://www.cvlibs.net/datasets/kitti/](http://www.cvlibs.net/datasets/kitti/)
 
 *   **Source code**:
-    [`tfds.object_detection.Kitti`](https://github.com/tensorflow/datasets/tree/master/tensorflow_datasets/object_detection/kitti.py)
+    [`tfds.datasets.kitti.Builder`](https://github.com/tensorflow/datasets/tree/master/tensorflow_datasets/datasets/kitti/kitti_dataset_builder.py)
 
 *   **Versions**:
 
@@ -66,75 +60,75 @@ Split          | Examples
 
 ```python
 FeaturesDict({
-    'image': Image(shape=(None, None, 3), dtype=tf.uint8),
-    'image/file_name': Text(shape=(), dtype=tf.string),
+    'image': Image(shape=(None, None, 3), dtype=uint8),
+    'image/file_name': Text(shape=(), dtype=string),
     'objects': Sequence({
-        'alpha': tf.float32,
-        'bbox': BBoxFeature(shape=(4,), dtype=tf.float32),
-        'dimensions': Tensor(shape=(3,), dtype=tf.float32),
-        'location': Tensor(shape=(3,), dtype=tf.float32),
-        'occluded': ClassLabel(shape=(), dtype=tf.int64, num_classes=4),
-        'rotation_y': tf.float32,
-        'truncated': tf.float32,
-        'type': ClassLabel(shape=(), dtype=tf.int64, num_classes=8),
+        'alpha': float32,
+        'bbox': BBoxFeature(shape=(4,), dtype=float32, description=2D bounding box of object in the image),
+        'dimensions': Tensor(shape=(3,), dtype=float32, description=3D object dimensions: height, width, length (in meters)),
+        'location': Tensor(shape=(3,), dtype=float32, description=3D object location x,y,z in camera coordinates (in meters)),
+        'occluded': ClassLabel(shape=(), dtype=int64, num_classes=4),
+        'rotation_y': float32,
+        'truncated': float32,
+        'type': ClassLabel(shape=(), dtype=int64, num_classes=8),
     }),
 })
 ```
 
 *   **Feature documentation**:
 
-| Feature            | Class        | Shape    | Dtype      | Description     |
-| :----------------- | :----------- | :------- | :--------- | :-------------- |
-|                    | FeaturesDict |          |            |                 |
-| image              | Image        | (None,   | tf.uint8   |                 |
-:                    :              : None, 3) :            :                 :
-| image/file_name    | Text         |          | tf.string  |                 |
-| objects            | Sequence     |          |            |                 |
-| objects/alpha      | Tensor       |          | tf.float32 | Observation     |
-:                    :              :          :            : angle of        :
-:                    :              :          :            : object, ranging :
-:                    :              :          :            : [-pi..pi]       :
-| objects/bbox       | BBoxFeature  | (4,)     | tf.float32 | 2D bounding box |
-:                    :              :          :            : of object in    :
-:                    :              :          :            : the image       :
-| objects/dimensions | Tensor       | (3,)     | tf.float32 | 3D object       |
-:                    :              :          :            : dimensions\:    :
-:                    :              :          :            : height, width,  :
-:                    :              :          :            : length (in      :
-:                    :              :          :            : meters)         :
-| objects/location   | Tensor       | (3,)     | tf.float32 | 3D object       |
-:                    :              :          :            : location x,y,z  :
-:                    :              :          :            : in camera       :
-:                    :              :          :            : coordinates (in :
-:                    :              :          :            : meters)         :
-| objects/occluded   | ClassLabel   |          | tf.int64   | Integer         |
-:                    :              :          :            : (0,1,2,3)       :
-:                    :              :          :            : indicating      :
-:                    :              :          :            : occlusion       :
-:                    :              :          :            : state\: 0 =     :
-:                    :              :          :            : fully visible,  :
-:                    :              :          :            : 1 = partly      :
-:                    :              :          :            : occluded2 =     :
-:                    :              :          :            : largely         :
-:                    :              :          :            : occluded, 3 =   :
-:                    :              :          :            : unknown         :
-| objects/rotation_y | Tensor       |          | tf.float32 | Rotation ry     |
-:                    :              :          :            : around Y-axis   :
-:                    :              :          :            : in camera       :
-:                    :              :          :            : coordinates     :
-:                    :              :          :            : [-pi..pi]       :
-| objects/truncated  | Tensor       |          | tf.float32 | Float from 0    |
-:                    :              :          :            : (non-truncated) :
-:                    :              :          :            : to 1            :
-:                    :              :          :            : (truncated),    :
-:                    :              :          :            : wheretruncated  :
-:                    :              :          :            : refers to the   :
-:                    :              :          :            : object leaving  :
-:                    :              :          :            : image           :
-:                    :              :          :            : boundaries      :
-| objects/type       | ClassLabel   |          | tf.int64   | The type of     |
-:                    :              :          :            : object, e.g.    :
-:                    :              :          :            : 'Car' or 'Van'  :
+| Feature            | Class        | Shape        | Dtype   | Description     |
+| :----------------- | :----------- | :----------- | :------ | :-------------- |
+|                    | FeaturesDict |              |         |                 |
+| image              | Image        | (None, None, | uint8   |                 |
+:                    :              : 3)           :         :                 :
+| image/file_name    | Text         |              | string  |                 |
+| objects            | Sequence     |              |         |                 |
+| objects/alpha      | Tensor       |              | float32 | Observation     |
+:                    :              :              :         : angle of        :
+:                    :              :              :         : object, ranging :
+:                    :              :              :         : [-pi..pi]       :
+| objects/bbox       | BBoxFeature  | (4,)         | float32 | 2D bounding box |
+:                    :              :              :         : of object in    :
+:                    :              :              :         : the image       :
+| objects/dimensions | Tensor       | (3,)         | float32 | 3D object       |
+:                    :              :              :         : dimensions\:    :
+:                    :              :              :         : height, width,  :
+:                    :              :              :         : length (in      :
+:                    :              :              :         : meters)         :
+| objects/location   | Tensor       | (3,)         | float32 | 3D object       |
+:                    :              :              :         : location x,y,z  :
+:                    :              :              :         : in camera       :
+:                    :              :              :         : coordinates (in :
+:                    :              :              :         : meters)         :
+| objects/occluded   | ClassLabel   |              | int64   | Integer         |
+:                    :              :              :         : (0,1,2,3)       :
+:                    :              :              :         : indicating      :
+:                    :              :              :         : occlusion       :
+:                    :              :              :         : state\: 0 =     :
+:                    :              :              :         : fully visible,  :
+:                    :              :              :         : 1 = partly      :
+:                    :              :              :         : occluded2 =     :
+:                    :              :              :         : largely         :
+:                    :              :              :         : occluded, 3 =   :
+:                    :              :              :         : unknown         :
+| objects/rotation_y | Tensor       |              | float32 | Rotation ry     |
+:                    :              :              :         : around Y-axis   :
+:                    :              :              :         : in camera       :
+:                    :              :              :         : coordinates     :
+:                    :              :              :         : [-pi..pi]       :
+| objects/truncated  | Tensor       |              | float32 | Float from 0    |
+:                    :              :              :         : (non-truncated) :
+:                    :              :              :         : to 1            :
+:                    :              :              :         : (truncated),    :
+:                    :              :              :         : wheretruncated  :
+:                    :              :              :         : refers to the   :
+:                    :              :              :         : object leaving  :
+:                    :              :              :         : image           :
+:                    :              :              :         : boundaries      :
+| objects/type       | ClassLabel   |              | int64   | The type of     |
+:                    :              :              :         : object, e.g.    :
+:                    :              :              :         : 'Car' or 'Van'  :
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

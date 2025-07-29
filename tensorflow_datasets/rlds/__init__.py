@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Datasets generated with RLDS."""
-from tensorflow_datasets.rlds.locomotion.locomotion import Locomotion
-from tensorflow_datasets.rlds.robosuite_panda_pick_place_can.robosuite_panda_pick_place_can import RobosuitePandaPickPlaceCan
+"""RLDS utils.
+
+Note that the datasets are imported lazily so they don't need to be in here.
+"""
+
+from tensorflow_datasets.rlds import envlogger_reader
+from tensorflow_datasets.rlds import rlds_base

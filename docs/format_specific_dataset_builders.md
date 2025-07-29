@@ -151,21 +151,52 @@ class MyDatasetBuilder(tfds.dataset_builders.TfDataBuilder):
     ds_train = tf.data.Dataset.from_tensor_slices([1, 2, 3])
     ds_test = tf.data.Dataset.from_tensor_slices([4, 5])
     super().__init__(
-      name="my_dataset",
-      version="1.0.0",
-      split_datasets={
-          "train": ds_train,
-          "test": ds_test,
-      },
-      features=tfds.features.FeaturesDict({
-          "number": tfds.features.Scalar(dtype=tf.int64),
-      }),
-      config="single_number",
-      description="My dataset with a single number.",
-      release_notes={
-          "1.0.0": "Initial release with numbers up to 5!",
-      }
-    )
+        name="my_dataset",
+        version="1.0.0",
+        split_datasets={
+            "train": ds_train,
+            "test": ds_test,
+        },
+        features=tfds.features.FeaturesDict({
+            "number": tfds.features.Scalar(dtype=tf.int64),
+        }),
+        config="single_number",
+        description="My dataset with a single number.",
+        release_notes={
+            "1.0.0": "Initial release with numbers up to 5!",
+        })
+```
+
+## CroissantBuilder
+
+### The format
+
+[Croissant](https://github.com/mlcommons/croissant) 🥐 is a high-level format for
+machine learning datasets that combines metadata, resource file descriptions,
+data structure, and default ML semantics into a single file; it works with
+existing datasets to make them easier to find, use, and support with tools.
+
+Croissant builds on schema.org and its `sc:Dataset` vocabulary, a widely used
+format to represent datasets on the Web, and make them searchable.
+
+### `CroissantBuilder`
+
+A `CroissantBuilder` defines a TFDS dataset based on a Croissant 🥐 metadata
+file; each of the `record_set_ids` specified will result in a separate
+`ConfigBuilder`.
+
+For example, to initialize a `CroissantBuilder` for the MNIST dataset using its
+[Croissant 🥐 definition](https://github.com/mlcommons/croissant/tree/main/datasets/1.0/huggingface-mnist):
+
+```python
+import tensorflow_datasets as tfds
+builder = tfds.dataset_builders.CroissantBuilder(
+    jsonld="https://raw.githubusercontent.com/mlcommons/croissant/main/datasets/0.8/huggingface-mnist/metadata.json",
+    file_format='array_record',
+)
+builder.download_and_prepare()
+ds = builder.as_data_source()
+print(ds['default'][0])
 ```
 
 ## CoNLL
@@ -217,9 +248,7 @@ class MyCoNNLDataset(tfds.dataset_builders.ConllDatasetBuilder):
 
   def _info(self) -> tfds.core.DatasetInfo:
     return self.create_dataset_info(
-      description="My dataset description",
-      citation="My dataset citation",
-      # ...
+        # ...
     )
 
   def _split_generators(self, dl_manager):
@@ -322,28 +351,28 @@ class MyCoNNLUDataset(tfds.dataset_builders.ConllUDatasetBuilder):
 
   # conllu_lib contains a set of ready-to-use features.
   BUILDER_CONFIGS = [
-    conllu_lib.get_universal_morphology_config(
-      language="en",
-      features=conllu_lib.UNIVERSAL_DEPENDENCIES_FEATURES,)
+      conllu_lib.get_universal_morphology_config(
+          language='en',
+          features=conllu_lib.UNIVERSAL_DEPENDENCIES_FEATURES,
+      )
   ]
 
   def _info(self) -> tfds.core.DatasetInfo:
     return self.create_dataset_info(
-      description="My dataset description",
-      citation="My dataset citation",
-      # ...
+        # ...
     )
 
   def _split_generators(self, dl_manager):
     path = dl_manager.download_and_extract('https://data-url')
 
-    return {'train':
-               self._generate_examples(
-                 path=path / 'train.txt',
-                 # If necessary, add optional custom processing (see conllu_lib
-                 # for examples).
-                 # process_example_fn=...,
-               )
+    return {
+        'train':
+            self._generate_examples(
+                path=path / 'train.txt',
+                # If necessary, add optional custom processing (see conllu_lib
+                # for examples).
+                # process_example_fn=...,
+            )
     }
 ```
 

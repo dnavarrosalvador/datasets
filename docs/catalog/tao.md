@@ -33,9 +33,11 @@ requires at least 300 GB of free space to store.
 
 *   **Versions**:
 
-    *   **`1.0.0`** (default): Initial release.
+    *   **`1.1.0`** (default): Added test split.
 
-*   **Download size**: `113.96 GiB`
+*   **Download size**: `Unknown size`
+
+*   **Dataset size**: `Unknown size`
 
 *   **Manual download instructions**: This dataset requires you to
     download the source data manually into `download_config.manual_dir`
@@ -52,14 +54,12 @@ and only the data not requiring manual download will be used.
 
 *   **Auto-cached**
     ([documentation](https://www.tensorflow.org/datasets/performances#auto-caching)):
-    No
+    Unknown
 
 *   **Splits**:
 
-Split          | Examples
-:------------- | -------:
-`'train'`      | 500
-`'validation'` | 988
+Split | Examples
+:---- | -------:
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):
@@ -68,6 +68,10 @@ Split          | Examples
 *   **Figure**
     ([tfds.show_examples](https://www.tensorflow.org/datasets/api_docs/python/tfds/visualization/show_examples)):
     Not supported.
+
+*   **Examples**
+    ([tfds.as_dataframe](https://www.tensorflow.org/datasets/api_docs/python/tfds/as_dataframe)):
+    Missing.
 
 *   **Citation**:
 
@@ -91,178 +95,100 @@ Split          | Examples
 
 *   **Config description**: All images are bilinearly resized to 480 X 640
 
-*   **Dataset size**: `482.30 GiB`
-
 *   **Feature structure**:
 
 ```python
 FeaturesDict({
     'metadata': FeaturesDict({
-        'dataset': tf.string,
-        'height': tf.int32,
-        'neg_category_ids': Tensor(shape=(None,), dtype=tf.int32),
-        'not_exhaustive_category_ids': Tensor(shape=(None,), dtype=tf.int32),
-        'num_frames': tf.int32,
-        'video_name': tf.string,
-        'width': tf.int32,
+        'dataset': string,
+        'height': int32,
+        'neg_category_ids': Tensor(shape=(None,), dtype=int32),
+        'not_exhaustive_category_ids': Tensor(shape=(None,), dtype=int32),
+        'num_frames': int32,
+        'video_name': string,
+        'width': int32,
     }),
     'tracks': Sequence({
-        'bboxes': Sequence(BBoxFeature(shape=(4,), dtype=tf.float32)),
-        'category': ClassLabel(shape=(), dtype=tf.int64, num_classes=363),
-        'frames': Sequence(tf.int32),
-        'is_crowd': tf.bool,
-        'scale_category': tf.string,
-        'track_id': tf.int32,
+        'bboxes': Sequence(BBoxFeature(shape=(4,), dtype=float32)),
+        'category': ClassLabel(shape=(), dtype=int64, num_classes=363),
+        'frames': Sequence(int32),
+        'is_crowd': bool,
+        'scale_category': string,
+        'track_id': int32,
     }),
-    'video': Video(Image(shape=(480, 640, 3), dtype=tf.uint8)),
+    'video': Video(Image(shape=(480, 640, 3), dtype=uint8)),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature                              | Class                 | Shape               | Dtype      | Description
-:----------------------------------- | :-------------------- | :------------------ | :--------- | :----------
-                                     | FeaturesDict          |                     |            |
-metadata                             | FeaturesDict          |                     |            |
-metadata/dataset                     | Tensor                |                     | tf.string  |
-metadata/height                      | Tensor                |                     | tf.int32   |
-metadata/neg_category_ids            | Tensor                | (None,)             | tf.int32   |
-metadata/not_exhaustive_category_ids | Tensor                | (None,)             | tf.int32   |
-metadata/num_frames                  | Tensor                |                     | tf.int32   |
-metadata/video_name                  | Tensor                |                     | tf.string  |
-metadata/width                       | Tensor                |                     | tf.int32   |
-tracks                               | Sequence              |                     |            |
-tracks/bboxes                        | Sequence(BBoxFeature) | (None, 4)           | tf.float32 |
-tracks/category                      | ClassLabel            |                     | tf.int64   |
-tracks/frames                        | Sequence(Tensor)      | (None,)             | tf.int32   |
-tracks/is_crowd                      | Tensor                |                     | tf.bool    |
-tracks/scale_category                | Tensor                |                     | tf.string  |
-tracks/track_id                      | Tensor                |                     | tf.int32   |
-video                                | Video(Image)          | (None, 480, 640, 3) | tf.uint8   |
-
-*   **Examples**
-    ([tfds.as_dataframe](https://www.tensorflow.org/datasets/api_docs/python/tfds/as_dataframe)):
-
-<!-- mdformat off(HTML should not be auto-formatted) -->
-
-{% framebox %}
-
-<button id="displaydataframe">Display examples...</button>
-<div id="dataframecontent" style="overflow-x:auto"></div>
-<script>
-const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/tao-480_640-1.0.0.html";
-const dataButton = document.getElementById('displaydataframe');
-dataButton.addEventListener('click', async () => {
-  // Disable the button after clicking (dataframe loaded only once).
-  dataButton.disabled = true;
-
-  const contentPane = document.getElementById('dataframecontent');
-  try {
-    const response = await fetch(url);
-    // Error response codes don't throw an error, so force an error to show
-    // the error message.
-    if (!response.ok) throw Error(response.statusText);
-
-    const data = await response.text();
-    contentPane.innerHTML = data;
-  } catch (e) {
-    contentPane.innerHTML =
-        'Error loading examples. If the error persist, please open '
-        + 'a new issue.';
-  }
-});
-</script>
-
-{% endframebox %}
-
-<!-- mdformat on -->
+Feature                              | Class                 | Shape               | Dtype   | Description
+:----------------------------------- | :-------------------- | :------------------ | :------ | :----------
+                                     | FeaturesDict          |                     |         |
+metadata                             | FeaturesDict          |                     |         |
+metadata/dataset                     | Tensor                |                     | string  |
+metadata/height                      | Tensor                |                     | int32   |
+metadata/neg_category_ids            | Tensor                | (None,)             | int32   |
+metadata/not_exhaustive_category_ids | Tensor                | (None,)             | int32   |
+metadata/num_frames                  | Tensor                |                     | int32   |
+metadata/video_name                  | Tensor                |                     | string  |
+metadata/width                       | Tensor                |                     | int32   |
+tracks                               | Sequence              |                     |         |
+tracks/bboxes                        | Sequence(BBoxFeature) | (None, 4)           | float32 |
+tracks/category                      | ClassLabel            |                     | int64   |
+tracks/frames                        | Sequence(Tensor)      | (None,)             | int32   |
+tracks/is_crowd                      | Tensor                |                     | bool    |
+tracks/scale_category                | Tensor                |                     | string  |
+tracks/track_id                      | Tensor                |                     | int32   |
+video                                | Video(Image)          | (None, 480, 640, 3) | uint8   |
 
 ## tao/full_resolution
 
 *   **Config description**: The full resolution version of the dataset.
 
-*   **Dataset size**: `171.24 GiB`
-
 *   **Feature structure**:
 
 ```python
 FeaturesDict({
     'metadata': FeaturesDict({
-        'dataset': tf.string,
-        'height': tf.int32,
-        'neg_category_ids': Tensor(shape=(None,), dtype=tf.int32),
-        'not_exhaustive_category_ids': Tensor(shape=(None,), dtype=tf.int32),
-        'num_frames': tf.int32,
-        'video_name': tf.string,
-        'width': tf.int32,
+        'dataset': string,
+        'height': int32,
+        'neg_category_ids': Tensor(shape=(None,), dtype=int32),
+        'not_exhaustive_category_ids': Tensor(shape=(None,), dtype=int32),
+        'num_frames': int32,
+        'video_name': string,
+        'width': int32,
     }),
     'tracks': Sequence({
-        'bboxes': Sequence(BBoxFeature(shape=(4,), dtype=tf.float32)),
-        'category': ClassLabel(shape=(), dtype=tf.int64, num_classes=363),
-        'frames': Sequence(tf.int32),
-        'is_crowd': tf.bool,
-        'scale_category': tf.string,
-        'track_id': tf.int32,
+        'bboxes': Sequence(BBoxFeature(shape=(4,), dtype=float32)),
+        'category': ClassLabel(shape=(), dtype=int64, num_classes=363),
+        'frames': Sequence(int32),
+        'is_crowd': bool,
+        'scale_category': string,
+        'track_id': int32,
     }),
-    'video': Video(Image(shape=(None, None, 3), dtype=tf.uint8)),
+    'video': Video(Image(shape=(None, None, 3), dtype=uint8)),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature                              | Class                 | Shape                 | Dtype      | Description
-:----------------------------------- | :-------------------- | :-------------------- | :--------- | :----------
-                                     | FeaturesDict          |                       |            |
-metadata                             | FeaturesDict          |                       |            |
-metadata/dataset                     | Tensor                |                       | tf.string  |
-metadata/height                      | Tensor                |                       | tf.int32   |
-metadata/neg_category_ids            | Tensor                | (None,)               | tf.int32   |
-metadata/not_exhaustive_category_ids | Tensor                | (None,)               | tf.int32   |
-metadata/num_frames                  | Tensor                |                       | tf.int32   |
-metadata/video_name                  | Tensor                |                       | tf.string  |
-metadata/width                       | Tensor                |                       | tf.int32   |
-tracks                               | Sequence              |                       |            |
-tracks/bboxes                        | Sequence(BBoxFeature) | (None, 4)             | tf.float32 |
-tracks/category                      | ClassLabel            |                       | tf.int64   |
-tracks/frames                        | Sequence(Tensor)      | (None,)               | tf.int32   |
-tracks/is_crowd                      | Tensor                |                       | tf.bool    |
-tracks/scale_category                | Tensor                |                       | tf.string  |
-tracks/track_id                      | Tensor                |                       | tf.int32   |
-video                                | Video(Image)          | (None, None, None, 3) | tf.uint8   |
-
-*   **Examples**
-    ([tfds.as_dataframe](https://www.tensorflow.org/datasets/api_docs/python/tfds/as_dataframe)):
-
-<!-- mdformat off(HTML should not be auto-formatted) -->
-
-{% framebox %}
-
-<button id="displaydataframe">Display examples...</button>
-<div id="dataframecontent" style="overflow-x:auto"></div>
-<script>
-const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/tao-full_resolution-1.0.0.html";
-const dataButton = document.getElementById('displaydataframe');
-dataButton.addEventListener('click', async () => {
-  // Disable the button after clicking (dataframe loaded only once).
-  dataButton.disabled = true;
-
-  const contentPane = document.getElementById('dataframecontent');
-  try {
-    const response = await fetch(url);
-    // Error response codes don't throw an error, so force an error to show
-    // the error message.
-    if (!response.ok) throw Error(response.statusText);
-
-    const data = await response.text();
-    contentPane.innerHTML = data;
-  } catch (e) {
-    contentPane.innerHTML =
-        'Error loading examples. If the error persist, please open '
-        + 'a new issue.';
-  }
-});
-</script>
-
-{% endframebox %}
-
-<!-- mdformat on -->
+Feature                              | Class                 | Shape                 | Dtype   | Description
+:----------------------------------- | :-------------------- | :-------------------- | :------ | :----------
+                                     | FeaturesDict          |                       |         |
+metadata                             | FeaturesDict          |                       |         |
+metadata/dataset                     | Tensor                |                       | string  |
+metadata/height                      | Tensor                |                       | int32   |
+metadata/neg_category_ids            | Tensor                | (None,)               | int32   |
+metadata/not_exhaustive_category_ids | Tensor                | (None,)               | int32   |
+metadata/num_frames                  | Tensor                |                       | int32   |
+metadata/video_name                  | Tensor                |                       | string  |
+metadata/width                       | Tensor                |                       | int32   |
+tracks                               | Sequence              |                       |         |
+tracks/bboxes                        | Sequence(BBoxFeature) | (None, 4)             | float32 |
+tracks/category                      | ClassLabel            |                       | int64   |
+tracks/frames                        | Sequence(Tensor)      | (None,)               | int32   |
+tracks/is_crowd                      | Tensor                |                       | bool    |
+tracks/scale_category                | Tensor                |                       | string  |
+tracks/track_id                      | Tensor                |                       | int32   |
+video                                | Video(Image)          | (None, None, None, 3) | uint8   |

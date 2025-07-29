@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,15 +18,13 @@
 Used by tensorflow_datasets/scripts/documentation/build_catalog.py
 """
 
-import collections
 from concurrent import futures
 import dataclasses
 import functools
-from typing import Any, Dict, Iterator, List, Optional, Text, Type
+from typing import Any, Iterator, List, Optional, Set, Type
 
 from absl import logging
 import tensorflow_datasets as tfds
-from tensorflow_datasets.core import config_based_builder
 from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
 from tensorflow_datasets.scripts.documentation import collection_markdown_builder
 from tensorflow_datasets.scripts.documentation import dataset_markdown_builder
@@ -36,6 +34,10 @@ import tqdm
 _WORKER_COUNT_DATASETS = 50
 _WORKER_COUNT_CONFIGS = 20
 
+# In the section headers we have different spellings of the same word. This
+# mapping is used to convert to a single spelling.
+_SECTION_WORD_MAPPING = {'modelling': 'modeling'}
+
 # WmtTranslate: The raw wmt can only be instantiated with the config kwargs
 _BUILDER_BLACKLIST = [
     'wmt_translate',
@@ -44,16 +46,28 @@ _BUILDER_BLACKLIST = [
 # pylint: disable=logging-format-interpolation
 
 
-@dataclasses.dataclass(eq=False, frozen=True)
+def _format_section(section: str) -> str:
+  section = section.replace('_', ' ').replace('-', ' ').lower()
+  for orig_word, new_word in _SECTION_WORD_MAPPING.items():
+    section = section.replace(orig_word, new_word)
+  return section.capitalize()
+
+
+@dataclasses.dataclass(eq=False)
 class BuilderToDocument:
   """Structure containing metadata."""
-  sections: List[Text]
+
+  sections: Set[str]
   namespace: Optional[str]
   builder: tfds.core.DatasetBuilder
   config_builders: List[tfds.core.DatasetBuilder]
 
+  def __post_init__(self):
+    # Make sure section names are formatted correctly.
+    self.sections = {_format_section(section) for section in self.sections}
 
-@dataclasses.dataclass(eq=False, frozen=True)
+
+@dataclasses.dataclass(eq=False)
 class BuilderDocumentation:
   """Documentation output of a single builder.
 
@@ -67,12 +81,17 @@ class BuilderDocumentation:
     is_manual: Whether the dataset require manual download
     is_nightly: Whether the dataset was recently added in `tfds-nightly`
   """
+
   name: str
   filestem: str
   content: str
-  sections: List[Text]
+  sections: Set[str]
   is_manual: bool
   is_nightly: bool
+
+  def __post_init__(self):
+    # Make sure section names are formatted correctly.
+    self.sections = {_format_section(section) for section in self.sections}
 
 
 @dataclasses.dataclass(eq=False, frozen=True)
@@ -84,12 +103,15 @@ class CollectionDocumentation:
     content: Documentation content
     is_nightly: Whether the dataset was recently added in `tfds-nightly`
   """
+
   name: str
   content: str
   is_nightly: bool
 
 
-def _load_builder(name: str,) -> Optional[BuilderToDocument]:
+def _load_builder(
+    name: str,
+) -> Optional[BuilderToDocument]:
   """Load the builder to document.
 
   Args:
@@ -122,7 +144,8 @@ def _load_builder_from_location(
     logging.info(
         'Dataset %s not found, will now try to load from sub-folder',
         dataset_name,
-        exc_info=e)
+        exc_info=e,
+    )
     # If tfds.core.DatasetNotFoundError, it might be the default
     # config isn't found. Should try to load a sub-folder (to check).
     builder = _maybe_load_config(name)
@@ -141,7 +164,7 @@ def _load_builder_from_location(
   else:
     config_builders = []
   return BuilderToDocument(
-      sections=[dataset_name.namespace],
+      sections={dataset_name.namespace},
       namespace=dataset_name.namespace,
       builder=builder,
       config_builders=config_builders,
@@ -186,7 +209,9 @@ def _load_all_configs(
   return [builder] + config_builders
 
 
-def _load_builder_from_code(name: str,) -> BuilderToDocument:
+def _load_builder_from_code(
+    name: str,
+) -> BuilderToDocument:
   """Load the builder, config,... to document."""
   builder_cls = tfds.builder_cls(name)
   sections = _get_sections(builder_cls)
@@ -198,7 +223,8 @@ def _load_builder_from_code(name: str,) -> BuilderToDocument:
 
     with futures.ThreadPoolExecutor(max_workers=_WORKER_COUNT_CONFIGS) as tpool:
       config_builders = list(
-          tpool.map(get_config_builder, builder_cls.BUILDER_CONFIGS),)
+          tpool.map(get_config_builder, builder_cls.BUILDER_CONFIGS),
+      )
     return BuilderToDocument(
         sections=sections,
         namespace=None,
@@ -214,33 +240,38 @@ def _load_builder_from_code(name: str,) -> BuilderToDocument:
     )
 
 
-def _get_sections(builder_cls: Type[tfds.core.DatasetBuilder]) -> List[Text]:
+def _get_sections(builder_cls: Type[tfds.core.DatasetBuilder]) -> Set[str]:
   """Returns the sections associated with the builder."""
   module_parts = builder_cls.__module__.split('.')
   if module_parts[0] != 'tensorflow_datasets':
     raise AssertionError(f'Unexpected builder {builder_cls}: module')
-  if issubclass(builder_cls, config_based_builder.ConfigBasedBuilder):
-    # Sections are inferred from tags.
-    ds_metadata = builder_cls.get_metadata()
-    if ds_metadata.tags:
-      sections = []
-      for tag in ds_metadata.tags:
-        section = tag.rsplit('.')[-1]
-        section = section.replace('-', ' ')
-        sections.append(section)
-      return sections
-    return ['uncategorized']
-  # One single section is inferred from module path.
+  # Legacy datasets: a single section, inferred from module path.
   _, category, *_ = module_parts  # tfds.<category>.xyz
-  return [category]
+  if category != 'datasets':
+    return {category}
+  # Sections are inferred from tags.
+  ds_metadata = builder_cls.get_metadata()
+  if ds_metadata.tags:
+    sections = set()
+    for tag in ds_metadata.tags:
+      # Ignore languages until we have a better way to display them.
+      if tag.startswith('content.language'):
+        continue
+      section = tag.rsplit('.')[-1]
+      sections.add(section)
+    return sections
+  return {'uncategorized'}
 
 
-def _document_single_collection(name: str,) -> CollectionDocumentation:
+def _document_single_collection(
+    name: str,
+) -> CollectionDocumentation:
   """Returns the documentation for a single dataset collection."""
   logging.info('Documenting dataset collection %s', name)
   collection = tfds.dataset_collection(name=name)
   out_str = collection_markdown_builder.get_collection_markdown_string(
-      collection=collection)
+      collection=collection
+  )
   return CollectionDocumentation(
       name=name,
       content=out_str,
@@ -267,8 +298,9 @@ def _document_single_builder_inner(
   tqdm.tqdm.write(f'Document builder {name}...')
   doc_info = _load_builder(name)
   if doc_info is None:
-    logging.warning('No doc info was found for document builder %s. Skipping.',
-                    name)
+    logging.warning(
+        'No doc info was found for document builder %s. Skipping.', name
+    )
     return None
 
   out_str = dataset_markdown_builder.get_markdown_string(
@@ -276,9 +308,11 @@ def _document_single_builder_inner(
       builder=doc_info.builder,
       config_builders=doc_info.config_builders,
       nightly_doc_util=nightly_doc_util,
-      **kwargs)
+      **kwargs,
+  )
   is_nightly = bool(
-      nightly_doc_util and nightly_doc_util.is_builder_nightly(name))
+      nightly_doc_util and nightly_doc_util.is_builder_nightly(name)
+  )
   return BuilderDocumentation(
       name=name,
       filestem=name.replace(':', '_'),
@@ -350,7 +384,8 @@ def iter_documentation_builders(
 
   if doc_util_paths.fig_base_path:
     nightly_doc_util = doc_utils.NightlyDocUtil(
-        path=doc_util_paths.nightly_path,)
+        path=doc_util_paths.nightly_path,
+    )
   else:
     nightly_doc_util = None
   # pytype: enable=attribute-error
@@ -376,19 +411,3 @@ def iter_documentation_builders(
         tqdm.tqdm.write(f'Documentation generated for {builder_doc.name}...')
         yield builder_doc
   print('All builder documentations generated!')
-
-
-def make_category_to_builders_dict(
-) -> Dict[str, List[tfds.core.DatasetBuilder]]:
-  """Loads all builders with their associated category."""
-  datasets = _all_tfds_datasets()
-  print(f'Creating the vanilla builders for {len(datasets)} datasets...')
-  with futures.ThreadPoolExecutor(max_workers=_WORKER_COUNT_DATASETS) as tpool:
-    builders = tpool.map(tfds.builder, datasets)
-
-  category_to_builders = collections.defaultdict(list)
-  for builder in builders:
-    sections = _get_sections(type(builder))
-    for section in sections:
-      category_to_builders[section].append(builder)
-  return category_to_builders

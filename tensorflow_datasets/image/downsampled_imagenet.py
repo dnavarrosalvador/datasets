@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,4 +23,5 @@ tfds.builder_cls('downsampled_imagenet')
 from tensorflow_datasets.core import lazy_builder_import
 
 DownsampledImagenet = lazy_builder_import.LazyBuilderImport(
-    'downsampled_imagenet')
+    'downsampled_imagenet'
+)

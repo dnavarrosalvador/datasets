@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -58,7 +58,8 @@ class Gsm8k(tfds.core.GeneratorBasedBuilder):
         builder=self,
         description=_DESCRIPTION,
         features=tfds.features.FeaturesDict(
-            {k: tfds.features.Text() for k in _FEATURES}),
+            {k: tfds.features.Text() for k in _FEATURES}
+        ),
         supervised_keys=None,
         homepage='https://github.com/openai/grade-school-math',
         citation=_CITATION,
@@ -69,7 +70,7 @@ class Gsm8k(tfds.core.GeneratorBasedBuilder):
     extracted = dl_manager.download_and_extract(_URLS)
     return {k: self._generate_examples(v) for k, v in extracted.items()}
 
-  def _generate_examples(self, path: str):
+  def _generate_examples(self, path: epath.PathLike):
     """Yields examples."""
     with epath.Path(path).open() as f:
       for i, line in enumerate(f):

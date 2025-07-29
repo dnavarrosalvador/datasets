@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 
 import os
 
+import numpy as np
 from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
 import tensorflow_datasets.public_api as tfds
 
@@ -52,9 +53,10 @@ class FlicConfig(tfds.core.BuilderConfig):
 
     descriptions = {
         "small": "5003 examples used in CVPR13 MODEC paper.",
-        "full":
+        "full": (
             "20928 examples, a superset of FLIC consisting of more difficult "
             "examples."
+        ),
     }
     description = kwargs.get("description", "Uses %s" % descriptions[data])
     kwargs["description"] = description
@@ -69,11 +71,12 @@ def _make_builder_configs():
   configs = []
   for data in _DATA_OPTIONS:
     configs.append(
-        FlicConfig(name=data, version=tfds.core.Version("2.0.0"), data=data))
+        FlicConfig(name=data, version=tfds.core.Version("2.0.0"), data=data)
+    )
   return configs
 
 
-class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
+class Builder(tfds.core.GeneratorBasedBuilder):
   """Frames Labeled In Cinema (FLIC)."""
 
   BUILDER_CONFIGS = _make_builder_configs()
@@ -81,21 +84,15 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
   def _info(self):
     return self.dataset_info_from_configs(
         features=tfds.features.FeaturesDict({
-            "image":
-                tfds.features.Image(
-                    shape=(480, 720, 3), encoding_format="jpeg"),
-            "poselet_hit_idx":
-                tfds.features.Sequence(tf.uint16),
-            "moviename":
-                tfds.features.Text(),
-            "xcoords":
-                tfds.features.Sequence(tf.float64),
-            "ycoords":
-                tfds.features.Sequence(tf.float64),
-            "currframe":
-                tfds.features.Tensor(shape=(), dtype=tf.float64),
-            "torsobox":
-                tfds.features.BBoxFeature(),
+            "image": tfds.features.Image(
+                shape=(480, 720, 3), encoding_format="jpeg"
+            ),
+            "poselet_hit_idx": tfds.features.Sequence(np.uint16),
+            "moviename": tfds.features.Text(),
+            "xcoords": tfds.features.Sequence(np.float64),
+            "ycoords": tfds.features.Sequence(np.float64),
+            "currframe": tfds.features.Tensor(shape=(), dtype=np.float64),
+            "torsobox": tfds.features.BBoxFeature(),
         }),
         homepage=_HOMEPAGE_URL,
     )
@@ -104,11 +101,13 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
     """Returns SplitGenerators."""
     extract_path = dl_manager.download_and_extract(self.builder_config.url)
 
-    mat_path = os.path.join(extract_path, self.builder_config.dir,
-                            "examples.mat")
+    mat_path = os.path.join(
+        extract_path, self.builder_config.dir, "examples.mat"
+    )
     with tf.io.gfile.GFile(mat_path, "rb") as f:
       data = tfds.core.lazy_imports.scipy.io.loadmat(
-          f, struct_as_record=True, squeeze_me=True, mat_dtype=True)
+          f, struct_as_record=True, squeeze_me=True, mat_dtype=True
+      )
 
     return [
         tfds.core.SplitGenerator(
@@ -133,8 +132,9 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
     """Yields examples."""
     for u_id, example in enumerate(data["examples"]):
       if example[selection_column]:
-        img_path = os.path.join(extract_path, self.builder_config.dir, "images",
-                                example[3])
+        img_path = os.path.join(
+            extract_path, self.builder_config.dir, "images", example[3]
+        )
         yield u_id, {
             "image": img_path,
             "poselet_hit_idx": example[0],

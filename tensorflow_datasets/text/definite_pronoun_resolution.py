@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,17 +53,15 @@ class DefinitePronounResolution(tfds.core.GeneratorBasedBuilder):
         builder=self,
         description=_DESCRIPTION,
         features=tfds.features.FeaturesDict({
-            'sentence':
-                tfds.features.Text(),
-            'pronoun':
-                tfds.features.Text(),
-            'candidates':
-                tfds.features.Sequence(tfds.features.Text(), length=2),
-            'label':
-                tfds.features.ClassLabel(num_classes=2),
+            'sentence': tfds.features.Text(),
+            'pronoun': tfds.features.Text(),
+            'candidates': tfds.features.Sequence(
+                tfds.features.Text(), length=2
+            ),
+            'label': tfds.features.ClassLabel(num_classes=2),
         }),
         supervised_keys=('sentence', 'label'),
-        homepage='http://www.hlt.utdallas.edu/~vince/data/emnlp12/',
+        homepage='https://www.hlt.utdallas.edu/~vince/data/emnlp12/',
         citation=_CITATION,
     )
 
@@ -74,9 +72,11 @@ class DefinitePronounResolution(tfds.core.GeneratorBasedBuilder):
     })
     return [
         tfds.core.SplitGenerator(
-            name=tfds.Split.TEST, gen_kwargs={'filepath': files['test']}),
+            name=tfds.Split.TEST, gen_kwargs={'filepath': files['test']}
+        ),
         tfds.core.SplitGenerator(
-            name=tfds.Split.TRAIN, gen_kwargs={'filepath': files['train']}),
+            name=tfds.Split.TRAIN, gen_kwargs={'filepath': files['train']}
+        ),
     ]
 
   def _generate_examples(self, filepath):

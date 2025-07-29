@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,21 +24,25 @@ import functools
 import html
 import importlib
 import json
-import os
 import typing
 from typing import Any, Dict, List, Mapping, Optional, Type, TypeVar, Union
 
+from absl import logging
+from etils import enp
 from etils import epath
 import numpy as np
-import six
 from tensorflow_datasets.core import constants
 from tensorflow_datasets.core import utils
 from tensorflow_datasets.core.proto import feature_pb2
+from tensorflow_datasets.core.utils import dtype_utils
+from tensorflow_datasets.core.utils import np_utils
 from tensorflow_datasets.core.utils import py_utils
+from tensorflow_datasets.core.utils import retry
 from tensorflow_datasets.core.utils import tf_utils
-from tensorflow_datasets.core.utils import tree_utils
 from tensorflow_datasets.core.utils import type_utils
 from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
+from tensorflow_datasets.core.utils.lazy_imports_utils import tf_agents
+from tensorflow_datasets.core.utils.lazy_imports_utils import tree
 
 from google.protobuf import descriptor
 from google.protobuf import json_format
@@ -52,59 +56,118 @@ T = TypeVar('T', bound='FeatureConnector')
 
 # FeatureConnector-like input accepted by `Sequence()`, `Optional()`,...
 if typing.TYPE_CHECKING:
-  FeatureConnectorArg = Union['FeatureConnector',
-                              Dict[str, 'FeatureConnectorArg'], tf.dtypes.DType]
+  FeatureConnectorArg = Union[
+      'FeatureConnector',
+      Dict[str, 'FeatureConnectorArg'],
+      tf.dtypes.DType,
+      Type[np.generic],
+  ]
+  BoundedTensorSpec = tf.python.framework.tensor_spec.BoundedTensorSpec
 else:
   FeatureConnectorArg = Any
+  BoundedTensorSpec = Any
+
+
+def log_tf_warning(class_name: str) -> None:
+  logging.log_first_n(
+      logging.WARNING,
+      (
+          f'`{class_name}.dtype` is deprecated. Please change '
+          f'your code to use NumPy with the field `{class_name}.np_dtype` '
+          f'or use TensorFlow with the field `{class_name}.tf_dtype`.'
+      ),
+      10,
+  )
 
 
 class TensorInfo(object):
   """Structure containing info on the `tf.Tensor` shape/dtype."""
 
   __slots__ = [
-      'shape', 'dtype', 'numpy_dtype', 'default_value', 'sequence_rank',
-      'dataset_lvl'
+      'shape',
+      '_dtype',
+      'numpy_dtype',
+      'default_value',
+      'sequence_rank',
+      'dataset_lvl',
+      'np_dtype',
+      '_tf_dtype',
+      'minimum',
+      'maximum',
+      'optional',
   ]
 
-  def __init__(self,
-               shape: Shape,
-               dtype: tf.dtypes.DType,
-               default_value=None,
-               sequence_rank: Optional[int] = None,
-               dataset_lvl: int = 0):
+  def __init__(
+      self,
+      shape: Shape,
+      dtype: type_utils.TfdsDType,
+      default_value=None,
+      sequence_rank: Optional[int] = None,
+      dataset_lvl: int = 0,
+      minimum: Optional[type_utils.NpArrayOrScalar] = None,
+      maximum: Optional[type_utils.NpArrayOrScalar] = None,
+      optional: bool = False,
+  ):
     """Constructor.
 
     Args:
-      shape: `tuple[int]`, shape of the tensor
-      dtype: Tensor dtype
+      shape: `tuple[int]`, shape of the tensor.
+      dtype: Tensor DType that will be converted to NumPy DType.
       default_value: Used for retrocompatibility with previous files if a new
         field is added to provide a default value when reading the file.
       sequence_rank: `int`, Number of `tfds.features.Sequence` dimension.
       dataset_lvl: `int`, if >0, nesting level of a `tfds.features.Dataset`.
+      minimum: Tensor minimum. This can be useful to specify
+        `tf_agents.specs.BoundedArraySpec` for example.
+      maximum: Tensor maximum. This can be useful to specify
+        `tf_agents.specs.BoundedArraySpec` for example.
+      optional: Whether the feature is optional and accepts None values.
     """
     self.shape = tf_utils.convert_to_shape(shape)
-    self.dtype = dtype
-    self.numpy_dtype: np.dtype = dtype.as_numpy_dtype
+    self._dtype = dtype
+    self.np_dtype: np.dtype = dtype_utils.cast_to_numpy(dtype)
+    # For backwards compatibility: now it is named np_dtype.
+    self.numpy_dtype = self.np_dtype
+    self._tf_dtype = None
     self.default_value = default_value
     self.sequence_rank = sequence_rank or 0
     self.dataset_lvl = dataset_lvl
+    self.minimum = minimum
+    self.maximum = maximum
+    self.optional = optional
 
   @classmethod
-  def copy_from(cls, tensor_info: 'TensorInfo') -> 'TensorInfo':
+  def copy_from(cls, tensor_info: TensorInfo) -> TensorInfo:
     """Copy constructor."""
     return cls(
         shape=tensor_info.shape,
-        dtype=tensor_info.dtype,
+        dtype=tensor_info.np_dtype,
         default_value=tensor_info.default_value,
         sequence_rank=tensor_info.sequence_rank,
         dataset_lvl=tensor_info.dataset_lvl,
+        minimum=tensor_info.minimum,
+        maximum=tensor_info.maximum,
+        optional=tensor_info.optional,
     )
 
   @classmethod
-  def from_tensor_spec(cls, tensor_spec: tf.TensorSpec) -> 'TensorInfo':
+  def from_tensor_spec(cls, tensor_spec: tf.TensorSpec) -> TensorInfo:
     return cls(
         shape=tf_utils.convert_to_shape(tensor_spec.shape),
-        dtype=tensor_spec.dtype)
+        dtype=tensor_spec.dtype,
+    )
+
+  @classmethod
+  def from_bounded_tensor_spec(
+      cls, tensor_spec: tf_agents.specs.BoundedTensorSpec
+  ) -> TensorInfo:
+    """Creates a new TensorInfo instance from a BoundedTensorSpec."""
+    return cls(
+        shape=tf_utils.convert_to_shape(tensor_spec.shape),
+        dtype=tensor_spec.dtype,
+        minimum=tensor_spec.minimum,
+        maximum=tensor_spec.maximum,
+    )
 
   def to_tensor_spec(self) -> tf.TensorSpec:
     """Converts this TensorInfo instance to a tf.TensorSpec.
@@ -115,21 +178,63 @@ class TensorInfo(object):
     Returns:
       The tf.TensorSpec corresponding to this instance.
     """
+    dtype = self.tf_dtype
+    shape = _to_tensor_shape(self.shape)
     if self.dataset_lvl > 1 or self.sequence_rank > 1:
-      return tf.RaggedTensorSpec(
-          dtype=self.dtype, shape=_to_tensor_shape(self.shape))
-    return tf.TensorSpec(dtype=self.dtype, shape=_to_tensor_shape(self.shape))
+      return tf.RaggedTensorSpec(dtype=dtype, shape=shape)
+    return tf.TensorSpec(dtype=dtype, shape=shape)
+
+  def to_bounded_tensor_spec(self) -> tf_agents.specs.BoundedTensorSpec:
+    """Converts this TensorInfo instance to a tf.BoundedTensorSpec.
+
+    Returns:
+      The tf.TensorSpec corresponding to this instance.
+    """
+    dtype = self.tf_dtype
+    shape = _to_tensor_shape(self.shape)
+    if self.dataset_lvl > 1 or self.sequence_rank > 1:
+      raise ValueError('Bounded tensor spec does not allow for ragged tensors.')
+    return tf_agents.specs.BoundedTensorSpec(
+        dtype=dtype, shape=shape, minimum=self.minimum, maximum=self.maximum
+    )
+
+  @property
+  def dtype(self) -> TreeDict[type_utils.TfdsDType]:
+    """Return the TensorFlow DType of this TensorInfo."""
+    log_tf_warning('TensorInfo')
+    return self.tf_dtype
+
+  @property
+  def tf_dtype(self) -> TreeDict[tf.dtypes.DType]:
+    if self._tf_dtype is None:
+      self._tf_dtype = tf.dtypes.as_dtype(self.np_dtype)
+    return self._tf_dtype
 
   def __eq__(self, other):
     """Equality."""
-    return (self.shape == other.shape and self.dtype == other.dtype and
-            self.default_value == other.default_value)
+    return (
+        self.shape == other.shape
+        and self._dtype == other._dtype
+        and self.default_value == other.default_value
+        and self.minimum == other.minimum
+        and self.maximum == other.maximum
+        and self.optional == other.optional
+    )
 
   def __repr__(self):
-    return '{}(shape={}, dtype={})'.format(
-        type(self).__name__,
+    kwargs = 'shape={}, dtype={}'.format(
         self.shape,
-        repr(self.dtype),
+        dtype_to_str(self.np_dtype),
+    )
+    if self.minimum is not None:
+      kwargs += ', minimum={}'.format(self.minimum)
+    if self.maximum is not None:
+      kwargs += ', maximum={}'.format(self.maximum)
+    if self.optional:
+      kwargs += ', optional=True'
+    return '{}({})'.format(
+        type(self).__name__,
+        kwargs,
     )
 
 
@@ -142,11 +247,12 @@ class Documentation:
     value_range: optional textual description of the value range of this
       feature. For example, the feature 'age' could have value range 0 to 150.
   """
+
   desc: Optional[str] = None
   value_range: Optional[str] = None
 
   @classmethod
-  def from_proto(cls, feature: feature_pb2.Feature) -> 'Documentation':
+  def from_proto(cls, feature: feature_pb2.Feature) -> Documentation:
     return cls(desc=feature.description, value_range=feature.value_range)
 
 
@@ -156,20 +262,19 @@ DocArg = Union[None, str, Documentation]
 @dataclasses.dataclass(order=True)
 class CatalogFeatureDocumentation:
   """Feature attributes to be displayed in the dataset catalog."""
+
   name: str  # Needs to be on top such that features are sorted by name.
   cls_name: str
   description: str
   value_range: str
   tensor_info: Optional[TensorInfo] = None
 
-  def replace(self, **kwargs: Any) -> 'CatalogFeatureDocumentation':
-    """Returns a copy of the `CatalogFeatureDocumentation` with updated attributes.
-    """
+  def replace(self, **kwargs: Any) -> CatalogFeatureDocumentation:
+    """Returns a copy of the `CatalogFeatureDocumentation` with updated attributes."""
     return dataclasses.replace(self, **kwargs)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class FeatureConnector(object):
+class FeatureConnector(object, metaclass=abc.ABCMeta):
   """Abstract base class for feature types.
 
   This class provides an interface between the way the information is stored
@@ -234,9 +339,9 @@ class FeatureConnector(object):
 
     ```
     return {
-        'image': tfds.features.TensorInfo(shape=(None,), dtype=tf.uint8),
-        'height': tfds.features.TensorInfo(shape=(), dtype=tf.int32),
-        'width': tfds.features.TensorInfo(shape=(), dtype=tf.int32),
+        'image': tfds.features.TensorInfo(shape=(None,), dtype=np.uint8),
+        'height': tfds.features.TensorInfo(shape=(), dtype=np.int32),
+        'width': tfds.features.TensorInfo(shape=(), dtype=np.int32),
     }
     ```
 
@@ -244,7 +349,7 @@ class FeatureConnector(object):
     directly:
 
     ```
-    return tfds.features.TensorInfo(shape=(256, 256), dtype=tf.uint8)
+    return tfds.features.TensorInfo(shape=(256, 256), dtype=np.uint8)
     ```
 
     Returns:
@@ -260,23 +365,38 @@ class FeatureConnector(object):
     of the dataset. For example, currently this method does not support
     RaggedTensorSpec.
     """
-    return tree_utils.map_structure(lambda ti: ti.to_tensor_spec(),
-                                    self.get_tensor_info())
+    return tree.map_structure(
+        lambda ti: ti.to_tensor_spec(), self.get_tensor_info()
+    )
 
-  @py_utils.memoized_property
+  @functools.cached_property
   def shape(self):
     """Return the shape (or dict of shape) of this FeatureConnector."""
-    return tree_utils.map_structure(lambda t: t.shape, self.get_tensor_info())
+    return tree.map_structure(lambda t: t.shape, self.get_tensor_info())
 
-  @py_utils.memoized_property
+  @functools.cached_property
   def dtype(self) -> TreeDict[tf.dtypes.DType]:
     """Return the dtype (or dict of dtype) of this FeatureConnector."""
-    return tree_utils.map_structure(lambda t: t.dtype, self.get_tensor_info())
+    log_tf_warning('FeatureConnector')
+    return self.tf_dtype
 
-  @py_utils.memoized_property
+  @functools.cached_property
+  def np_dtype(self) -> TreeDict[np.dtype]:
+    return tree.map_structure(lambda t: t.np_dtype, self.get_tensor_info())
+
+  # For backwards compatibility: now it is named np_dtype.
+  @functools.cached_property
   def numpy_dtype(self) -> TreeDict[np.dtype]:
-    return tree_utils.map_structure(lambda t: t.numpy_dtype,
-                                    self.get_tensor_info())
+    return self.np_dtype
+
+  @functools.cached_property
+  def tf_dtype(self) -> TreeDict[tf.dtypes.DType]:
+    def convert_to_tensorflow(value):
+      if enp.lazy.is_np_dtype(value):
+        return tf.dtypes.as_dtype(value)
+      return value.tf_dtype
+
+    return tree.map_structure(convert_to_tensorflow, self.np_dtype)
 
   @classmethod
   def cls_from_name(cls, python_class_name: str) -> Type['FeatureConnector']:
@@ -288,20 +408,23 @@ class FeatureConnector(object):
       # Split `my_project.xyz.MyFeature` -> (`my_project.xyz`, `MyFeature`)
       if '.' not in python_class_name:
         raise ValueError(
-            f'Python class name must contain a dot, got: "{python_class_name}"')
+            f'Python class name must contain a dot, got: "{python_class_name}"'
+        )
       module_name, _ = python_class_name.rsplit('.', maxsplit=1)  # pytype: disable=attribute-error
       try:
         # Import to register the FeatureConnector
         importlib.import_module(module_name)
-      except ImportError:
+      except ImportError as exception:
         raise ValueError(
             f'{err_msg}\nCould not import {module_name}. You might have to '
-            'install additional dependencies.')
+            'install additional dependencies.'
+        ) from exception
 
     feature_class = cls._registered_features.get(python_class_name)
     if feature_class is None:
-      raise ValueError(f'{err_msg}\n'
-                       f'Supported: {list(cls._registered_features)}')
+      raise ValueError(
+          f'{err_msg}\nSupported: {list(cls._registered_features)}'
+      )
     return feature_class
 
   @property
@@ -309,7 +432,7 @@ class FeatureConnector(object):
     return f'{type(self).__module__}.{type(self).__name__}'
 
   @classmethod
-  def from_json(cls, value: Json) -> 'FeatureConnector':
+  def from_json(cls, value: Json) -> FeatureConnector:
     """FeatureConnector factory.
 
     This function should be called from the `tfds.features.FeatureConnector`
@@ -343,8 +466,14 @@ class FeatureConnector(object):
         elif isinstance(content, dict):
           content = json_format.ParseDict(content, proto_cls())
         else:
-          raise ValueError(f'Type {type(content)} not supported when parsing '
-                           'features serialized as json.')
+          raise ValueError(
+              f'Type {type(content)} not supported when parsing '
+              'features serialized as json.'
+          )
+      if isinstance(content, dict) and (
+          'dtype' in content and isinstance(content['dtype'], str)
+      ):
+        content['dtype'] = dtype_from_str(content['dtype'])
       return feature_cls.from_json_content(content)
     else:
       feature_proto = json_format.ParseDict(value, feature_pb2.Feature())
@@ -474,7 +603,8 @@ class FeatureConnector(object):
       content = feature_pb2.JsonFeature(json=json.dumps(content))
     if not isinstance(content, message.Message):
       raise TypeError(
-          f'to_json_content should return json or proto. Not: {content!r}')
+          f'to_json_content should return json or proto. Not: {content!r}'
+      )
     # Automatically compute the oneof field name:
     # e.g. {'json_feature': feature_pb2.JsonFeature()}
     oneof_kwarg = {_proto2oneof_field_name(content): content}
@@ -507,13 +637,14 @@ class FeatureConnector(object):
     Args:
       root_dir: `path/to/dir` containing the `features.json`
     """
-    with tf.io.gfile.GFile(make_config_path(root_dir), 'w') as f:
-      json_dict = json_format.MessageToDict(self.to_proto())
-      f.write(json.dumps(json_dict, indent=4))
+    json_dict = json_format.MessageToDict(self.to_proto())
+    make_config_path(root_dir).write_text(
+        json.dumps(json_dict, indent=4, sort_keys=True)
+    )
     self.save_metadata(root_dir, feature_name=None)
 
   @classmethod
-  def from_config(cls, root_dir: str) -> 'FeatureConnector':
+  def from_config(cls, root_dir: str) -> FeatureConnector:
     """Reconstructs the FeatureConnector from the config file.
 
     Usage:
@@ -528,9 +659,8 @@ class FeatureConnector(object):
     Returns:
       The reconstructed feature instance.
     """
-    with tf.io.gfile.GFile(make_config_path(root_dir)) as f:
-      content = json.loads(f.read())
-      feature = FeatureConnector.from_json(content)
+    content = json.loads(retry.retry(make_config_path(root_dir).read_text))
+    feature = FeatureConnector.from_json(content)
     feature.load_metadata(root_dir, feature_name=None)
     return feature
 
@@ -547,9 +677,9 @@ class FeatureConnector(object):
 
     ```
     return {
-        'image': tfds.features.TensorInfo(shape=(None,), dtype=tf.uint8),
-        'height': tfds.features.TensorInfo(shape=(), dtype=tf.int32),
-        'width': tfds.features.TensorInfo(shape=(), dtype=tf.int32),
+        'image': tfds.features.TensorInfo(shape=(None,), dtype=np.uint8),
+        'height': tfds.features.TensorInfo(shape=(), dtype=np.int32),
+        'width': tfds.features.TensorInfo(shape=(), dtype=np.int32),
     }
     ```
 
@@ -557,7 +687,7 @@ class FeatureConnector(object):
     directly:
 
     ```
-    return tfds.features.TensorInfo(shape=(64, 64), tf.uint8)
+    return tfds.features.TensorInfo(shape=(64, 64), np.uint8)
     ```
 
     If not defined, the retuned values are automatically deduced from the
@@ -633,6 +763,20 @@ class FeatureConnector(object):
     """
     return tfexample_data
 
+  def decode_example_np(
+      self, example_data: type_utils.NpArrayOrScalar
+  ) -> type_utils.NpArrayOrScalar | None:
+    """Decode the example data into NumPy-compatible input.
+
+    Args:
+      example_data: Value to convert to NumPy.
+
+    Returns:
+      np_data: Data as NumPy-compatible type: either a Python primitive (bytes,
+      int, etc) or a NumPy array.
+    """
+    raise NotImplementedError
+
   def decode_batch_example(self, tfexample_data):
     """Decode multiple features batched in a single tf.Tensor.
 
@@ -667,8 +811,10 @@ class FeatureConnector(object):
     if (
         # input/output could potentially be a `dict` for custom feature
         # connectors. Empty length not supported for those for now.
-        isinstance(ex, dict) or isinstance(self.shape, dict) or
-        not _has_shape_ambiguity(in_shape=ex.shape, out_shape=self.shape)):
+        isinstance(ex, dict)
+        or isinstance(self.shape, dict)
+        or not _has_shape_ambiguity(in_shape=ex.shape, out_shape=self.shape)
+    ):
       return decode_map_fn(ex)
     else:
       # `tf.map_fn` cannot resolve ambiguity when decoding an empty sequence
@@ -676,11 +822,16 @@ class FeatureConnector(object):
       # `(0,)` -> `(0, None, None, 3)`.
       # Instead, we arbitrarily set unknown shape to `0`:
       # `(0,)` -> `(0, 0, 0, 3)`
+      tf_type = tf.dtypes.as_dtype(self.dtype)
       return tf.cond(
           tf.equal(tf.shape(ex)[0], 0),  # Empty sequence
-          lambda: _make_empty_seq_output(shape=self.shape, dtype=self.dtype),
+          lambda: _make_empty_seq_output(shape=self.shape, dtype=tf_type),
           lambda: decode_map_fn(ex),
       )
+
+  def decode_batch_example_np(self, batch):
+    """See decode_batch_example."""
+    return np_utils.np_map_fn(self.decode_example_np, batch)
 
   def decode_ragged_example(self, tfexample_data):
     """Decode nested features from a tf.RaggedTensor.
@@ -726,7 +877,7 @@ class FeatureConnector(object):
     """Returns the HTML str representation of the object (Nested sequence)."""
     return _repr_html(ex)
 
-  def _flatten(self, x):
+  def _flatten(self, x: Any) -> List[Any]:
     """Flatten the input dict into a list of values.
 
     For instance, the following feature:
@@ -823,7 +974,10 @@ class FeatureConnector(object):
 
   def _additional_repr_info(self):
     """Override to return additional info to go into __repr__."""
-    return {}
+    additional_repr_info = {}
+    if description := self.doc.desc:
+      additional_repr_info['description'] = description
+    return additional_repr_info
 
   def __repr__(self):
     """Display the feature dictionary."""
@@ -834,7 +988,7 @@ class FeatureConnector(object):
     # Ensure ordering of keys by adding them one-by-one
     repr_info = collections.OrderedDict()
     repr_info['shape'] = tensor_info.shape
-    repr_info['dtype'] = repr(tensor_info.dtype)
+    repr_info['dtype'] = dtype_to_str(tensor_info.np_dtype)
     additional_info = self._additional_repr_info()
     for k, v in additional_info.items():
       repr_info[k] = v
@@ -858,7 +1012,8 @@ class FeatureConnector(object):
           raise RuntimeError(
               'Only maps with value TensorInfo are supported '
               f'(got {type(tensor_info)}). '
-              'Custom feature classes should override this method.')
+              'Custom feature classes should override this method.'
+          )
         tensor_info_per_feature[feature_name] = tensor_info
     else:
       raise RuntimeError('Subclasses with nesting should override this method.')
@@ -871,7 +1026,8 @@ class FeatureConnector(object):
               tensor_info=tensor_info,
               description=self._doc.desc,
               value_range=self._doc.value_range,
-          ))
+          )
+      )
     return result
 
   def save_metadata(
@@ -916,16 +1072,16 @@ class FeatureConnector(object):
     will restore the feature metadata from the saved file.
 
     Args:
-      data_dir: path to the dataset folder to which save the info (ex:
+      data_dir: path to the dataset folder where the info is saved (ex:
         `~/datasets/cifar10/1.2.0/`)
       feature_name: the name of the feature (from the FeaturesDict key)
     """
     pass
 
 
-def make_config_path(root_dir: epath.PathLike) -> str:
+def make_config_path(root_dir: epath.PathLike) -> epath.Path:
   """Returns the path to the features config."""
-  return os.fspath(epath.Path(root_dir) / constants.FEATURES_FILENAME)
+  return epath.Path(root_dir) / constants.FEATURES_FILENAME
 
 
 def _repr_html(ex) -> str:
@@ -955,7 +1111,8 @@ def _has_shape_ambiguity(in_shape: Shape, out_shape: Shape) -> bool:
       in_shape[0] is None  # Empty sequence
       # Unknown output shape (note that sequence length isn't present,
       # as `self.shape` is called from the inner feature).
-      and None in out_shape)
+      and None in out_shape
+  )
 
 
 @functools.lru_cache(None)
@@ -975,11 +1132,12 @@ def _name2proto_cls(cls_name: str) -> Type[message.Message]:
 
 def _proto2oneof_field_name(proto: message.Message) -> str:
   """Returns the field name associated with the class."""
-  for field in _feature_content_fields():
+  fields = _feature_content_fields()
+  for field in fields:
     if field.message_type._concrete_class == type(proto):  # pylint: disable=protected-access
       return field.name
   supported_cls = [
-      f.message_type._concrete_class.name for f in _feature_content_fields()  # pylint: disable=protected-access
+      field.message_type._concrete_class for field in fields  # pylint: disable=protected-access
   ]
   raise ValueError(f'Unknown proto {type(proto)}. Supported: {supported_cls}.')
 
@@ -991,14 +1149,13 @@ def _make_empty_seq_output(
   """Return an empty (0, *shape) `tf.Tensor` with `0` instead of `None`."""
   if not isinstance(shape, (tuple, list)) or None not in shape:
     raise ValueError(f'Could not construct empty output for shape: {shape}')
-  return tf.constant([],
-                     shape=[0] + [0 if d is None else d for d in shape],
-                     dtype=dtype)
+  return tf.constant(
+      [], shape=[0] + [0 if d is None else d for d in shape], dtype=dtype
+  )
 
 
 def to_shape_proto(shape: utils.Shape) -> feature_pb2.Shape:
-  """Converts TFDS shape to Shape proto (-1 is used for unspecified dimensions).
-  """
+  """Converts TFDS shape to Shape proto (-1 is used for unspecified dimensions)."""
   dimensions = []
   for dimension in shape:
     if dimension is None or dimension < 0:
@@ -1021,12 +1178,24 @@ def from_shape_proto(shape: feature_pb2.Shape) -> utils.Shape:
   return [parse_dimension(dimension) for dimension in shape.dimensions]
 
 
-def encode_dtype(dtype: tf.dtypes.DType) -> str:
-  return dtype.name
+_STRING_NAME = 'string'
 
 
-def parse_dtype(dtype: str) -> tf.dtypes.DType:
-  return tf.dtypes.as_dtype(dtype)
+def dtype_to_str(dtype: type_utils.TfdsDType) -> str:
+  np_dtype: np.dtype = dtype_utils.cast_to_numpy(dtype)
+  if np_dtype == np.object_:
+    return _STRING_NAME
+  return np.dtype(np_dtype).name
+
+
+def dtype_from_str(dtype: str) -> type_utils.TfdsDType:
+  if dtype == _STRING_NAME:
+    return np.object_
+  try:
+    np_dtype = np.dtype(dtype)
+    return dtype_utils.cast_to_numpy(np_dtype)
+  except TypeError:
+    return tf.dtypes.as_dtype(dtype)
 
 
 def convert_feature_name_to_filename(

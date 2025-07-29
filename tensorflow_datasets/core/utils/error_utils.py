@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,27 +17,51 @@
 
 import contextlib
 import dataclasses
-import threading
 from typing import Callable, Iterator, List, Type, Union
 
+from etils import edc
 from tensorflow_datasets.core import utils
 
 Message = Union[str, Callable[[], str]]
 
 
 @dataclasses.dataclass
-class ErrorContext():
+class ErrorContext:
   """Stack container for error context.
 
   This stack keeps track of the error messages which are raised when loading a
   dataset. These error messages are used to provide better context for the users
   in case of DatasetNotFound errors are raised.
   """
+
   messages: List[Message] = dataclasses.field(default_factory=list)
 
 
 # Current error context. Accessed by `reraise_with_context` and `add_context`.
-context_holder = threading.local()
+@edc.dataclass
+@dataclasses.dataclass
+class ContextHolder:
+  # Each thread will use its own instance of current_context_msg.
+  current_context_msg: edc.ContextVar[ErrorContext | None] = None
+
+
+context_holder = ContextHolder()
+
+
+@contextlib.contextmanager
+def record_error_context() -> Iterator[ErrorContext]:
+  """Contextmanager which captures the error context for a thread."""
+
+  if context_holder.current_context_msg is not None:
+    raise ValueError(
+        'Cannot record error context within the scope of another error context.'
+    )
+
+  context_holder.current_context_msg = ErrorContext()
+  try:
+    yield context_holder.current_context_msg
+  finally:
+    context_holder.current_context_msg = None
 
 
 @contextlib.contextmanager
@@ -52,7 +76,7 @@ def reraise_with_context(error_cls: Type[Exception]) -> Iterator[None]:
   """
   # If current_context_msg exists, we are already within the scope of the
   # session contextmanager.
-  if hasattr(context_holder, 'current_context_msg'):
+  if context_holder.current_context_msg is not None:
     yield
     return
 
@@ -63,7 +87,7 @@ def reraise_with_context(error_cls: Type[Exception]) -> Iterator[None]:
     context_msg = '\n'.join(context_holder.current_context_msg.messages)
     utils.reraise(e, suffix=context_msg)
   finally:
-    del context_holder.current_context_msg
+    context_holder.current_context_msg = None
 
 
 def add_context(msg: str) -> None:
@@ -78,7 +102,8 @@ def add_context(msg: str) -> None:
   Raises:
     AttributeError if local thread has no current_context_msg attribute.
   """
-  if not hasattr(context_holder, 'current_context_msg'):
+  if context_holder.current_context_msg is None:
     raise AttributeError(
-        'add_context called outside of reraise_with_context contextmanager.')
+        'add_context called outside of reraise_with_context contextmanager.'
+    )
   context_holder.current_context_msg.messages.append(msg)

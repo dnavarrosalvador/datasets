@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,15 +16,15 @@
 """dSprites dataset."""
 
 import numpy as np
-from six import moves
-from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
 import tensorflow_datasets.public_api as tfds
 
-_URL = ("https://github.com/deepmind/dsprites-dataset/blob/master/"
-        "dsprites_ndarray_co1sh3sc6or40x32y32_64x64.hdf5?raw=true")
+_URL = (
+    "https://github.com/deepmind/dsprites-dataset/blob/master/"
+    "dsprites_ndarray_co1sh3sc6or40x32y32_64x64.hdf5?raw=true"
+)
 
 
-class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
+class Builder(tfds.core.GeneratorBasedBuilder):
   """dSprites data set."""
 
   VERSION = tfds.core.Version("2.0.0")
@@ -43,11 +43,11 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
         "label_orientation": tfds.features.ClassLabel(num_classes=40),
         "label_x_position": tfds.features.ClassLabel(num_classes=32),
         "label_y_position": tfds.features.ClassLabel(num_classes=32),
-        "value_shape": tfds.features.Tensor(shape=[], dtype=tf.float32),
-        "value_scale": tfds.features.Tensor(shape=[], dtype=tf.float32),
-        "value_orientation": tfds.features.Tensor(shape=[], dtype=tf.float32),
-        "value_x_position": tfds.features.Tensor(shape=[], dtype=tf.float32),
-        "value_y_position": tfds.features.Tensor(shape=[], dtype=tf.float32),
+        "value_shape": tfds.features.Tensor(shape=[], dtype=np.float32),
+        "value_scale": tfds.features.Tensor(shape=[], dtype=np.float32),
+        "value_orientation": tfds.features.Tensor(shape=[], dtype=np.float32),
+        "value_x_position": tfds.features.Tensor(shape=[], dtype=np.float32),
+        "value_y_position": tfds.features.Tensor(shape=[], dtype=np.float32),
     }
     if self.version > "2.0.0":
       features_dict["id"] = tfds.features.Text()
@@ -62,7 +62,8 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
     # There is no predefined train/val/test split for this dataset.
     return [
         tfds.core.SplitGenerator(
-            name=tfds.Split.TRAIN, gen_kwargs=dict(filepath=filepath)),
+            name=tfds.Split.TRAIN, gen_kwargs=dict(filepath=filepath)
+        ),
     ]
 
   def _generate_examples(self, filepath):
@@ -83,7 +84,8 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
       values_array = np.array(h5dataset["latents"]["values"])
 
     for i, (image, classes, values) in enumerate(
-        moves.zip(image_array, class_array, values_array)):
+        zip(image_array, class_array, values_array)
+    ):
       record = dict(
           image=np.expand_dims(image, -1),
           label_shape=classes[1],
@@ -95,7 +97,8 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
           value_scale=values[2],
           value_orientation=values[3],
           value_x_position=values[4],
-          value_y_position=values[5])
+          value_y_position=values[5],
+      )
       if self.version > "2.0.0":
         record["id"] = "{:06d}".format(i)
       yield i, record

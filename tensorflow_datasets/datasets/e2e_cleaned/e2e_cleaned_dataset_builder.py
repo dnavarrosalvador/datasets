@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ from __future__ import annotations
 import csv
 
 from etils import epath
-from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
+import numpy as np
 import tensorflow_datasets.public_api as tfds
 
 _HOMEPAGE_URL = 'https://github.com/tuetschek/e2e-cleaning'
@@ -36,7 +36,7 @@ def _get_table_from_mr(mr):
   for type_value in mr.split(', '):
     type_value_delimiter = type_value.find('[')
     type_ = type_value[0:type_value_delimiter]
-    value = type_value[type_value_delimiter + 1:-1]
+    value = type_value[type_value_delimiter + 1 : -1]
     mr_as_table.append({
         'column_header': type_,
         'row_number': 1,
@@ -45,7 +45,7 @@ def _get_table_from_mr(mr):
   return mr_as_table
 
 
-class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
+class Builder(tfds.core.GeneratorBasedBuilder):
   """MR in the restaurant domain and target utterances describing it."""
 
   VERSION = tfds.core.Version('0.1.0')
@@ -54,14 +54,13 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
     return self.dataset_info_from_configs(
         features=tfds.features.FeaturesDict({
             'input_text': {
-                'table':
-                    tfds.features.Sequence({
-                        'column_header': tf.string,
-                        'row_number': tf.int16,
-                        'content': tf.string,
-                    })
+                'table': tfds.features.Sequence({
+                    'column_header': np.str_,
+                    'row_number': np.int16,
+                    'content': np.str_,
+                })
             },
-            'target_text': tf.string,
+            'target_text': np.str_,
         }),
         # If there's a common (input, target) tuple from the features,
         # specify them here. They'll be used if as_supervised=True in
@@ -73,11 +72,9 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
 
   def _split_generators(self, dl_manager):
     """Returns SplitGenerators."""
-    extracted_path = dl_manager.download_and_extract({
-        'train_path': _TRAIN_URL,
-        'dev_path': _DEV_URL,
-        'test_path': _TEST_URL
-    })
+    extracted_path = dl_manager.download_and_extract(
+        {'train_path': _TRAIN_URL, 'dev_path': _DEV_URL, 'test_path': _TEST_URL}
+    )
     return [
         tfds.core.SplitGenerator(
             name=tfds.Split.TRAIN,
@@ -105,5 +102,5 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
             'input_text': {
                 'table': _get_table_from_mr(row['mr']),
             },
-            'target_text': row['ref']
+            'target_text': row['ref'],
         }

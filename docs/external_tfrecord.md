@@ -15,7 +15,7 @@ Limitations:
 
 *   `tf.train.SequenceExample` is not supported, only `tf.train.Example`.
 *   You need to be able to express the `tf.train.Example` in terms of
-    `tfds.features` (see section bellow).
+    `tfds.features` (see section below).
 
 ## File naming convention
 
@@ -169,7 +169,7 @@ the standard TFDS API (like `tfds.builder`):
 ```python
 builder = tfds.builder_from_directory('~/path/to/my_dataset/3.0.0/')
 
-# Metadata are avalailable as usual
+# Metadata are available as usual
 builder.info.splits['train'].num_examples
 
 # Construct the tf.data.Dataset pipeline
@@ -197,7 +197,7 @@ builder = tfds.builder_from_directories(builder_dirs=[
     '~/path/my_dataset/agent3/1.0.0/',
 ])
 
-# Metadata are avalailable as usual
+# Metadata are available as usual
 builder.info.splits['train'].num_examples
 
 # Construct the tf.data.Dataset pipeline

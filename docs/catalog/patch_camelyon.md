@@ -12,12 +12,6 @@
 # `patch_camelyon`
 
 
-*   **Visualization**:
-    <a class="button button-with-icon" href="https://knowyourdata-tfds.withgoogle.com/#tab=STATS&dataset=patch_camelyon">
-    Explore in Know Your Data
-    <span class="material-icons icon-after" aria-hidden="true"> north_east
-    </span> </a>
-
 *   **Description**:
 
 The PatchCamelyon benchmark is a new and challenging image classification
@@ -37,7 +31,7 @@ Imagenet, trainable on a single GPU.
     [https://patchcamelyon.grand-challenge.org/](https://patchcamelyon.grand-challenge.org/)
 
 *   **Source code**:
-    [`tfds.image_classification.PatchCamelyon`](https://github.com/tensorflow/datasets/tree/master/tensorflow_datasets/image_classification/patch_camelyon.py)
+    [`tfds.datasets.patch_camelyon.Builder`](https://github.com/tensorflow/datasets/tree/master/tensorflow_datasets/datasets/patch_camelyon/patch_camelyon_dataset_builder.py)
 
 *   **Versions**:
 
@@ -46,11 +40,11 @@ Imagenet, trainable on a single GPU.
 
 *   **Download size**: `7.48 GiB`
 
-*   **Dataset size**: `Unknown size`
+*   **Dataset size**: `7.06 GiB`
 
 *   **Auto-cached**
     ([documentation](https://www.tensorflow.org/datasets/performances#auto-caching)):
-    Unknown
+    No
 
 *   **Splits**:
 
@@ -64,20 +58,20 @@ Split          | Examples
 
 ```python
 FeaturesDict({
-    'id': Text(shape=(), dtype=tf.string),
-    'image': Image(shape=(96, 96, 3), dtype=tf.uint8),
-    'label': ClassLabel(shape=(), dtype=tf.int64, num_classes=2),
+    'id': Text(shape=(), dtype=string),
+    'image': Image(shape=(96, 96, 3), dtype=uint8),
+    'label': ClassLabel(shape=(), dtype=int64, num_classes=2),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature | Class        | Shape       | Dtype     | Description
-:------ | :----------- | :---------- | :-------- | :----------
-        | FeaturesDict |             |           |
-id      | Text         |             | tf.string |
-image   | Image        | (96, 96, 3) | tf.uint8  |
-label   | ClassLabel   |             | tf.int64  |
+Feature | Class        | Shape       | Dtype  | Description
+:------ | :----------- | :---------- | :----- | :----------
+        | FeaturesDict |             |        |
+id      | Text         |             | string |
+image   | Image        | (96, 96, 3) | uint8  |
+label   | ClassLabel   |             | int64  |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

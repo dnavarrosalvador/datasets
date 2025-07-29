@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ import functools
 
 import tensorflow as tf
 import tensorflow_datasets as tfds
-from tensorflow_datasets.core import transform as transform_lib
 from tensorflow_datasets.core.dataset_builders import view_builder
 
 
@@ -26,16 +25,23 @@ def add_number(number: int, increment: int) -> int:
   return number + increment
 
 
+def is_even(number: int) -> bool:
+  return number % 2 == 0
+
+
 _MNIST_TRANSFORMATIONS = [
-    transform_lib.remove_feature(feature_name="image"),
-    transform_lib.apply_fn(
+    tfds.transform.remove_feature(feature_name="image"),
+    tfds.transform.apply_filter(fn=is_even, input_feature="label"),
+    tfds.transform.apply_fn(
         fn=functools.partial(add_number, increment=10),
         input_feature="label",
-        output_feature="label_plus_10"),
-    transform_lib.apply_fn(
+        output_feature="label_plus_10",
+    ),
+    tfds.transform.apply_fn(
         fn=functools.partial(add_number, increment=2),
         input_feature="label",
-        output_feature="label_plus_2"),
+        output_feature="label_plus_2",
+    ),
 ]
 
 _TRANSFORMED_MNIST_FEATURES = tfds.features.FeaturesDict({
@@ -51,7 +57,6 @@ def add_number_map_fn(
     input_name: str,
     output_name: str,
 ) -> tf.data.Dataset:
-
   def f(ex):
     ex[output_name] = ex[input_name] + increment
     return ex
@@ -63,7 +68,6 @@ def remove_feature_map_fn(
     dataset: tf.data.Dataset,
     feature_name: str,
 ) -> tf.data.Dataset:
-
   def f(ex):
     del ex[feature_name]
     return ex
@@ -76,12 +80,14 @@ _MNIST_DATASET_TRANSFORMATIONS = [
         add_number_map_fn,
         increment=10,
         input_name="label",
-        output_name="label_plus_10"),
+        output_name="label_plus_10",
+    ),
     functools.partial(
         add_number_map_fn,
         increment=2,
         input_name="label",
-        output_name="label_plus_2"),
+        output_name="label_plus_2",
+    ),
     functools.partial(remove_feature_map_fn, feature_name="image"),
 ]
 
@@ -159,8 +165,9 @@ def test_view_builder_with_configs_load():
     tfds.testing.DummyMnist(data_dir=data_dir).download_and_prepare()
 
     ds_train = tfds.load(
-        "dummy_mnist_view_with_configs", split="train", data_dir=data_dir)
-    assert len(list(ds_train)) == 20
+        "dummy_mnist_view_with_configs", split="train", data_dir=data_dir
+    )
+    assert len(list(ds_train)) == 10
     for example in ds_train:
       assert example["label"] + 10 == example["label_plus_10"]
       assert example["label"] + 2 == example["label_plus_2"]
@@ -171,8 +178,9 @@ def test_beam_view_builder_with_configs_load():
     tfds.testing.DummyMnist(data_dir=data_dir).download_and_prepare()
 
     ds_train = tfds.load(
-        "beam_dummy_mnist_view_with_configs", split="train", data_dir=data_dir)
-    assert len(list(ds_train)) == 20
+        "beam_dummy_mnist_view_with_configs", split="train", data_dir=data_dir
+    )
+    assert len(list(ds_train)) == 10
     for example in ds_train:
       assert example["label"] + 10 == example["label_plus_10"]
       assert example["label"] + 2 == example["label_plus_2"]
@@ -183,8 +191,9 @@ def test_view_builder_without_configs_load():
     tfds.testing.DummyMnist(data_dir=data_dir).download_and_prepare()
 
     ds_train = tfds.load(
-        "dummy_mnist_view_without_configs", split="train", data_dir=data_dir)
-    assert len(list(ds_train)) == 20
+        "dummy_mnist_view_without_configs", split="train", data_dir=data_dir
+    )
+    assert len(list(ds_train)) == 10
     for example in ds_train:
       assert example["label"] + 10 == example["label_plus_10"]
       assert example["label"] + 2 == example["label_plus_2"]
@@ -195,7 +204,8 @@ def test_view_builder_tf_dataset_with_configs_load():
     tfds.testing.DummyMnist(data_dir=data_dir).download_and_prepare()
 
     ds_train = tfds.load(
-        "dummy_mnist_view_dataset_transform", split="train", data_dir=data_dir)
+        "dummy_mnist_view_dataset_transform", split="train", data_dir=data_dir
+    )
     assert len(list(ds_train)) == 20
     for example in ds_train:
       assert example["label"] + 10 == example["label_plus_10"]

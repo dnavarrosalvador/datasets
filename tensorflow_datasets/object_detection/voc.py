@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ from __future__ import annotations
 import os
 import xml.etree.ElementTree
 
+import numpy as np
 from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
 import tensorflow_datasets.public_api as tfds
 
@@ -53,7 +54,7 @@ _VOC_URL = "http://host.robots.ox.ac.uk/pascal/VOC/voc{year}/"
 # Original site, it is down very often.
 # _VOC_DATA_URL = "http://host.robots.ox.ac.uk/pascal/VOC/voc{year}/"
 # Data mirror:
-_VOC_DATA_URL = "http://pjreddie.com/media/files/"
+_VOC_DATA_URL = "https://data.brainchip.com/dataset-mirror/voc/"
 _VOC_LABELS = (
     "aeroplane",
     "bicycle",
@@ -102,25 +103,21 @@ def _get_example_objects(annon_filepath):
       label = obj.find("name").text.lower()
       # Get objects' pose name.
       pose = obj.find("pose").text.lower()
-      is_truncated = (obj.find("truncated").text == "1")
-      is_difficult = (obj.find("difficult").text == "1")
+      is_truncated = obj.find("truncated").text == "1"
+      is_difficult = obj.find("difficult").text == "1"
       bndbox = obj.find("bndbox")
       xmax = float(bndbox.find("xmax").text)
       xmin = float(bndbox.find("xmin").text)
       ymax = float(bndbox.find("ymax").text)
       ymin = float(bndbox.find("ymin").text)
       yield {
-          "label":
-              label,
-          "pose":
-              pose,
-          "bbox":
-              tfds.features.BBox(ymin / height, xmin / width, ymax / height,
-                                 xmax / width),
-          "is_truncated":
-              is_truncated,
-          "is_difficult":
-              is_difficult,
+          "label": label,
+          "pose": pose,
+          "bbox": tfds.features.BBox(
+              ymin / height, xmin / width, ymax / height, xmax / width
+          ),
+          "is_truncated": is_truncated,
+          "is_difficult": is_difficult,
       }
     # pytype: enable=attribute-error
 
@@ -128,22 +125,22 @@ def _get_example_objects(annon_filepath):
 class VocConfig(tfds.core.BuilderConfig):
   """BuilderConfig for Voc."""
 
-  def __init__(self,
-               year=None,
-               filenames=None,
-               has_test_annotations=True,
-               **kwargs):
+  def __init__(
+      self, year=None, filenames=None, has_test_annotations=True, **kwargs
+  ):
     self.year = year
     self.filenames = filenames
     self.has_test_annotations = has_test_annotations
     super(VocConfig, self).__init__(
         name=year,
         # Version history:
+        # 5.0.0: Added new download links and updated checksums.
         # 4.0.0: Added BuildConfig and 2012 version support, deprecate Voc2007.
         # 3.0.0: S3 with new hashing function (different shuffle).
         # 2.0.0: S3 (new shuffling, sharding and slicing mechanism).
-        version=tfds.core.Version("4.0.0"),
-        **kwargs)
+        version=tfds.core.Version("5.0.0"),
+        **kwargs,
+    )
 
 
 class Voc(tfds.core.GeneratorBasedBuilder):
@@ -153,7 +150,8 @@ class Voc(tfds.core.GeneratorBasedBuilder):
       VocConfig(
           year="2007",
           description=_VOC_CONFIG_DESCRIPTION.format(
-              year=2007, num_images=9963, num_objects=24640),
+              year=2007, num_images=9963, num_objects=24640
+          ),
           filenames={
               "trainval": "VOCtrainval_06-Nov-2007.tar",
               "test": "VOCtest_06-Nov-2007.tar",
@@ -163,7 +161,8 @@ class Voc(tfds.core.GeneratorBasedBuilder):
       VocConfig(
           year="2012",
           description=_VOC_CONFIG_DESCRIPTION.format(
-              year=2012, num_images=11540, num_objects=27450),
+              year=2012, num_images=11540, num_objects=27450
+          ),
           filenames={
               "trainval": "VOCtrainval_11-May-2012.tar",
               "test": "VOC2012test.tar",
@@ -177,24 +176,21 @@ class Voc(tfds.core.GeneratorBasedBuilder):
         builder=self,
         description=_VOC_DESCRIPTION,
         features=tfds.features.FeaturesDict({
-            "image":
-                tfds.features.Image(),
-            "image/filename":
-                tfds.features.Text(),
-            "objects":
-                tfds.features.Sequence({
-                    "label": tfds.features.ClassLabel(names=_VOC_LABELS),
-                    "bbox": tfds.features.BBoxFeature(),
-                    "pose": tfds.features.ClassLabel(names=_VOC_POSES),
-                    "is_truncated": tf.bool,
-                    "is_difficult": tf.bool,
-                }),
-            "labels":
-                tfds.features.Sequence(
-                    tfds.features.ClassLabel(names=_VOC_LABELS)),
-            "labels_no_difficult":
-                tfds.features.Sequence(
-                    tfds.features.ClassLabel(names=_VOC_LABELS)),
+            "image": tfds.features.Image(),
+            "image/filename": tfds.features.Text(),
+            "objects": tfds.features.Sequence({
+                "label": tfds.features.ClassLabel(names=_VOC_LABELS),
+                "bbox": tfds.features.BBoxFeature(),
+                "pose": tfds.features.ClassLabel(names=_VOC_POSES),
+                "is_truncated": np.bool_,
+                "is_difficult": np.bool_,
+            }),
+            "labels": tfds.features.Sequence(
+                tfds.features.ClassLabel(names=_VOC_LABELS)
+            ),
+            "labels_no_difficult": tfds.features.Sequence(
+                tfds.features.ClassLabel(names=_VOC_LABELS)
+            ),
         }),
         homepage=_VOC_URL.format(year=self.builder_config.year),
         citation=_VOC_CITATION.format(year=self.builder_config.year),
@@ -208,23 +204,31 @@ class Voc(tfds.core.GeneratorBasedBuilder):
     return [
         tfds.core.SplitGenerator(
             name=tfds.Split.TEST,
-            gen_kwargs=dict(data_path=paths["test"], set_name="test")),
+            gen_kwargs=dict(data_path=paths["test"], set_name="test"),
+        ),
         tfds.core.SplitGenerator(
             name=tfds.Split.TRAIN,
-            gen_kwargs=dict(data_path=paths["trainval"], set_name="train")),
+            gen_kwargs=dict(data_path=paths["trainval"], set_name="train"),
+        ),
         tfds.core.SplitGenerator(
             name=tfds.Split.VALIDATION,
-            gen_kwargs=dict(data_path=paths["trainval"], set_name="val")),
+            gen_kwargs=dict(data_path=paths["trainval"], set_name="val"),
+        ),
     ]
 
   def _generate_examples(self, data_path, set_name):
     """Yields examples."""
     set_filepath = os.path.join(
         data_path,
-        os.path.normpath("VOCdevkit/VOC{}/ImageSets/Main/{}.txt".format(
-            self.builder_config.year, set_name)))
+        os.path.normpath(
+            "VOCdevkit/VOC{}/ImageSets/Main/{}.txt".format(
+                self.builder_config.year, set_name
+            )
+        ),
+    )
     load_annotations = (
-        self.builder_config.has_test_annotations or set_name != "test")
+        self.builder_config.has_test_annotations or set_name != "test"
+    )
     with tf.io.gfile.GFile(set_filepath, "r") as f:
       for line in f:
         image_id = line.strip()
@@ -234,18 +238,27 @@ class Voc(tfds.core.GeneratorBasedBuilder):
   def _generate_example(self, data_path, image_id, load_annotations):
     image_filepath = os.path.join(
         data_path,
-        os.path.normpath("VOCdevkit/VOC{}/JPEGImages/{}.jpg".format(
-            self.builder_config.year, image_id)))
+        os.path.normpath(
+            "VOCdevkit/VOC{}/JPEGImages/{}.jpg".format(
+                self.builder_config.year, image_id
+            )
+        ),
+    )
     annon_filepath = os.path.join(
         data_path,
-        os.path.normpath("VOCdevkit/VOC{}/Annotations/{}.xml".format(
-            self.builder_config.year, image_id)))
+        os.path.normpath(
+            "VOCdevkit/VOC{}/Annotations/{}.xml".format(
+                self.builder_config.year, image_id
+            )
+        ),
+    )
     if load_annotations:
       objects = list(_get_example_objects(annon_filepath))
       # Use set() to remove duplicates
       labels = sorted(set(obj["label"] for obj in objects))
       labels_no_difficult = sorted(
-          set(obj["label"] for obj in objects if obj["is_difficult"] == 0))
+          set(obj["label"] for obj in objects if obj["is_difficult"] == 0)
+      )
     else:  # The test set of VOC2012 does not contain annotations
       objects = []
       labels = []

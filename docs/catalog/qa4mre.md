@@ -3,7 +3,7 @@
     <meta itemprop="name" content="TensorFlow Datasets" />
   </div>
   <meta itemprop="name" content="qa4mre" />
-  <meta itemprop="description" content="QA4MRE dataset was created for the CLEF 2011/2012/2013 shared tasks to promote research in &#10;question answering and reading comprehension. The dataset contains a supporting &#10;passage and a set of questions corresponding to the passage. Multiple options &#10;for answers are provided for each question, of which only one is correct. The &#10;training and test datasets are available for the main track.&#10;Additional gold standard documents are available for two pilot studies: one on &#10;alzheimers data, and the other on entrance exams data.&#10;&#10;To use this dataset:&#10;&#10;```python&#10;import tensorflow_datasets as tfds&#10;&#10;ds = tfds.load(&#x27;qa4mre&#x27;, split=&#x27;train&#x27;)&#10;for ex in ds.take(4):&#10;  print(ex)&#10;```&#10;&#10;See [the guide](https://www.tensorflow.org/datasets/overview) for more&#10;informations on [tensorflow_datasets](https://www.tensorflow.org/datasets).&#10;&#10;" />
+  <meta itemprop="description" content="QA4MRE dataset was created for the CLEF 2011/2012/2013 shared tasks to promote&#10;research in question answering and reading comprehension. The dataset contains a&#10;supporting passage and a set of questions corresponding to the passage. Multiple&#10;options for answers are provided for each question, of which only one is&#10;correct. The training and test datasets are available for the main track.&#10;Additional gold standard documents are available for two pilot studies: one on&#10;alzheimers data, and the other on entrance exams data.&#10;&#10;To use this dataset:&#10;&#10;```python&#10;import tensorflow_datasets as tfds&#10;&#10;ds = tfds.load(&#x27;qa4mre&#x27;, split=&#x27;train&#x27;)&#10;for ex in ds.take(4):&#10;  print(ex)&#10;```&#10;&#10;See [the guide](https://www.tensorflow.org/datasets/overview) for more&#10;informations on [tensorflow_datasets](https://www.tensorflow.org/datasets).&#10;&#10;" />
   <meta itemprop="url" content="https://www.tensorflow.org/datasets/catalog/qa4mre" />
   <meta itemprop="sameAs" content="http://nlp.uned.es/clef-qa/repository/pastCampaigns.php" />
   <meta itemprop="citation" content="@InProceedings{10.1007/978-3-642-40802-1_29,&#10;author=&quot;Pe{\~{n}}as, Anselmo&#10;and Hovy, Eduard&#10;and Forner, Pamela&#10;and Rodrigo, {\&#x27;A}lvaro&#10;and Sutcliffe, Richard&#10;and Morante, Roser&quot;,&#10;editor=&quot;Forner, Pamela&#10;and M{\&quot;u}ller, Henning&#10;and Paredes, Roberto&#10;and Rosso, Paolo&#10;and Stein, Benno&quot;,&#10;title=&quot;QA4MRE 2011-2013: Overview of Question Answering for Machine Reading Evaluation&quot;,&#10;booktitle=&quot;Information Access Evaluation. Multilinguality, Multimodality, and Visualization&quot;,&#10;year=&quot;2013&quot;,&#10;publisher=&quot;Springer Berlin Heidelberg&quot;,&#10;address=&quot;Berlin, Heidelberg&quot;,&#10;pages=&quot;303--320&quot;,&#10;abstract=&quot;This paper describes the methodology for testing the performance of Machine Reading systems through Question Answering and Reading Comprehension Tests. This was the attempt of the QA4MRE challenge which was run as a Lab at CLEF 2011--2013. The traditional QA task was replaced by a new Machine Reading task, whose intention was to ask questions that required a deep knowledge of individual short texts and in which systems were required to choose one answer, by analysing the corresponding test document in conjunction with background text collections provided by the organization. Four different tasks have been organized during these years: Main Task, Processing Modality and Negation for Machine Reading, Machine Reading of Biomedical Texts about Alzheimer&#x27;s disease, and Entrance Exams. This paper describes their motivation, their goals, their methodology for preparing the data sets, their background collections, their metrics used for the evaluation, and the lessons learned along these three years.&quot;,&#10;isbn=&quot;978-3-642-40802-1&quot;&#10;}" />
@@ -26,13 +26,11 @@ alzheimers data, and the other on entrance exams data.
     [http://nlp.uned.es/clef-qa/repository/pastCampaigns.php](http://nlp.uned.es/clef-qa/repository/pastCampaigns.php)
 
 *   **Source code**:
-    [`tfds.text.Qa4mre`](https://github.com/tensorflow/datasets/tree/master/tensorflow_datasets/text/qa4mre.py)
+    [`tfds.datasets.qa4mre.Builder`](https://github.com/tensorflow/datasets/tree/master/tensorflow_datasets/datasets/qa4mre/qa4mre_dataset_builder.py)
 
 *   **Versions**:
 
     *   **`0.1.0`** (default): No release notes.
-
-*   **Download size**: `Unknown size`
 
 *   **Auto-cached**
     ([documentation](https://www.tensorflow.org/datasets/performances#auto-caching)):
@@ -43,38 +41,38 @@ alzheimers data, and the other on entrance exams data.
 ```python
 FeaturesDict({
     'answer_options': Sequence({
-        'answer_id': Text(shape=(), dtype=tf.string),
-        'answer_str': Text(shape=(), dtype=tf.string),
+        'answer_id': Text(shape=(), dtype=string),
+        'answer_str': Text(shape=(), dtype=string),
     }),
-    'correct_answer_id': Text(shape=(), dtype=tf.string),
-    'correct_answer_str': Text(shape=(), dtype=tf.string),
-    'document_id': Text(shape=(), dtype=tf.string),
-    'document_str': Text(shape=(), dtype=tf.string),
-    'question_id': Text(shape=(), dtype=tf.string),
-    'question_str': Text(shape=(), dtype=tf.string),
-    'test_id': Text(shape=(), dtype=tf.string),
-    'topic_id': Text(shape=(), dtype=tf.string),
-    'topic_name': Text(shape=(), dtype=tf.string),
+    'correct_answer_id': Text(shape=(), dtype=string),
+    'correct_answer_str': Text(shape=(), dtype=string),
+    'document_id': Text(shape=(), dtype=string),
+    'document_str': Text(shape=(), dtype=string),
+    'question_id': Text(shape=(), dtype=string),
+    'question_str': Text(shape=(), dtype=string),
+    'test_id': Text(shape=(), dtype=string),
+    'topic_id': Text(shape=(), dtype=string),
+    'topic_name': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature                   | Class        | Shape | Dtype     | Description
-:------------------------ | :----------- | :---- | :-------- | :----------
-                          | FeaturesDict |       |           |
-answer_options            | Sequence     |       |           |
-answer_options/answer_id  | Text         |       | tf.string |
-answer_options/answer_str | Text         |       | tf.string |
-correct_answer_id         | Text         |       | tf.string |
-correct_answer_str        | Text         |       | tf.string |
-document_id               | Text         |       | tf.string |
-document_str              | Text         |       | tf.string |
-question_id               | Text         |       | tf.string |
-question_str              | Text         |       | tf.string |
-test_id                   | Text         |       | tf.string |
-topic_id                  | Text         |       | tf.string |
-topic_name                | Text         |       | tf.string |
+Feature                   | Class        | Shape | Dtype  | Description
+:------------------------ | :----------- | :---- | :----- | :----------
+                          | FeaturesDict |       |        |
+answer_options            | Sequence     |       |        |
+answer_options/answer_id  | Text         |       | string |
+answer_options/answer_str | Text         |       | string |
+correct_answer_id         | Text         |       | string |
+correct_answer_str        | Text         |       | string |
+document_id               | Text         |       | string |
+document_str              | Text         |       | string |
+question_id               | Text         |       | string |
+question_str              | Text         |       | string |
+test_id                   | Text         |       | string |
+topic_id                  | Text         |       | string |
+topic_name                | Text         |       | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):
@@ -115,6 +113,8 @@ isbn="978-3-642-40802-1"
 
 *   **Config description**: This configuration includes the main track for DE
     language in 2011 year.
+
+*   **Download size**: `217.08 KiB`
 
 *   **Dataset size**: `1.69 MiB`
 
@@ -166,6 +166,8 @@ dataButton.addEventListener('click', async () => {
 *   **Config description**: This configuration includes the main track for EN
     language in 2011 year.
 
+*   **Download size**: `197.74 KiB`
+
 *   **Dataset size**: `1.52 MiB`
 
 *   **Splits**:
@@ -215,6 +217,8 @@ dataButton.addEventListener('click', async () => {
 
 *   **Config description**: This configuration includes the main track for ES
     language in 2011 year.
+
+*   **Download size**: `212.52 KiB`
 
 *   **Dataset size**: `1.64 MiB`
 
@@ -266,6 +270,8 @@ dataButton.addEventListener('click', async () => {
 *   **Config description**: This configuration includes the main track for IT
     language in 2011 year.
 
+*   **Download size**: `209.73 KiB`
+
 *   **Dataset size**: `1.61 MiB`
 
 *   **Splits**:
@@ -315,6 +321,8 @@ dataButton.addEventListener('click', async () => {
 
 *   **Config description**: This configuration includes the main track for RO
     language in 2011 year.
+
+*   **Download size**: `216.32 KiB`
 
 *   **Dataset size**: `1.68 MiB`
 
@@ -366,6 +374,8 @@ dataButton.addEventListener('click', async () => {
 *   **Config description**: This configuration includes the main track for AR
     language in 2012 year.
 
+*   **Download size**: `347.83 KiB`
+
 *   **Dataset size**: `2.62 MiB`
 
 *   **Splits**:
@@ -415,6 +425,8 @@ dataButton.addEventListener('click', async () => {
 
 *   **Config description**: This configuration includes the main track for BG
     language in 2012 year.
+
+*   **Download size**: `434.63 KiB`
 
 *   **Dataset size**: `3.33 MiB`
 
@@ -466,6 +478,8 @@ dataButton.addEventListener('click', async () => {
 *   **Config description**: This configuration includes the main track for DE
     language in 2012 year.
 
+*   **Download size**: `275.00 KiB`
+
 *   **Dataset size**: `2.02 MiB`
 
 *   **Splits**:
@@ -515,6 +529,8 @@ dataButton.addEventListener('click', async () => {
 
 *   **Config description**: This configuration includes the main track for EN
     language in 2012 year.
+
+*   **Download size**: `237.76 KiB`
 
 *   **Dataset size**: `1.71 MiB`
 
@@ -566,6 +582,8 @@ dataButton.addEventListener('click', async () => {
 *   **Config description**: This configuration includes the main track for ES
     language in 2012 year.
 
+*   **Download size**: `271.92 KiB`
+
 *   **Dataset size**: `1.99 MiB`
 
 *   **Splits**:
@@ -615,6 +633,8 @@ dataButton.addEventListener('click', async () => {
 
 *   **Config description**: This configuration includes the main track for IT
     language in 2012 year.
+
+*   **Download size**: `273.49 KiB`
 
 *   **Dataset size**: `2.01 MiB`
 
@@ -666,6 +686,8 @@ dataButton.addEventListener('click', async () => {
 *   **Config description**: This configuration includes the main track for RO
     language in 2012 year.
 
+*   **Download size**: `272.99 KiB`
+
 *   **Dataset size**: `2.01 MiB`
 
 *   **Splits**:
@@ -715,6 +737,8 @@ dataButton.addEventListener('click', async () => {
 
 *   **Config description**: This configuration includes the alzheimers track for
     EN language in 2012 year.
+
+*   **Download size**: `173.19 KiB`
 
 *   **Dataset size**: `1.57 MiB`
 
@@ -766,6 +790,8 @@ dataButton.addEventListener('click', async () => {
 *   **Config description**: This configuration includes the main track for AR
     language in 2013 year.
 
+*   **Download size**: `369.44 KiB`
+
 *   **Dataset size**: `4.04 MiB`
 
 *   **Splits**:
@@ -815,6 +841,8 @@ dataButton.addEventListener('click', async () => {
 
 *   **Config description**: This configuration includes the main track for BG
     language in 2013 year.
+
+*   **Download size**: `452.74 KiB`
 
 *   **Dataset size**: `5.21 MiB`
 
@@ -866,6 +894,8 @@ dataButton.addEventListener('click', async () => {
 *   **Config description**: This configuration includes the main track for EN
     language in 2013 year.
 
+*   **Download size**: `268.52 KiB`
+
 *   **Dataset size**: `2.81 MiB`
 
 *   **Splits**:
@@ -915,6 +945,8 @@ dataButton.addEventListener('click', async () => {
 
 *   **Config description**: This configuration includes the main track for ES
     language in 2013 year.
+
+*   **Download size**: `307.78 KiB`
 
 *   **Dataset size**: `3.35 MiB`
 
@@ -966,6 +998,8 @@ dataButton.addEventListener('click', async () => {
 *   **Config description**: This configuration includes the main track for RO
     language in 2013 year.
 
+*   **Download size**: `306.16 KiB`
+
 *   **Dataset size**: `3.26 MiB`
 
 *   **Splits**:
@@ -1016,6 +1050,8 @@ dataButton.addEventListener('click', async () => {
 *   **Config description**: This configuration includes the alzheimers track for
     EN language in 2013 year.
 
+*   **Download size**: `267.98 KiB`
+
 *   **Dataset size**: `2.50 MiB`
 
 *   **Splits**:
@@ -1065,6 +1101,8 @@ dataButton.addEventListener('click', async () => {
 
 *   **Config description**: This configuration includes the entrance_exam track
     for EN language in 2013 year.
+
+*   **Download size**: `53.32 KiB`
 
 *   **Dataset size**: `186.01 KiB`
 

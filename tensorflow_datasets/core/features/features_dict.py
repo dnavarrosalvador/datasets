@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,23 +17,23 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 import concurrent.futures
-from typing import Dict, List, Union
 
 from tensorflow_datasets.core import utils
 from tensorflow_datasets.core.features import feature as feature_lib
 from tensorflow_datasets.core.features import tensor_feature
 from tensorflow_datasets.core.features import top_level_feature
 from tensorflow_datasets.core.proto import feature_pb2
+from tensorflow_datasets.core.utils import dtype_utils
 from tensorflow_datasets.core.utils import py_utils
 from tensorflow_datasets.core.utils import type_utils
-from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
 
 Json = type_utils.Json
 WORKER_COUNT = 16
 
 
-class _DictGetCounter(object):
+class _DictGetCounter:
   """Wraps dict.get and counts successful key accesses."""
 
   def __init__(self, d):
@@ -62,7 +62,7 @@ class FeaturesDict(top_level_feature.TopLevelFeature):
   ```
   features = tfds.features.FeaturesDict({
       'input': tfds.features.Image(),
-      'output': tf.int32,
+      'output': np.int32,
   })
   ```
 
@@ -93,10 +93,10 @@ class FeaturesDict(top_level_feature.TopLevelFeature):
 
   ```
   tfds.features.FeaturesDict({
-      'input': tf.int32,
+      'input': np.int32,
       'target': {
-          'height': tf.int32,
-          'width': tf.int32,
+          'height': np.int32,
+          'width': np.int32,
       },
   })
   ```
@@ -110,21 +110,20 @@ class FeaturesDict(top_level_feature.TopLevelFeature):
       'target/width': tf.io.FixedLenFeature(shape=(), dtype=tf.int32),
   }
   ```
-
   """
 
   def __init__(
       self,
-      feature_dict: Dict[str, feature_lib.FeatureConnectorArg],
+      feature_dict: Mapping[str, feature_lib.FeatureConnectorArg],
       *,
       doc: feature_lib.DocArg = None,
   ):
     """Initialize the features.
 
     Args:
-      feature_dict (dict): Dictionary containing the feature connectors of a
-        example. The keys should correspond to the data dict as returned by
-        tf.data.Dataset(). Types (tf.int32,...) and dicts will automatically be
+      feature_dict: Mapping containing the feature connectors of a example. The
+        keys should correspond to the data dict as returned by
+        tf.data.Dataset(). Types (np.int32,...) and dicts will automatically be
         converted into FeatureConnector.
       doc: Documentation of this feature (e.g. description).
 
@@ -167,13 +166,14 @@ class FeaturesDict(top_level_feature.TopLevelFeature):
     # Add indentation
     for key, feature in sorted(list(self._feature_dict.items())):
       feature_repr = tensor_feature.get_inner_feature_repr(feature)
-      all_sub_lines = '\'{}\': {},'.format(key, feature_repr)
+      all_sub_lines = "'{}': {},".format(key, feature_repr)
       lines.extend('    ' + l for l in all_sub_lines.split('\n'))
     lines.append('})')
     return '\n'.join(lines)
 
   def catalog_documentation(
-      self) -> List[feature_lib.CatalogFeatureDocumentation]:
+      self,
+  ) -> list[feature_lib.CatalogFeatureDocumentation]:
     feature_docs = [
         feature_lib.CatalogFeatureDocumentation(
             name='',
@@ -210,11 +210,11 @@ class FeaturesDict(top_level_feature.TopLevelFeature):
 
   @classmethod
   def from_json_content(
-      cls, value: Union[Json, feature_pb2.FeaturesDict]) -> 'FeaturesDict':
+      cls, value: Json | feature_pb2.FeaturesDict
+  ) -> 'FeaturesDict':
     if isinstance(value, dict):
       features = {
-          k: feature_lib.FeatureConnector.from_json(v)
-          for k, v in value.items()
+          k: feature_lib.FeatureConnector.from_json(v) for k, v in value.items()
       }
     else:
       features = {
@@ -228,18 +228,21 @@ class FeaturesDict(top_level_feature.TopLevelFeature):
         features={
             feature_key: feature.to_proto()
             for feature_key, feature in self._feature_dict.items()
-        },)
+        },
+    )
 
   def encode_example(self, example_dict):
     """See base class for details."""
     example = {}
-    for k, (feature, example_value) in utils.zip_dict(self._feature_dict,
-                                                      example_dict):
+    for k, (feature, example_value) in utils.zip_dict(
+        self._feature_dict, example_dict
+    ):
       try:
         example[k] = feature.encode_example(example_value)
       except Exception as e:  # pylint: disable=broad-except
         utils.reraise(
-            e, prefix=f'In <{feature.__class__.__name__}> with name "{k}":\n')
+            e, prefix=f'In <{feature.__class__.__name__}> with name "{k}":\n'
+        )
     return example
 
   def _flatten(self, x):
@@ -247,7 +250,8 @@ class FeaturesDict(top_level_feature.TopLevelFeature):
     if x and not isinstance(x, (dict, FeaturesDict)):
       raise ValueError(
           'Error while flattening dict: FeaturesDict received a non dict item: '
-          '{}'.format(x))
+          '{}'.format(x)
+      )
 
     dict_counter = _DictGetCounter(x)
     out = []
@@ -260,7 +264,9 @@ class FeaturesDict(top_level_feature.TopLevelFeature):
           'this means that the provided dict structure does not match the '
           '`FeatureDict`. Please check for typos in the key names. '
           'Available keys: {}. Unrecognized keys: {}'.format(
-              list(self.keys()), list(set(x.keys()) - set(self.keys()))))
+              list(self.keys()), list(set(x.keys()) - set(self.keys()))
+          )
+      )
     return out
 
   def _nest(self, list_x):
@@ -269,12 +275,13 @@ class FeaturesDict(top_level_feature.TopLevelFeature):
     out = {}
     for k, f in sorted(self.items()):
       offset = len(f._flatten(None))  # pylint: disable=protected-access
-      out[k] = f._nest(list_x[curr_pos:curr_pos + offset])  # pylint: disable=protected-access
+      out[k] = f._nest(list_x[curr_pos : curr_pos + offset])  # pylint: disable=protected-access
       curr_pos += offset
     if curr_pos != len(list_x):
       raise ValueError(
           'Error while nesting: Expected length {} does not match input '
-          'length {} of {}'.format(curr_pos, len(list_x), list_x))
+          'length {} of {}'.format(curr_pos, len(list_x), list_x)
+      )
     return out
 
   def save_metadata(self, data_dir, feature_name=None):
@@ -282,7 +289,8 @@ class FeaturesDict(top_level_feature.TopLevelFeature):
     # Recursively save all child features
     for child_name, feature in self._feature_dict.items():
       name_for_file = feature_lib.convert_feature_name_to_filename(
-          feature_name=child_name, parent_name=feature_name)
+          feature_name=child_name, parent_name=feature_name
+      )
       feature.save_metadata(data_dir, feature_name=name_for_file)
 
   def load_metadata(self, data_dir, feature_name=None):
@@ -292,11 +300,13 @@ class FeaturesDict(top_level_feature.TopLevelFeature):
     def load_metadata(feature_item):
       child_name, feature = feature_item
       name_for_file = feature_lib.convert_feature_name_to_filename(
-          feature_name=child_name, parent_name=feature_name)
+          feature_name=child_name, parent_name=feature_name
+      )
       feature.load_metadata(data_dir, feature_name=name_for_file)
 
     with concurrent.futures.ThreadPoolExecutor(
-        max_workers=WORKER_COUNT) as executor:
+        max_workers=WORKER_COUNT
+    ) as executor:
       executor.map(load_metadata, self._feature_dict.items())
 
 
@@ -304,8 +314,8 @@ def to_feature(value: feature_lib.FeatureConnectorArg):
   """Convert the given value to Feature if necessary."""
   if isinstance(value, feature_lib.FeatureConnector):
     return value
-  elif utils.is_dtype(value):  # tf.int32, tf.string,...
-    return tensor_feature.Tensor(shape=(), dtype=tf.as_dtype(value))
+  elif dtype_utils.is_np_or_tf_dtype(value):  # tf.int32, np.int32,...
+    return tensor_feature.Tensor(shape=(), dtype=value)
   elif isinstance(value, dict):
     return FeaturesDict(value)
   else:

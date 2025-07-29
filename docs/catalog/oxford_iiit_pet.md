@@ -3,7 +3,7 @@
     <meta itemprop="name" content="TensorFlow Datasets" />
   </div>
   <meta itemprop="name" content="oxford_iiit_pet" />
-  <meta itemprop="description" content="The Oxford-IIIT pet dataset is a 37 category pet image dataset with roughly 200&#10;images for each class. The images have large variations in scale, pose and&#10;lighting. All images have an associated ground truth annotation of breed.&#10;&#10;To use this dataset:&#10;&#10;```python&#10;import tensorflow_datasets as tfds&#10;&#10;ds = tfds.load(&#x27;oxford_iiit_pet&#x27;, split=&#x27;train&#x27;)&#10;for ex in ds.take(4):&#10;  print(ex)&#10;```&#10;&#10;See [the guide](https://www.tensorflow.org/datasets/overview) for more&#10;informations on [tensorflow_datasets](https://www.tensorflow.org/datasets).&#10;&#10;" />
+  <meta itemprop="description" content="The Oxford-IIIT pet dataset is a 37 category pet image dataset with roughly 200&#10;images for each class. The images have large variations in scale, pose and&#10;lighting. All images have an associated ground truth annotation of breed and&#10;species. Additionally, head bounding boxes are provided for the training split,&#10;allowing using this dataset for simple object detection tasks. In the test&#10;split, the bounding boxes are empty.&#10;&#10;To use this dataset:&#10;&#10;```python&#10;import tensorflow_datasets as tfds&#10;&#10;ds = tfds.load(&#x27;oxford_iiit_pet&#x27;, split=&#x27;train&#x27;)&#10;for ex in ds.take(4):&#10;  print(ex)&#10;```&#10;&#10;See [the guide](https://www.tensorflow.org/datasets/overview) for more&#10;informations on [tensorflow_datasets](https://www.tensorflow.org/datasets).&#10;&#10;" />
   <meta itemprop="url" content="https://www.tensorflow.org/datasets/catalog/oxford_iiit_pet" />
   <meta itemprop="sameAs" content="http://www.robots.ox.ac.uk/~vgg/data/pets/" />
   <meta itemprop="citation" content="@InProceedings{parkhi12a,&#10;  author       = &quot;Parkhi, O. M. and Vedaldi, A. and Zisserman, A. and Jawahar, C.~V.&quot;,&#10;  title        = &quot;Cats and Dogs&quot;,&#10;  booktitle    = &quot;IEEE Conference on Computer Vision and Pattern Recognition&quot;,&#10;  year         = &quot;2012&quot;,&#10;}" />
@@ -12,17 +12,14 @@
 # `oxford_iiit_pet`
 
 
-*   **Visualization**:
-    <a class="button button-with-icon" href="https://knowyourdata-tfds.withgoogle.com/#tab=STATS&dataset=oxford_iiit_pet">
-    Explore in Know Your Data
-    <span class="material-icons icon-after" aria-hidden="true"> north_east
-    </span> </a>
-
 *   **Description**:
 
 The Oxford-IIIT pet dataset is a 37 category pet image dataset with roughly 200
 images for each class. The images have large variations in scale, pose and
-lighting. All images have an associated ground truth annotation of breed.
+lighting. All images have an associated ground truth annotation of breed and
+species. Additionally, head bounding boxes are provided for the training split,
+allowing using this dataset for simple object detection tasks. In the test
+split, the bounding boxes are empty.
 
 *   **Additional Documentation**:
     <a class="button button-with-icon" href="https://paperswithcode.com/dataset/oxford-iiit-pets">
@@ -34,15 +31,16 @@ lighting. All images have an associated ground truth annotation of breed.
     [http://www.robots.ox.ac.uk/~vgg/data/pets/](http://www.robots.ox.ac.uk/~vgg/data/pets/)
 
 *   **Source code**:
-    [`tfds.image_classification.OxfordIIITPet`](https://github.com/tensorflow/datasets/tree/master/tensorflow_datasets/image_classification/oxford_iiit_pet.py)
+    [`tfds.datasets.oxford_iiit_pet.Builder`](https://github.com/tensorflow/datasets/tree/master/tensorflow_datasets/datasets/oxford_iiit_pet/oxford_iiit_pet_dataset_builder.py)
 
 *   **Versions**:
 
-    *   **`3.2.0`** (default): No release notes.
+    *   **`4.0.0`** (default): Add head bounding boxes. Fix corrupt images.
+        Update dataset URL.
 
 *   **Download size**: `773.52 MiB`
 
-*   **Dataset size**: `774.69 MiB`
+*   **Dataset size**: `773.68 MiB`
 
 *   **Auto-cached**
     ([documentation](https://www.tensorflow.org/datasets/performances#auto-caching)):
@@ -59,24 +57,26 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'file_name': Text(shape=(), dtype=tf.string),
-    'image': Image(shape=(None, None, 3), dtype=tf.uint8),
-    'label': ClassLabel(shape=(), dtype=tf.int64, num_classes=37),
-    'segmentation_mask': Image(shape=(None, None, 1), dtype=tf.uint8),
-    'species': ClassLabel(shape=(), dtype=tf.int64, num_classes=2),
+    'file_name': Text(shape=(), dtype=string),
+    'head_bbox': BBoxFeature(shape=(4,), dtype=float32),
+    'image': Image(shape=(None, None, 3), dtype=uint8),
+    'label': ClassLabel(shape=(), dtype=int64, num_classes=37),
+    'segmentation_mask': Image(shape=(None, None, 1), dtype=uint8),
+    'species': ClassLabel(shape=(), dtype=int64, num_classes=2),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature           | Class        | Shape           | Dtype     | Description
-:---------------- | :----------- | :-------------- | :-------- | :----------
-                  | FeaturesDict |                 |           |
-file_name         | Text         |                 | tf.string |
-image             | Image        | (None, None, 3) | tf.uint8  |
-label             | ClassLabel   |                 | tf.int64  |
-segmentation_mask | Image        | (None, None, 1) | tf.uint8  |
-species           | ClassLabel   |                 | tf.int64  |
+Feature           | Class        | Shape           | Dtype   | Description
+:---------------- | :----------- | :-------------- | :------ | :----------
+                  | FeaturesDict |                 |         |
+file_name         | Text         |                 | string  |
+head_bbox         | BBoxFeature  | (4,)            | float32 |
+image             | Image        | (None, None, 3) | uint8   |
+label             | ClassLabel   |                 | int64   |
+segmentation_mask | Image        | (None, None, 1) | uint8   |
+species           | ClassLabel   |                 | int64   |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):
@@ -96,7 +96,7 @@ species           | ClassLabel   |                 | tf.int64  |
 <button id="displaydataframe">Display examples...</button>
 <div id="dataframecontent" style="overflow-x:auto"></div>
 <script>
-const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/oxford_iiit_pet-3.2.0.html";
+const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/oxford_iiit_pet-4.0.0.html";
 const dataButton = document.getElementById('displaydataframe');
 dataButton.addEventListener('click', async () => {
   // Disable the button after clicking (dataframe loaded only once).

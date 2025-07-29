@@ -42,18 +42,18 @@ tower etc.
 
 ```python
 FeaturesDict({
-    'id': Text(shape=(), dtype=tf.string),
-    'image': Image(shape=(None, None, 3), dtype=tf.uint8),
+    'id': Text(shape=(), dtype=string),
+    'image': Image(shape=(None, None, 3), dtype=uint8),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature | Class        | Shape           | Dtype     | Description
-:------ | :----------- | :-------------- | :-------- | :----------
-        | FeaturesDict |                 |           |
-id      | Text         |                 | tf.string |
-image   | Image        | (None, None, 3) | tf.uint8  |
+Feature | Class        | Shape           | Dtype  | Description
+:------ | :----------- | :-------------- | :----- | :----------
+        | FeaturesDict |                 |        |
+id      | Text         |                 | string |
+image   | Image        | (None, None, 3) | uint8  |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

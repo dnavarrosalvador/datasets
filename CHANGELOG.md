@@ -10,6 +10,314 @@ and this project adheres to
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [4.9.9] - 2025-05-28
+
+### Added
+
+- [LBPP dataset](https://www.tensorflow.org/datasets/catalog/lbpp).
+
+### Changed
+
+- `apache-beam` version is pinned at `<2.65.0` until related tests are fixed,
+  see issue [11055](https://github.com/tensorflow/datasets/issues/11055).
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+- CroissantBuilder now supports Croissant files without patch version (i.e. only
+  {major.minor} are provided).
+- Various small bug fixes.
+
+### Security
+
+## [4.9.8] - 2025-03-13
+
+### Added
+
+- New Beam writer `NoShuffleBeamWriter` that doesn't shuffle, which speeds up
+  dataset generation significantly, but does not have deterministic order
+  guarantees. Can be enabled with the flag `--nondeterministic_order`.
+- CroissantBuilder now supports Croissant files that define splits; and new
+  feature types: feature dictionaries and multidimensional arrays.
+- New datasets.
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+- Various small bug fixes.
+- Various performance improvements.
+
+### Security
+
+## [4.9.7] - 2024-10-30
+
+### Added
+
+- New datasets.
+
+### Changed
+
+- `CroissantBuilder`'s API to generate TFDS datasets from Croissant files.
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+- Versions for existing datasets.
+
+### Security
+
+## [4.9.6] - 2024-06-04
+
+### Added
+
+-   Full support for Python 3.12.
+
+## [4.9.5] - 2024-05-30
+
+### Added
+
+-   Support to download and prepare datasets using the
+    [Parquet](https://parquet.apache.org) data format.
+    ```python
+    builder = tfds.builder('fashion_mnist', file_format='parquet')
+    builder.download_and_prepare()
+    ds = builder.as_dataset(split='train')
+    print(next(iter(ds)))
+    ```
+
+-   [`tfds.data_source`](https://www.tensorflow.org/datasets/api_docs/python/tfds/data_source)
+    is pickable, thus working smoothly with
+    [PyGrain](https://github.com/google/grain). Learn more by following the
+    [tutorial](https://www.tensorflow.org/datasets/data_source).
+
+-   TFDS plays nicely with
+    [Croissant](https://mlcommons.org/working-groups/croissant). Learn more by
+    following the
+    [recipe](https://colab.research.google.com/github/mlcommons/croissant/blob/main/python/mlcroissant/recipes/tfds_croissant_builder.ipynb).
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [4.9.4] - 2023-12-16
+
+### Added
+
+-   A new [CroissantBuilder](https://www.tensorflow.org/datasets/format_specific_dataset_builders#croissantbuilder)
+    which initializes a DatasetBuilder based on a [Croissant](https://github.com/mlcommons/croissant)
+    metadata file.
+-   New conversion options between different bounding boxes formats.
+-   Better support for `HuggingfaceDatasetBuilder`.
+-   A [script](https://github.com/tensorflow/datasets/blob/master/tensorflow_datasets/scripts/convert_format.py)
+    to convert a dataset from one format to another.
+
+### Changed
+
+### Deprecated
+
+-   Python 3.9 support. TFDS now uses Python 3.10
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [4.9.3] - 2023-09-08
+
+### Added
+
+-   [Segment Anything](https://ai.facebook.com/datasets/segment-anything-downloads)
+    (SA-1B) dataset.
+
+### Changed
+
+-   Hugging Face datasets accept `None` values for any features. TFDS has no
+    `tfds.features.Optional`, so `None` values are converted to default values.
+    Those default values used to be `0` and `0.0` for int and float. Now, it's
+    `-inf` as defined by NumPy (e.g., `np.iinfo(np.int32).min` or
+    `np.finfo(np.float32).min`). This avoids ambiguous values when `0` and `0.0`
+    exist in the values of the dataset. The roadmap is to implement
+    `tfds.features.Optional`.
+
+### Deprecated
+
+-   Python 3.8 support. As per
+    [NEP 29](https://numpy.org/neps/nep-0029-deprecation_policy.html), TFDS now
+    uses Python>=3.9.
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [4.9.2] - 2023-04-13
+
+### Added
+
+-   [Experimental] A list of freeform text tags can now be attached to a
+    `BuilderConfig`. For example:
+    ```py
+    BUILDER_CONFIGS = [
+        tfds.core.BuilderConfig(name="foo", tags=["foo", "live"]),
+        tfds.core.BuilderConfig(name="bar", tags=["bar", "old"]),
+    ]
+    ```
+    The tags are recorded with the dataset metadata and can later be retrieved
+    using the info object:
+    ```py
+    builder.info.config_tags  # ["foo", "live"]
+    ```
+    This feature is experimental and there are no guidelines on tags format.
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+-   Fixed generated proto files (see issue [4858](https://github.com/tensorflow/datasets/issues/4858)).
+
+### Security
+
+## [4.9.1] - 2023-04-11
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+-   The installation on macOS now works (see issues
+    [4805](https://github.com/tensorflow/datasets/issues/4805) and
+    [4852](https://github.com/tensorflow/datasets/issues/4852)). The ArrayRecord
+    dependency is lazily loaded, so the
+    [TensorFlow-less path](https://www.tensorflow.org/datasets/tfless_tfds) is
+    not possible at the moment on macOS. A fix for this will follow soon.
+
+### Security
+
+## [4.9.0] - 2023-04-04
+
+### Added
+
+-   Native support for JAX and PyTorch. TensorFlow is no longer a dependency for
+    reading datasets. See the
+    [documentation](https://www.tensorflow.org/datasets/tfless_tfds).
+-   Added minival split to
+    [LVIS dataset](https://www.tensorflow.org/datasets/catalog/lvis).
+-   [Mixed-human](https://www.tensorflow.org/datasets/catalog/robomimic_mh) and
+    [machine-generated](https://www.tensorflow.org/datasets/catalog/robomimic_mg)
+    robomimic datasets.
+-   WebVid dataset.
+-   ImagenetPI dataset.
+-   [Wikipedia](https://www.tensorflow.org/datasets/catalog/wikipedia) for
+    20230201.
+
+### Changed
+
+-   Support for `tensorflow=2.12`.
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [4.8.3] - 2023-02-27
+
+### Added
+
+### Changed
+
+### Deprecated
+
+-   Python 3.7 support: this version and future version use Python 3.8.
+
+### Removed
+
+### Fixed
+
+-   Flag `ignore_verifications` from Hugging Face's `datasets.load_dataset` is
+    deprecated, and used to cause errors in `tfds.load(huggingface:foo)`.
+
+### Security
+
+## [4.8.2] - 2023-01-17
+
+### Deprecated
+
+-   Python 3.7 support: this is the last version of TFDS supporting Python 3.7.
+    Future versions will use Python 3.8.
+
+### Fixed
+
+-   `tfds new` and `tfds build` better support the new recommended datasets
+    organization, where individual datasets have their own package under
+    `datasets/`, builder class is called `Builder` and is defined within module
+    `${dsname}_dataset_builder.py`.
+
+### Security
+
+## [4.8.1] - 2023-01-02
+
+### Changed
+
+- Added file `valid_tags.txt` to not break builds.
+- TFDS no longer relies on TensorFlow DTypes. We chose NumPy DTypes to keep the
+typing expressiveness, while dropping the heavy dependency on TensorFlow. We
+migrated all our internal datasets. Please, migrate accordingly:
+    - `tf.bool`: `np.bool_`
+    - `tf.string`: `np.str_`
+    - `tf.int64`, `tf.int32`, etc: `np.int64`, `np.int32`, etc
+    - `tf.float64`, `tf.float32`, etc: `np.float64`, `np.float32`, etc
+
+
+## [4.8.0] - 2022-12-21
+
+### Added
+
+-   [API] `DatasetBuilder`'s description and citations can be specified in
+    dedicated `README.md` and `CITATIONS.bib` files, within the dataset package
+    (see https://www.tensorflow.org/datasets/add_dataset).
+-   Tags can be associated to Datasets, in the `TAGS.txt` file. For
+    now, they are only used in the generated documentation.
 -   [API][Experimental] New `ViewBuilder` to define datasets as transformations
     of existing datasets. Also adds `tfds.transform` with functionality to apply
     transformations.
@@ -17,6 +325,12 @@ and this project adheres to
     new corresponding method.
 -   `tfds.core.DatasetBuilder` can have a default limit for the number of
     simultaneous downloads. `tfds.download.DownloadConfig` can override it.
+-   `tfds.features.Audio` supports storing raw audio data for lazy decoding.
+-   The number of shards can be overridden when preparing a dataset:
+    `builder.download_and_prepare(download_config=tfds.download.DownloadConfig(num_shards=42))`.
+    Alternatively, you can configure the min and max shard size if you want TFDS
+    to compute the number of shards for you, but want to have control over the
+    shard sizes.
 
 ### Changed
 
@@ -97,8 +411,8 @@ and this project adheres to
 
 -   Various datasets
 -   In Linux, when loading a dataset from a directory that is not your home
-    (`~`) directory, a new `~` directory is not created in the current
-    directory (fixes [#4117](https://github.com/tensorflow/datasets/issues/4117)).
+    (`~`) directory, a new `~` directory is not created in the current directory
+    (fixes [#4117](https://github.com/tensorflow/datasets/issues/4117)).
 
 ### Security
 

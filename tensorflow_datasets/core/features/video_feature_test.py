@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,7 +45,24 @@ class VideoFeatureTest(testing.FeatureExpectationsTestCase):
                 expected=np_video,
             ),
         ],
-        test_attributes=dict(_encoding_format='png', _extra_ffmpeg_args=[]))
+        test_attributes=dict(_encoding_format='png', _extra_ffmpeg_args=[]),
+    )
+
+  def test_video_with_none_shape(self):
+    np_video = np.random.randint(256, size=(128, 64, 64, 3), dtype=np.uint8)
+
+    self.assertFeature(
+        feature=features.Video(shape=None),
+        shape=(None, None, None, 3),
+        dtype=tf.uint8,
+        tests=[
+            testing.FeatureExpectationItem(
+                value=np_video,
+                expected=np_video,
+            ),
+        ],
+        test_attributes=dict(_encoding_format='png', _extra_ffmpeg_args=[]),
+    )
 
   def test_video_concatenated_frames(self):
     video_shape = (None, 400, 640, 3)
@@ -117,7 +134,6 @@ class VideoFeatureTest(testing.FeatureExpectationsTestCase):
               ),
           ],
       )
-
 
 if __name__ == '__main__':
   testing.test_main()

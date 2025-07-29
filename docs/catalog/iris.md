@@ -22,7 +22,7 @@ One class is linearly separable from the other 2; the latter are NOT linearly
 separable from each other.
 
 *   **Additional Documentation**:
-    <a class="button button-with-icon" href="https://paperswithcode.com/dataset/iris">
+    <a class="button button-with-icon" href="https://paperswithcode.com/dataset/iris-1">
     Explore on Papers With Code
     <span class="material-icons icon-after" aria-hidden="true"> north_east
     </span> </a>
@@ -35,16 +35,16 @@ separable from each other.
 
 *   **Versions**:
 
-    *   **`2.0.0`** (default): New split API
-        (https://tensorflow.org/datasets/splits)
+    *   `2.0.0`: New split API (https://tensorflow.org/datasets/splits)
+    *   **`2.1.0`** (default): Updated broken link
 
-*   **Download size**: `4.44 KiB`
+*   **Download size**: `3.65 KiB`
 
-*   **Dataset size**: `Unknown size`
+*   **Dataset size**: `7.62 KiB`
 
 *   **Auto-cached**
     ([documentation](https://www.tensorflow.org/datasets/performances#auto-caching)):
-    Unknown
+    Yes
 
 *   **Splits**:
 
@@ -56,18 +56,18 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'features': Tensor(shape=(4,), dtype=tf.float32),
-    'label': ClassLabel(shape=(), dtype=tf.int64, num_classes=3),
+    'features': Tensor(shape=(4,), dtype=float32),
+    'label': ClassLabel(shape=(), dtype=int64, num_classes=3),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature  | Class        | Shape | Dtype      | Description
-:------- | :----------- | :---- | :--------- | :----------
-         | FeaturesDict |       |            |
-features | Tensor       | (4,)  | tf.float32 |
-label    | ClassLabel   |       | tf.int64   |
+Feature  | Class        | Shape | Dtype   | Description
+:------- | :----------- | :---- | :------ | :----------
+         | FeaturesDict |       |         |
+features | Tensor       | (4,)  | float32 |
+label    | ClassLabel   |       | int64   |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):
@@ -87,7 +87,7 @@ label    | ClassLabel   |       | tf.int64   |
 <button id="displaydataframe">Display examples...</button>
 <div id="dataframecontent" style="overflow-x:auto"></div>
 <script>
-const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/iris-2.0.0.html";
+const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/iris-2.1.0.html";
 const dataButton = document.getElementById('displaydataframe');
 dataButton.addEventListener('click', async () => {
   // Disable the button after clicking (dataframe loaded only once).

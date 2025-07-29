@@ -53,6 +53,9 @@ message TensorFeature {
   Shape shape = 1;
   string dtype = 2;
   string encoding = 3;
+  optional int64 minimum = 4;
+  optional int64 maximum = 5;
+  bool optional = 6;
 }
 
 message ClassLabel {
@@ -97,14 +100,17 @@ message AudioFeature {
   // audio. This value isn't used neither in encoding nor decoding.
   int64 sample_rate = 4;
   string encoding = 5;
+  bool lazy_decode = 6;
 }
 
 // A bounding box around an object in an image. Typically, bounding boxes are
 // tensors of type `tf.float32` and shape `[4,]` and contain the normalized
-// coordinates of the bounding box `[ymin, xmin, ymax, xmax]`.
+// coordinates of the bounding box `[ymin, xmin, ymax, xmax]`. Different formats
+// are supported through the `bbox_format` field.
 message BoundingBoxFeature {
   Shape shape = 1;
   string dtype = 2;
+  string bbox_format = 3;
 }
 
 message TextFeature {}

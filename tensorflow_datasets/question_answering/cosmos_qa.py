@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,17 +44,15 @@ Cosmos QA is a large-scale dataset of 35.6K problems that require
 """
 
 _SPLIT_DOWNLOAD_URL = {
-    'train':
-        'https://raw.githubusercontent.com/wilburOne/cosmosqa/master/data/train.csv',
-    'validation':
-        'https://raw.githubusercontent.com/wilburOne/cosmosqa/master/data/valid.csv',
-    'test':
-        'https://raw.githubusercontent.com/wilburOne/cosmosqa/master/data/test.jsonl'
+    'train': 'https://raw.githubusercontent.com/wilburOne/cosmosqa/master/data/train.csv',
+    'validation': 'https://raw.githubusercontent.com/wilburOne/cosmosqa/master/data/valid.csv',
+    'test': 'https://raw.githubusercontent.com/wilburOne/cosmosqa/master/data/test.jsonl',
 }
 
 
 class CosmosQA(tfds.core.GeneratorBasedBuilder):
   """The Cosmos QA dataset."""
+
   VERSION = tfds.core.Version('1.0.0')
 
   def _info(self):
@@ -84,7 +82,8 @@ class CosmosQA(tfds.core.GeneratorBasedBuilder):
 
     return [
         tfds.core.SplitGenerator(
-            name=split, gen_kwargs={'file_path': file_path})
+            name=split, gen_kwargs={'file_path': file_path}
+        )
         for split, file_path in file_paths.items()
     ]
 

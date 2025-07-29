@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,11 +36,14 @@ class Longt5(dataset_collection_builder.DatasetCollection):
     )
 
   @property
-  def datasets(self,) -> Mapping[str, Mapping[str, naming.DatasetReference]]:
-    return collections.OrderedDict({
-        "1.0.0":
-            naming.references_for({
+  def datasets(
+      self,
+  ) -> Mapping[str, Mapping[str, naming.DatasetReference]]:
+    return collections.OrderedDict(
+        {
+            "1.0.0": naming.references_for({
                 "natural_questions": "natural_questions/longt5:0.1.0",
                 "media_sum": "media_sum:1.0.0",
             })
-    })
+        }
+    )

@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -174,5 +174,5 @@ class Conll2002(tfds.dataset_builders.ConllDatasetBuilder):
     return {
         "train": self._generate_examples(dl_paths["train"]),
         "dev": self._generate_examples(dl_paths["dev"]),
-        "test": self._generate_examples(dl_paths["test"])
+        "test": self._generate_examples(dl_paths["test"]),
     }

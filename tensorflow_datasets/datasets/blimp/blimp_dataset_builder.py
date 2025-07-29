@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import json
 
+import numpy as np
 from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
 import tensorflow_datasets.public_api as tfds
 
@@ -41,10 +42,11 @@ class BlimpConfig(tfds.core.BuilderConfig):
         name=name,
         description=f'This configuration includes the paradigm {name}.',
         version=tfds.core.Version('0.1.0'),
-        **kwargs)
+        **kwargs,
+    )
 
 
-class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
+class Builder(tfds.core.GeneratorBasedBuilder):
   """Minimal grammatical and ungrammatical pairs of 67 linguistic paradigms."""
 
   all_paradigms = [
@@ -129,11 +131,11 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
             'field': tfds.features.Text(),
             'linguistics_term': tfds.features.Text(),
             'UID': tfds.features.Text(),
-            'simple_LM_method': tf.bool,
-            'one_prefix_method': tf.bool,
-            'two_prefix_method': tf.bool,
-            'lexically_identical': tf.bool,
-            'pair_id': tf.int32,
+            'simple_LM_method': np.bool_,
+            'one_prefix_method': np.bool_,
+            'two_prefix_method': np.bool_,
+            'lexically_identical': np.bool_,
+            'pair_id': np.int32,
         }),
         supervised_keys=None,
         # Homepage of the dataset for documentation
@@ -152,7 +154,8 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
     return [
         tfds.core.SplitGenerator(
             name=tfds.Split.TRAIN,
-            gen_kwargs={'filepath': downloaded_files[cfg.name]})
+            gen_kwargs={'filepath': downloaded_files[cfg.name]},
+        )
     ]
 
   def _generate_examples(self, filepath):

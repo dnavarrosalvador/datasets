@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 
 import csv
 
+import numpy as np
 from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
 import tensorflow_datasets.public_api as tfds
 
@@ -25,14 +26,17 @@ _HOMEPAGE = 'https://github.com/facebookresearch/asset'
 _LICENSE = 'Creative Common Attribution-NonCommercial 4.0 International'
 
 _URL_LIST = [
-    ('human_ratings.csv',
-     'https://raw.githubusercontent.com/facebookresearch/asset/main/human_ratings/human_ratings.csv'
+    (
+        'human_ratings.csv',
+        'https://raw.githubusercontent.com/facebookresearch/asset/main/human_ratings/human_ratings.csv',
     ),
-    ('asset.valid.orig',
-     'https://raw.githubusercontent.com/facebookresearch/asset/main/dataset/asset.valid.orig'
+    (
+        'asset.valid.orig',
+        'https://raw.githubusercontent.com/facebookresearch/asset/main/dataset/asset.valid.orig',
     ),
-    ('asset.test.orig',
-     'https://raw.githubusercontent.com/facebookresearch/asset/main/dataset/asset.test.orig'
+    (
+        'asset.test.orig',
+        'https://raw.githubusercontent.com/facebookresearch/asset/main/dataset/asset.test.orig',
     ),
 ]
 
@@ -42,13 +46,15 @@ _URL_LIST += [
     (  # pylint:disable=g-complex-comprehension
         f'asset.{spl}.simp.{i}',
         f'https://raw.githubusercontent.com/facebookresearch/asset/main/dataset/asset.{spl}.simp.{i}',
-    ) for spl in ['valid', 'test'] for i in range(10)
+    )
+    for spl in ['valid', 'test']
+    for i in range(10)
 ]
 
 _URLs = dict(_URL_LIST)
 
 
-class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
+class Builder(tfds.core.GeneratorBasedBuilder):
   """DatasetBuilder for asset dataset."""
 
   VERSION = tfds.core.Version('1.0.0')
@@ -59,12 +65,17 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
   BUILDER_CONFIGS = [
       tfds.core.BuilderConfig(
           name='simplification',
-          description='A set of original sentences aligned with 10 possible simplifications for each.'
+          description=(
+              'A set of original sentences aligned with 10 possible'
+              ' simplifications for each.'
+          ),
       ),
       tfds.core.BuilderConfig(
           name='ratings',
-          description='Human ratings of automatically produced text simplification.'
-      )
+          description=(
+              'Human ratings of automatically produced text simplification.'
+          ),
+      ),
   ]
 
   DEFAULT_CONFIG_NAME = 'simplification'
@@ -75,23 +86,18 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
     if self.builder_config.name == 'simplification':
       features = tfds.features.FeaturesDict({
           'original': tfds.features.Text(),
-          'simplifications': tfds.features.Sequence(tfds.features.Text())
+          'simplifications': tfds.features.Sequence(tfds.features.Text()),
       })
     else:
       features = tfds.features.FeaturesDict({
-          'original':
-              tfds.features.Text(),
-          'simplification':
-              tfds.features.Text(),
-          'original_sentence_id':
-              tf.int32,
-          'aspect':
-              tfds.features.ClassLabel(
-                  names=['meaning', 'fluency', 'simplicity']),
-          'worker_id':
-              tf.int32,
-          'rating':
-              tf.int32,
+          'original': tfds.features.Text(),
+          'simplification': tfds.features.Text(),
+          'original_sentence_id': np.int32,
+          'aspect': tfds.features.ClassLabel(
+              names=['meaning', 'fluency', 'simplicity']
+          ),
+          'worker_id': np.int32,
+          'rating': np.int32,
       })
 
     return self.dataset_info_from_configs(
@@ -106,10 +112,10 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
     data_dir = dl_manager.download_and_extract(_URLs)
     if self.builder_config.name == 'simplification':
       return {
-          'validation':
-              self._generate_examples(filepaths=data_dir, split='valid'),
-          'test':
-              self._generate_examples(filepaths=data_dir, split='test'),
+          'validation': self._generate_examples(
+              filepaths=data_dir, split='valid'
+          ),
+          'test': self._generate_examples(filepaths=data_dir, split='test'),
       }
     else:
       return {
@@ -127,7 +133,7 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
       for id_, lines in enumerate(zip(*files)):
         yield id_, {
             'original': lines[0].strip(),
-            'simplifications': [line.strip() for line in lines[1:]]
+            'simplifications': [line.strip() for line in lines[1:]],
         }
     else:
       with tf.io.gfile.GFile(filepaths['human_ratings.csv']) as f:

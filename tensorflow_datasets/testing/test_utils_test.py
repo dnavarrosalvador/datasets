@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,10 +17,9 @@
 
 import pathlib
 
+import mlcroissant as mlc
 import pytest
-
 import tensorflow as tf
-
 from tensorflow_datasets.testing import test_case
 from tensorflow_datasets.testing import test_utils
 
@@ -43,12 +42,14 @@ class RunInGraphAndEagerTest(test_case.TestCase):
 
     self.assertEqual(len(l), 4)
     self.assertEqual(
-        set(l), {
+        set(l),
+        {
             ('with_brackets', 'graph'),
             ('with_brackets', 'eager'),
             ('without_brackets', 'graph'),
             ('without_brackets', 'eager'),
-        })
+        },
+    )
 
   def test_run_in_graph_and_eager_modes_setup_in_same_mode(self):
     modes = []
@@ -75,14 +76,17 @@ class RunInGraphAndEagerTest(test_case.TestCase):
     e.setUp()
     e.testBody()
 
-    self.assertEqual(modes, [
-        'setup_eager',
-        'subtest_eager_mode',
-        'run_eager',
-        'subtest_graph_mode',
-        'setup_graph',
-        'run_graph',
-    ])
+    self.assertEqual(
+        modes,
+        [
+            'setup_eager',
+            'subtest_eager_mode',
+            'run_eager',
+            'subtest_graph_mode',
+            'setup_graph',
+            'run_graph',
+        ],
+    )
 
   def test_mock_tf(self):
     # pylint: disable=g-import-not-at-top,reimported
@@ -122,8 +126,7 @@ class RunInGraphAndEagerTest(test_case.TestCase):
 
 
 @pytest.mark.parametrize(
-    'as_path_fn',
-    [pathlib.Path, str]  # Test both PathLike and str
+    'as_path_fn', [pathlib.Path, str]  # Test both PathLike and str
 )
 def test_mock_fs(as_path_fn):
   _p = as_path_fn  # pylint: disable=invalid-name
@@ -165,8 +168,9 @@ def test_mock_fs(as_path_fn):
     assert fs.read_file('/path/to/file1_moved') == 'Content of file 1'
 
     # Test `tf.io.gfile.listdir`
-    assert (set(tf.io.gfile.listdir(_p('/path/to'))) == set(
-        tf.io.gfile.listdir(_p('/path/to/'))))
+    assert set(tf.io.gfile.listdir(_p('/path/to'))) == set(
+        tf.io.gfile.listdir(_p('/path/to/'))
+    )
     assert set(tf.io.gfile.listdir(_p('/path/to'))) == {'file1_moved', 'file2'}
     assert set(tf.io.gfile.listdir(_p('/path'))) == {'file.txt', 'to'}
 
@@ -206,3 +210,75 @@ def test_mock_fs_gcs():
     assert tf.io.gfile.glob(f'{bs}/bucket/*/file.txt') == [
         f'{bs}/bucket/dir/file.txt',
     ]
+
+
+def test_gcs_access():
+  gcs_utils = test_utils.utils.gcs_utils
+
+  def is_lambda(fn):
+    """Returns True if the function is a lambda."""
+    return callable(fn) and fn.__name__ == (lambda: None).__name__
+
+  # Test that `gcs_utils.gcs_dataset_info_files` is correctly patched
+  assert not is_lambda(gcs_utils.gcs_dataset_info_files)
+  with test_utils.disable_gcs_access():
+    assert is_lambda(gcs_utils.gcs_dataset_info_files)
+    with test_utils.enable_gcs_access():
+      assert not is_lambda(gcs_utils.gcs_dataset_info_files)
+    assert is_lambda(gcs_utils.gcs_dataset_info_files)
+  assert not is_lambda(gcs_utils.gcs_dataset_info_files)
+
+
+@pytest.mark.parametrize(
+    'entries,expected_records',
+    [
+        (
+            [
+                {'text': 'Dummy example 0', 'index': 0},
+            ],
+            [
+                {'jsonl/text': b'Dummy example 0', 'jsonl/index': 0},
+            ],
+        ),
+        (
+            [
+                {'text': 'Dummy example 0', 'index': 0},
+                {'text': None, 'index': 1},
+            ],
+            [
+                {'jsonl/text': b'Dummy example 0', 'jsonl/index': 0},
+                {'jsonl/text': None, 'jsonl/index': 1},
+            ],
+        ),
+        (
+            [],
+            [],
+        ),
+        # If entries is None, dummy_croissant_file will create two dummy
+        # entries.
+        (
+            None,
+            [
+                {'jsonl/text': b'Dummy example 0', 'jsonl/index': 0},
+                {'jsonl/text': b'Dummy example 1', 'jsonl/index': 1},
+            ],
+        ),
+    ],
+)
+def test_dummy_croissant_file(entries, expected_records):
+  with test_utils.dummy_croissant_file(entries=entries) as croissant_file:
+    dataset = mlc.Dataset(jsonld=croissant_file)
+
+    assert dataset.jsonld == croissant_file
+    assert dataset.mapping is None
+    assert dataset.metadata.description == 'Dummy description.'
+    assert dataset.metadata.url == 'https://dummy_url'
+    assert dataset.metadata.version == '1.2.0'
+
+    assert [record_set.id for record_set in dataset.metadata.record_sets] == [
+        'jsonl'
+    ]
+    if entries is not None:
+      assert len(tuple(dataset.records('jsonl'))) == len(expected_records)
+    for i, record in enumerate(dataset.records('jsonl')):
+      assert record == expected_records[i]

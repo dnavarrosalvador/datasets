@@ -50,8 +50,6 @@ builder = tfds.builder("wmt_translate", config=config)
 
     *   **`1.0.0`** (default): No release notes.
 
-*   **Dataset size**: `Unknown size`
-
 *   **Manual download instructions**: This dataset requires you to
     download the source data manually into `download_config.manual_dir`
     (defaults to `~/tensorflow_datasets/downloads/manual/`):<br/>
@@ -61,7 +59,7 @@ builder = tfds.builder("wmt_translate", config=config)
 
 *   **Auto-cached**
     ([documentation](https://www.tensorflow.org/datasets/performances#auto-caching)):
-    Unknown
+    No
 
 *   **Figure**
     ([tfds.show_examples](https://www.tensorflow.org/datasets/api_docs/python/tfds/visualization/show_examples)):
@@ -90,6 +88,8 @@ builder = tfds.builder("wmt_translate", config=config)
 
 *   **Download size**: `1.62 GiB`
 
+*   **Dataset size**: `2.89 GiB`
+
 *   **Splits**:
 
 Split          | Examples
@@ -102,18 +102,18 @@ Split          | Examples
 
 ```python
 Translation({
-    'cs': Text(shape=(), dtype=tf.string),
-    'en': Text(shape=(), dtype=tf.string),
+    'cs': Text(shape=(), dtype=string),
+    'en': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature | Class       | Shape | Dtype     | Description
-:------ | :---------- | :---- | :-------- | :----------
-        | Translation |       |           |
-cs      | Text        |       | tf.string |
-en      | Text        |       | tf.string |
+Feature | Class       | Shape | Dtype  | Description
+:------ | :---------- | :---- | :----- | :----------
+        | Translation |       |        |
+cs      | Text        |       | string |
+en      | Text        |       | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):
@@ -162,6 +162,8 @@ dataButton.addEventListener('click', async () => {
 
 *   **Download size**: `1.62 GiB`
 
+*   **Dataset size**: `1.37 GiB`
+
 *   **Splits**:
 
 Split          | Examples
@@ -174,18 +176,18 @@ Split          | Examples
 
 ```python
 Translation({
-    'de': Text(shape=(), dtype=tf.string),
-    'en': Text(shape=(), dtype=tf.string),
+    'de': Text(shape=(), dtype=string),
+    'en': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature | Class       | Shape | Dtype     | Description
-:------ | :---------- | :---- | :-------- | :----------
-        | Translation |       |           |
-de      | Text        |       | tf.string |
-en      | Text        |       | tf.string |
+Feature | Class       | Shape | Dtype  | Description
+:------ | :---------- | :---- | :----- | :----------
+        | Translation |       |        |
+de      | Text        |       | string |
+en      | Text        |       | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):
@@ -234,6 +236,8 @@ dataButton.addEventListener('click', async () => {
 
 *   **Download size**: `260.51 MiB`
 
+*   **Dataset size**: `623.22 MiB`
+
 *   **Splits**:
 
 Split          | Examples
@@ -246,18 +250,18 @@ Split          | Examples
 
 ```python
 Translation({
-    'en': Text(shape=(), dtype=tf.string),
-    'fi': Text(shape=(), dtype=tf.string),
+    'en': Text(shape=(), dtype=string),
+    'fi': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature | Class       | Shape | Dtype     | Description
-:------ | :---------- | :---- | :-------- | :----------
-        | Translation |       |           |
-en      | Text        |       | tf.string |
-fi      | Text        |       | tf.string |
+Feature | Class       | Shape | Dtype  | Description
+:------ | :---------- | :---- | :----- | :----------
+        | Translation |       |        |
+en      | Text        |       | string |
+fi      | Text        |       | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):
@@ -306,6 +310,8 @@ dataButton.addEventListener('click', async () => {
 
 *   **Download size**: `6.24 GiB`
 
+*   **Dataset size**: `14.65 GiB`
+
 *   **Splits**:
 
 Split          | Examples
@@ -318,18 +324,18 @@ Split          | Examples
 
 ```python
 Translation({
-    'en': Text(shape=(), dtype=tf.string),
-    'fr': Text(shape=(), dtype=tf.string),
+    'en': Text(shape=(), dtype=string),
+    'fr': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature | Class       | Shape | Dtype     | Description
-:------ | :---------- | :---- | :-------- | :----------
-        | Translation |       |           |
-en      | Text        |       | tf.string |
-fr      | Text        |       | tf.string |
+Feature | Class       | Shape | Dtype  | Description
+:------ | :---------- | :---- | :----- | :----------
+        | Translation |       |        |
+en      | Text        |       | string |
+fr      | Text        |       | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):
@@ -378,6 +384,8 @@ dataButton.addEventListener('click', async () => {
 
 *   **Download size**: `1.02 GiB`
 
+*   **Dataset size**: `843.90 MiB`
+
 *   **Splits**:
 
 Split          | Examples
@@ -390,18 +398,18 @@ Split          | Examples
 
 ```python
 Translation({
-    'en': Text(shape=(), dtype=tf.string),
-    'ru': Text(shape=(), dtype=tf.string),
+    'en': Text(shape=(), dtype=string),
+    'ru': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature | Class       | Shape | Dtype     | Description
-:------ | :---------- | :---- | :-------- | :----------
-        | Translation |       |           |
-en      | Text        |       | tf.string |
-ru      | Text        |       | tf.string |
+Feature | Class       | Shape | Dtype  | Description
+:------ | :---------- | :---- | :----- | :----------
+        | Translation |       |        |
+en      | Text        |       | string |
+ru      | Text        |       | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,25 +20,20 @@ import json
 
 from absl import logging
 from etils import epath
-from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
+import numpy as np
 import tensorflow_datasets.public_api as tfds
 
 
 def squadlike_features():
   return tfds.features.FeaturesDict({
-      "id":
-          tf.string,
-      "title":
-          tfds.features.Text(),
-      "context":
-          tfds.features.Text(),
-      "question":
-          tfds.features.Text(),
-      "answers":
-          tfds.features.Sequence({
-              "text": tfds.features.Text(),
-              "answer_start": tf.int32,
-          }),
+      "id": np.str_,
+      "title": tfds.features.Text(),
+      "context": tfds.features.Text(),
+      "question": tfds.features.Text(),
+      "answers": tfds.features.Sequence({
+          "text": tfds.features.Text(),
+          "answer_start": np.int32,
+      }),
   })
 
 

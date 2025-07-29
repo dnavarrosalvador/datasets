@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,12 +19,10 @@ TFDS CLI to help creates and build datasets (e.g. `tfds new my_dataset`,
 `tfds build`,...)
 
 See: https://www.tensorflow.org/datasets/cli
-
 """
 
 import argparse
 import logging as python_logging
-import sys
 from typing import List
 
 from absl import app
@@ -36,6 +34,8 @@ import tensorflow_datasets.public_api as tfds
 
 # Import commands
 from tensorflow_datasets.scripts.cli import build
+from tensorflow_datasets.scripts.cli import convert_format
+from tensorflow_datasets.scripts.cli import croissant
 from tensorflow_datasets.scripts.cli import new
 from tensorflow_datasets.scripts.utils import flag_utils
 
@@ -53,12 +53,20 @@ def _parse_flags(argv: List[str]) -> argparse.Namespace:
   parser.add_argument(
       '--version',
       action='version',
-      version='TensorFlow Datasets: ' + tfds.__version__)
+      version='TensorFlow Datasets: ' + tfds.__version__,
+  )
+  parser.add_argument(
+      '--dry_run',
+      action='store_true',
+      help='If True, print the parsed arguments.',
+  )
   parser.set_defaults(subparser_fn=lambda _: parser.print_help())
   # Register sub-commands
   subparser = parser.add_subparsers(title='command')
   build.register_subparser(subparser)
   new.register_subparser(subparser)
+  convert_format.register_subparser(subparser)
+  croissant.register_subparser(subparser)
   return parser.parse_args(argv[1:])
 
 
@@ -78,25 +86,26 @@ def main(args: argparse.Namespace) -> None:
   # `absl.run` (e.g. open source `pytest` tests)
   if not FLAGS.is_parsed() or (
       # If user explicitly request logs, keep C++ logger
-      not FLAGS.logtostderr and not FLAGS.alsologtostderr
+      not FLAGS.logtostderr
+      and not FLAGS.alsologtostderr
   ):
     # Using cleaner, less verbose logger
     formatter = python_logging.Formatter(
-        '{levelname}[{filename}]: {message}', style='{')
+        '{levelname}[{filename}]: {message}', style='{'
+    )
     logging.use_python_logging(quiet=True)
     logging.set_verbosity(logging.INFO)
     python_handler = logging.get_absl_handler().python_handler
     python_handler.setFormatter(formatter)
     # Replace `sys.stderr` by the TQDM file
     new_stream = tfds.core.utils.tqdm_utils.TqdmStream()
-    if sys.version_info >= (3, 7):
-      python_handler.setStream(new_stream)
-    else:
-      python_handler.stream.flush()
-      python_handler.stream = new_stream
+    python_handler.setStream(new_stream)
 
-  # Launch the subcommand defined in the subparser (or default to print help)
-  args.subparser_fn(args)
+  if args.dry_run:
+    print(args)
+  else:
+    # Launch the subcommand defined in the subparser (or default to print help)
+    args.subparser_fn(args)
 
 
 def launch_cli() -> None:

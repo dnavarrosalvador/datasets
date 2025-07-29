@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,14 +22,17 @@ from tensorflow_datasets.video.tao import tao
 
 class TaoTest(tfds.testing.DatasetBuilderTestCase):
   """Tests for tao dataset."""
+
   DATASET_CLASS = tao.Tao
   SPLITS = {
       tfds.Split.TRAIN: 1,
       tfds.Split.VALIDATION: 1,
+      tfds.Split.TEST: 1,
   }
   DL_EXTRACT_RESULT = {
       'train': '',
       'val': '',
+      'test': '',
       'annotations': '',
   }
 
@@ -57,20 +60,24 @@ class TaoTest(tfds.testing.DatasetBuilderTestCase):
       splits = builder.as_dataset()
       train_ex = list(splits[tfds.Split.TRAIN])[0]
       val_ex = list(splits[tfds.Split.VALIDATION])[0]
-      for ex in [train_ex, val_ex]:
+      test_ex = list(splits[tfds.Split.TEST])[0]
+      for ex in [train_ex, val_ex, test_ex]:
         # There should be the same number of each of these; a number
         # per group of bboxes indicating which frame they correspond to.
-        self.assertEqual(ex['tracks']['bboxes'].shape[0],
-                         ex['tracks']['frames'].shape[0])
+        self.assertEqual(
+            ex['tracks']['bboxes'].shape[0], ex['tracks']['frames'].shape[0]
+        )
 
     with self.subTest('check_video'):
       splits = builder.as_dataset()
       train_ex = list(splits[tfds.Split.TRAIN])[0]
       val_ex = list(splits[tfds.Split.VALIDATION])[0]
+      test_ex = list(splits[tfds.Split.TEST])[0]
       # NOTE: For real images, this will be a list of potentially a thousand or
       # more frames. For testing purposes we load a single dummy 10 X 10 image.
       self.assertEqual(train_ex['video'].shape, (1, 28, 42, 3))
       self.assertEqual(val_ex['video'].shape, (1, 28, 42, 3))
+      self.assertEqual(test_ex['video'].shape, (1, 28, 42, 3))
 
 
 if __name__ == '__main__':

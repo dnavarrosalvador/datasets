@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,9 +29,24 @@ from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
 import tensorflow_datasets.public_api as tfds
 
 _PRIMARY_STYLES = [
-    "afrobeat", "afrocuban", "blues", "country", "dance", "funk", "gospel",
-    "highlife", "hiphop", "jazz", "latin", "middleeastern", "neworleans", "pop",
-    "punk", "reggae", "rock", "soul"
+    "afrobeat",
+    "afrocuban",
+    "blues",
+    "country",
+    "dance",
+    "funk",
+    "gospel",
+    "highlife",
+    "hiphop",
+    "jazz",
+    "latin",
+    "middleeastern",
+    "neworleans",
+    "pop",
+    "punk",
+    "reggae",
+    "rock",
+    "soul",
 ]
 
 _TIME_SIGNATURES = ["3-4", "4-4", "5-4", "5-8", "6-8"]
@@ -43,11 +58,9 @@ _DOWNLOAD_URL_MIDI_ONLY = "https://storage.googleapis.com/magentadata/datasets/g
 class GrooveConfig(tfds.core.BuilderConfig):
   """BuilderConfig for Groove Dataset."""
 
-  def __init__(self,
-               split_bars=None,
-               include_audio=True,
-               audio_rate=16000,
-               **kwargs):
+  def __init__(
+      self, split_bars=None, include_audio=True, audio_rate=16000, **kwargs
+  ):
     """Constructs a GrooveConfig.
 
     Args:
@@ -74,53 +87,53 @@ class GrooveConfig(tfds.core.BuilderConfig):
     self.audio_rate = audio_rate
 
 
-class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
+class Builder(tfds.core.GeneratorBasedBuilder):
   """The Groove MIDI Dataset (GMD) of drum performances."""
 
   BUILDER_CONFIGS = [
       GrooveConfig(
           include_audio=False,
-          description="Groove dataset without audio, unsplit."),
+          description="Groove dataset without audio, unsplit.",
+      ),
       GrooveConfig(
-          include_audio=True,
-          description="Groove dataset with audio, unsplit."),
+          include_audio=True, description="Groove dataset with audio, unsplit."
+      ),
       GrooveConfig(
           include_audio=False,
           split_bars=2,
-          description="Groove dataset without audio, split into 2-bar chunks."),
+          description="Groove dataset without audio, split into 2-bar chunks.",
+      ),
       GrooveConfig(
           include_audio=True,
           split_bars=2,
-          description="Groove dataset with audio, split into 2-bar chunks."),
+          description="Groove dataset with audio, split into 2-bar chunks.",
+      ),
       GrooveConfig(
           include_audio=False,
           split_bars=4,
-          description="Groove dataset without audio, split into 4-bar chunks."),
+          description="Groove dataset without audio, split into 4-bar chunks.",
+      ),
   ]
 
   def _info(self):
     features_dict = {
-        "id":
-            tf.string,
-        "drummer":
-            tfds.features.ClassLabel(
-                names=["drummer%d" % i for i in range(1, 11)]),
-        "type":
-            tfds.features.ClassLabel(names=["beat", "fill"]),
-        "bpm":
-            tf.int32,
-        "time_signature":
-            tfds.features.ClassLabel(names=_TIME_SIGNATURES),
+        "id": tf.string,
+        "drummer": tfds.features.ClassLabel(
+            names=["drummer%d" % i for i in range(1, 11)]
+        ),
+        "type": tfds.features.ClassLabel(names=["beat", "fill"]),
+        "bpm": tf.int32,
+        "time_signature": tfds.features.ClassLabel(names=_TIME_SIGNATURES),
         "style": {
             "primary": tfds.features.ClassLabel(names=_PRIMARY_STYLES),
             "secondary": tf.string,
         },
-        "midi":
-            tf.string
+        "midi": tf.string,
     }
     if self.builder_config.include_audio:
       features_dict["audio"] = tfds.features.Audio(
-          dtype=tf.float32, sample_rate=self.builder_config.audio_rate)
+          dtype=np.float32, sample_rate=self.builder_config.audio_rate
+      )
     return self.dataset_info_from_configs(
         features=tfds.features.FeaturesDict(features_dict),
         homepage="https://g.co/magenta/groove-dataset",
@@ -131,8 +144,12 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
     # Download data.
     data_dir = os.path.join(
         dl_manager.download_and_extract(
-            _DOWNLOAD_URL if self._builder_config
-            .include_audio else _DOWNLOAD_URL_MIDI_ONLY), "groove")
+            _DOWNLOAD_URL
+            if self._builder_config.include_audio  # pytype: disable=attribute-error  # always-use-return-annotations
+            else _DOWNLOAD_URL_MIDI_ONLY
+        ),
+        "groove",
+    )
 
     rows = collections.defaultdict(list)
     with tf.io.gfile.GFile(os.path.join(data_dir, "info.csv")) as f:
@@ -142,28 +159,27 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
 
     return [
         tfds.core.SplitGenerator(  # pylint: disable=g-complex-comprehension
-            name=split,
-            gen_kwargs={
-                "rows": split_rows,
-                "data_dir": data_dir
-            }) for split, split_rows in rows.items()
+            name=split, gen_kwargs={"rows": split_rows, "data_dir": data_dir}
+        )
+        for split, split_rows in rows.items()
     ]
 
   def _generate_examples(self, rows, data_dir):
-    split_bars = self._builder_config.split_bars
+    split_bars = self._builder_config.split_bars  # pytype: disable=attribute-error  # always-use-return-annotations
     for row in rows:
       split_genre = row["style"].split("/")
       with tf.io.gfile.GFile(
-          os.path.join(data_dir, row["midi_filename"]), "rb") as midi_f:
+          os.path.join(data_dir, row["midi_filename"]), "rb"
+      ) as midi_f:
         midi = midi_f.read()
       audio = None
-      if self._builder_config.include_audio:
+      if self._builder_config.include_audio:  # pytype: disable=attribute-error  # always-use-return-annotations
         if not row["audio_filename"]:
           # Skip examples with no audio.
           logging.warning("Skipping example with no audio: %s", row["id"])
           continue
         wav_path = os.path.join(data_dir, row["audio_filename"])
-        audio = _load_wav(wav_path, self._builder_config.audio_rate)
+        audio = _load_wav(wav_path, self._builder_config.audio_rate)  # pytype: disable=attribute-error  # always-use-return-annotations
 
       example = {
           "id": row["id"],
@@ -173,7 +189,7 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
           "time_signature": row["time_signature"],
           "style": {
               "primary": split_genre[0],
-              "secondary": split_genre[1] if len(split_genre) == 2 else ""
+              "secondary": split_genre[1] if len(split_genre) == 2 else "",
           },
       }
       if not split_bars:
@@ -187,7 +203,7 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
         bpm = int(row["bpm"])
         beats_per_bar = int(row["time_signature"].split("-")[0])
         bar_duration = 60 / bpm * beats_per_bar
-        audio_rate = self._builder_config.audio_rate
+        audio_rate = self._builder_config.audio_rate  # pytype: disable=attribute-error  # always-use-return-annotations
 
         pm = tfds.core.lazy_imports.pretty_midi.PrettyMIDI(io.BytesIO(midi))
         total_duration = pm.get_end_time()
@@ -211,9 +227,11 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
 
           # Split audio.
           if audio is not None:
-            example["audio"] = audio[int(time_range[0] *
-                                         audio_rate):int(time_range[1] *
-                                                         audio_rate)]
+            example["audio"] = audio[
+                int(time_range[0] * audio_rate) : int(
+                    time_range[1] * audio_rate
+                )
+            ]
 
           example["id"] += ":%03d" % i
           yield example["id"], example
@@ -221,9 +239,14 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
 
 def _load_wav(path, sample_rate):
   with tf.io.gfile.GFile(path, "rb") as audio_f:
-    audio_segment = tfds.core.lazy_imports.pydub.AudioSegment.from_file(
-        audio_f, format="wav").set_channels(1).set_frame_rate(sample_rate)
+    audio_segment = (
+        tfds.core.lazy_imports.pydub.AudioSegment.from_file(
+            audio_f, format="wav"
+        )
+        .set_channels(1)
+        .set_frame_rate(sample_rate)
+    )
   audio = np.array(audio_segment.get_array_of_samples()).astype(np.float32)
   # Convert from int to float representation.
-  audio /= 2**(8 * audio_segment.sample_width)
+  audio /= 2 ** (8 * audio_segment.sample_width)
   return audio

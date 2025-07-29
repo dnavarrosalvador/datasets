@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
 import tensorflow_datasets.public_api as tfds
 
 
-class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
+class Builder(tfds.core.GeneratorBasedBuilder):
   """DatasetBuilder for s3o4d dataset."""
 
   VERSION = tfds.core.Version('1.0.0')
@@ -36,9 +36,9 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
         features=tfds.features.FeaturesDict({
             'image': tfds.features.Image(shape=(256, 256, 3)),
             'label': tfds.features.ClassLabel(names=['bunny', 'dragon']),
-            'illumination': tfds.features.Tensor(shape=(3,), dtype=tf.float32),
-            'pose_quat': tfds.features.Tensor(shape=(4,), dtype=tf.float32),
-            'pose_mat': tfds.features.Tensor(shape=(3, 3), dtype=tf.float32),
+            'illumination': tfds.features.Tensor(shape=(3,), dtype=np.float32),
+            'pose_quat': tfds.features.Tensor(shape=(4,), dtype=np.float32),
+            'pose_mat': tfds.features.Tensor(shape=(3, 3), dtype=np.float32),
         }),
         supervised_keys=None,
         homepage='https://github.com/deepmind/deepmind-research/tree/master/geomancer#stanford-3d-objects-for-disentangling-s3o4d',
@@ -48,25 +48,44 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
     """Returns SplitGenerators."""
 
     suffices = {'img': 'images.zip', 'latent': 'latents.npz'}
-    prod = itertools.product(['bunny', 'dragon'], ['train', 'test'],
-                             ['img', 'latent'])
-    path_dict = dict([
-        ('_'.join([a, b, c]),
-         f'https://storage.googleapis.com/dm_s3o4d/{a}/{b}_{suffices[c]}')
-        for a, b, c in prod
-    ])
+    prod = itertools.product(
+        ['bunny', 'dragon'], ['train', 'test'], ['img', 'latent']
+    )
+    path_dict = dict(
+        [
+            (
+                '_'.join([a, b, c]),
+                f'https://storage.googleapis.com/dm_s3o4d/{a}/{b}_{suffices[c]}',
+            )
+            for a, b, c in prod
+        ]
+    )
     paths = dl_manager.download(path_dict)
 
-    return dict([
-        (  # pylint: disable=g-complex-comprehension
-            '_'.join([a, b]),
-            self._generate_examples(dl_manager, paths['_'.join([a, b, 'img'])],
-                                    paths['_'.join([a, b, 'latent'])], a))
-        for a, b in itertools.product(['bunny', 'dragon'], ['train', 'test'])
-    ])
+    return dict(
+        [
+            (  # pylint: disable=g-complex-comprehension
+                '_'.join([a, b]),
+                self._generate_examples(
+                    dl_manager,
+                    paths['_'.join([a, b, 'img'])],
+                    paths['_'.join([a, b, 'latent'])],
+                    a,
+                ),
+            )
+            for a, b in itertools.product(
+                ['bunny', 'dragon'], ['train', 'test']
+            )
+        ]
+    )
 
-  def _generate_examples(self, dl_manager: tfds.download.DownloadManager,
-                         img_path, latent_path, label):
+  def _generate_examples(
+      self,
+      dl_manager: tfds.download.DownloadManager,
+      img_path,
+      latent_path,
+      label,
+  ):
     """Yields examples."""
     with tf.io.gfile.GFile(latent_path, 'rb') as f:
       latents = dict(np.load(f))

@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ from unittest import mock
 
 from etils import epath
 import pytest
-
 from tensorflow_datasets.core import dataset_builder
 from tensorflow_datasets.core import naming
 from tensorflow_datasets.core import registered
@@ -39,17 +38,17 @@ from tensorflow_datasets.core.community import register_package
 
 
 @contextlib.contextmanager
-def mock_cache_path(new_cache_dir: epath.PathLike) -> Iterator[None]:
+def mock_cache_path(new_cache_dir: epath.Path) -> Iterator[None]:
   """Mock which overwrite the cache path."""
-  new_dir = epath.Path(new_cache_dir)
-
   # Use `__wrapped__` to access the original function wrapped inside
   # `functools.lru_cache`
   new_cache_path = utils.memoize()(cache.cache_path.__wrapped__)
   new_module_path = utils.memoize()(cache.module_path.__wrapped__)
-  with mock.patch.object(cache, '_default_cache_dir', return_value=new_dir), \
-       mock.patch.object(cache, 'cache_path', new_cache_path), \
-       mock.patch.object(cache, 'module_path', new_module_path):
+  with mock.patch.object(
+      cache, '_default_cache_dir', return_value=new_cache_dir
+  ), mock.patch.object(cache, 'cache_path', new_cache_path), mock.patch.object(
+      cache, 'module_path', new_module_path
+  ):
     yield
 
 
@@ -58,7 +57,7 @@ def dummy_register():
   """Dummy register."""
 
   with tempfile.TemporaryDirectory() as tmp_path:
-    tmp_path = pathlib.Path(tmp_path)
+    tmp_path = epath.Path(tmp_path)
 
     source_path = utils.tfds_path() / 'testing/dummy_dataset/dummy_dataset.py'
 
@@ -86,7 +85,9 @@ def dummy_register():
       yield register_package.PackageRegister(path=dummy_path)
 
 
-def test_list_dataset_references(dummy_register):  # pylint: disable=redefined-outer-name
+def test_list_dataset_references(
+    dummy_register: register_package.PackageRegister,
+):  # pylint: disable=redefined-outer-name
   assert sorted(dummy_register.list_dataset_references()) == [
       naming.DatasetReference(dataset_name='ds1', namespace='kaggle'),
       naming.DatasetReference(dataset_name='dummy_dataset', namespace='kaggle'),
@@ -94,8 +95,7 @@ def test_list_dataset_references(dummy_register):  # pylint: disable=redefined-o
   ]
 
 
-def test_builder_cls(dummy_register):  # pylint: disable=redefined-outer-name
-
+def test_builder_cls(dummy_register: register_package.PackageRegister):  # pylint: disable=redefined-outer-name
   # The dataset will be installed in the cache
   installed_path = cache.cache_path()
   installed_path /= 'modules/tfds_community/kaggle/dummy_dataset'
@@ -105,7 +105,7 @@ def test_builder_cls(dummy_register):  # pylint: disable=redefined-outer-name
   builder_cls = dummy_register.builder_cls(ds_name)
   assert builder_cls.name == 'dummy_dataset'
 
-  clshash = 'cb71f9cc30261640a34c0902e9828ef436f08beabc352f35ba58798136efb679'
+  clshash = '6806575195fd56423450330f62bc81f053bb46f7505eeb537e32f599673876fe'
   assert installed_path / f'{clshash}/dummy_dataset.py' == builder_cls.code_path
   assert 'kaggle' in builder_cls.code_path.parts
   assert issubclass(builder_cls, dataset_builder.DatasetBuilder)
@@ -119,7 +119,8 @@ def test_builder_cls(dummy_register):  # pylint: disable=redefined-outer-name
   with mock.patch.object(
       register_package,
       '_download_and_cache',
-      side_effect=ValueError('Dataset should have been cached already')):
+      side_effect=ValueError('Dataset should have been cached already'),
+  ):
     ds_name = naming.DatasetName('kaggle:dummy_dataset')
     builder_cls2 = dummy_register.builder_cls(ds_name)
   assert builder_cls is builder_cls2
@@ -149,7 +150,8 @@ def test_dataset_package():
   pkg = register_package.DatasetPackage(
       name=naming.DatasetName('ns:ds'),
       source=dataset_sources.DatasetSource.from_json(
-          'github://<owner>/<name>/tree/<branch>/my_ds/ds.py',),
+          'github://<owner>/<name>/tree/<branch>/my_ds/ds.py',
+      ),
   )
   assert register_package.DatasetPackage.from_json(pkg.to_json()) == pkg
 
@@ -162,7 +164,7 @@ def test_dataset_package():
 
 
 def test_mock_cache_path(tmp_path: pathlib.Path):
-  with mock_cache_path(tmp_path):
+  with mock_cache_path(epath.Path(tmp_path)):
     assert os.fspath(tmp_path) not in sys.path
     assert cache.cache_path() == tmp_path
     assert cache.module_path() == tmp_path / 'modules'

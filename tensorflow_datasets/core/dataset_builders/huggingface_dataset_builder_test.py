@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,86 +13,131 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Tests for huggingface_dataset_builder."""
-import datetime
-import pytest
-import tensorflow as tf
+from unittest import mock
 
-from tensorflow_datasets.core import features as feature_lib
+import datasets as hf_datasets
+import numpy as np
+import pytest
 from tensorflow_datasets.core import lazy_imports_lib
 from tensorflow_datasets.core.dataset_builders import huggingface_dataset_builder
+from tensorflow_datasets.core.utils.lazy_imports_utils import huggingface_hub
+
+PIL_Image = lazy_imports_lib.lazy_imports.PIL_Image
 
 
-def test_convert_dataset_name():
-  assert huggingface_dataset_builder._convert_dataset_name("x") == "x"
-  assert huggingface_dataset_builder._convert_dataset_name("X") == "x"
-  assert huggingface_dataset_builder._convert_dataset_name("x-y") == "x_y"
-  assert huggingface_dataset_builder._convert_dataset_name("x/y") == "x__y"
+class DummyHuggingfaceBuilder(hf_datasets.GeneratorBasedBuilder):
+
+  def _info(self):
+    return hf_datasets.DatasetInfo(
+        description='description',
+        citation='citation',
+        license='test-license',
+        features=None,
+        version='1.0.0',
+    )
+
+  def _split_generators(self, dl_manager):
+    return [hf_datasets.SplitGenerator(name='train.clean')]
+
+  def _generate_examples(self):
+    for i in range(2):
+      yield i, {
+          'number': i,
+          'text': f'{i}',
+          'image': PIL_Image.new(mode='L', size=(4, 4)),
+      }
 
 
-def test_convert_config_name():
-  assert huggingface_dataset_builder._convert_config_name("x") == "x"
-  assert huggingface_dataset_builder._convert_config_name("X") == "x"
+@pytest.fixture(name='load_dataset_builder')
+def mock_load_dataset_builder(tmp_path):
+  hf_builder = DummyHuggingfaceBuilder(cache_dir=tmp_path / 'data')
+  hf_builder.download_and_prepare = mock.Mock(
+      wraps=hf_builder.download_and_prepare
+  )
+  with mock.patch.object(
+      hf_datasets, 'load_dataset_builder', return_value=hf_builder
+  ) as load_dataset_builder:
+    yield load_dataset_builder
 
 
-def test_convert_to_tf_dtype():
-  assert huggingface_dataset_builder._convert_to_tf_dtype("bool_") == tf.bool
-  assert huggingface_dataset_builder._convert_to_tf_dtype("float") == tf.float32
-  assert huggingface_dataset_builder._convert_to_tf_dtype(
-      "double") == tf.float64
-  assert huggingface_dataset_builder._convert_to_tf_dtype(
-      "large_string") == tf.string
-  assert huggingface_dataset_builder._convert_to_tf_dtype("utf8") == tf.string
-  assert huggingface_dataset_builder._convert_to_tf_dtype("int32") == tf.int32
-  assert huggingface_dataset_builder._convert_to_tf_dtype("int64") == tf.int64
-  assert huggingface_dataset_builder._convert_to_tf_dtype(
-      "timestamp[s, tz=UTC]") == tf.int64
-  with pytest.raises(ValueError, match="Unrecognized type.+"):
-    huggingface_dataset_builder._convert_to_tf_dtype("I am no dtype")
+@pytest.fixture(name='login_to_hf')
+def mock_login_to_hf():
+  with mock.patch.object(
+      huggingface_dataset_builder, 'login_to_hf'
+  ) as login_to_hf:
+    yield login_to_hf
 
 
-def test_convert_value_datetime():
-  feature = feature_lib.Scalar(dtype=tf.int64)
-  epoch_start = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
-  assert huggingface_dataset_builder._convert_value(epoch_start, feature) == 0
-  assert huggingface_dataset_builder._convert_value(
-      datetime.datetime(1970, 1, 2, tzinfo=datetime.timezone.utc),
-      feature) == 86400
+@pytest.fixture(autouse=True)
+def mock_hub_dataset_info():
+  fake_dataset_info = huggingface_hub.hf_api.DatasetInfo(
+      id='foo/bar',
+      citation='citation from the hub',
+      private=False,
+      downloads=123,
+      likes=456,
+      tags=[],
+  )
+  with mock.patch.object(
+      huggingface_hub, 'dataset_info', return_value=fake_dataset_info
+  ) as dataset_info:
+    yield dataset_info
 
 
-def test_convert_value_scalar():
-  int64_feature = feature_lib.Scalar(dtype=tf.int64)
-  assert huggingface_dataset_builder._convert_value(None, int64_feature) == 0
-  assert huggingface_dataset_builder._convert_value(42, int64_feature) == 42
-
-  int32_feature = feature_lib.Scalar(dtype=tf.int32)
-  assert huggingface_dataset_builder._convert_value(None, int32_feature) == 0
-  assert huggingface_dataset_builder._convert_value(42, int32_feature) == 42
-
-  string_feature = feature_lib.Scalar(dtype=tf.string)
-  assert not huggingface_dataset_builder._convert_value(None, string_feature)
-  assert huggingface_dataset_builder._convert_value("abc",
-                                                    string_feature) == "abc"
-
-  bool_feature = feature_lib.Scalar(dtype=tf.bool)
-  assert not huggingface_dataset_builder._convert_value(None, bool_feature)
-  assert huggingface_dataset_builder._convert_value(True, bool_feature)
-  assert not huggingface_dataset_builder._convert_value(False, bool_feature)
-
-  float_feature = feature_lib.Scalar(dtype=tf.float32)
-  assert huggingface_dataset_builder._convert_value(None, float_feature) == 0.0
-  assert huggingface_dataset_builder._convert_value(42.0, float_feature) == 42.0
+@pytest.fixture(name='builder')
+def mock_huggingface_dataset_builder(
+    tmp_path, load_dataset_builder, login_to_hf
+):
+  builder = huggingface_dataset_builder.HuggingfaceDatasetBuilder(
+      file_format='array_record',
+      hf_repo_id='foo/bar',
+      hf_config='config',
+      ignore_verifications=True,
+      data_dir=tmp_path / 'data',
+      hf_hub_token='SECRET_TOKEN',
+      hf_num_proc=100,
+      other_arg='this is another arg',
+  )
+  load_dataset_builder.assert_called_once_with(
+      'foo/bar', 'config', other_arg='this is another arg'
+  )
+  login_to_hf.assert_called_once_with('SECRET_TOKEN')
+  yield builder
 
 
-def test_convert_value_sequence():
-  sequence_feature = feature_lib.Sequence(feature=tf.int64)
-  assert huggingface_dataset_builder._convert_value([42],
-                                                    sequence_feature) == [42]
-  assert huggingface_dataset_builder._convert_value(42,
-                                                    sequence_feature) == [42]
+def test_dataset_info(builder):
+  assert builder.info.description == 'description'
+  assert builder.info.citation == 'citation from the hub'
+  assert builder.info.redistribution_info.license == 'test-license'
+  assert builder.info.homepage == 'https://huggingface.co/datasets/foo/bar'
 
 
-def test_convert_value_image():
-  image_feature = feature_lib.Image()
-  image = lazy_imports_lib.lazy_imports.PIL_Image.new(mode="RGB", size=(4, 4))
-  assert huggingface_dataset_builder._convert_value(image, image_feature)
+def test_download_and_prepare(builder):
+  builder.download_and_prepare()
+  ds = builder.as_data_source()
+  expected_image = PIL_Image.new(mode='RGB', size=(4, 4))
+  # Split names are sanitized, eg train.clean -> train_clean
+  for element, expected in zip(
+      ds['train_clean'],
+      [
+          {'number': 0, 'text': b'0', 'image': expected_image},
+          {'number': 1, 'text': b'1', 'image': expected_image},
+      ],
+  ):
+    for feature in ['number', 'text', 'image']:
+      assert np.array_equal(element[feature], expected[feature])
+  assert len(ds['train_clean']) == 2
+
+
+def test_all_parameters_are_passed_down_to_hf(builder):
+  builder._hf_builder.download_and_prepare.assert_called_once_with(
+      verification_mode='no_checks', num_proc=100
+  )
+
+
+def test_hf_features(builder):
+  assert builder._hf_features() == {
+      'number': hf_datasets.Value('int64'),
+      'text': hf_datasets.Value('string'),
+      'image': hf_datasets.Image(),
+  }

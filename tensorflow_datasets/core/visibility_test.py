@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,8 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-"""Tests for tensorflow_datasets.core.visibility."""
 
 import tensorflow_datasets as tfds
 from tensorflow_datasets.core import visibility
@@ -28,3 +26,9 @@ def test_visibility():
   # `absl.app` should detect the TFDS script and restrict the visibility
   # to TFDS public by default.
   assert visibility._current_available == {visibility.DatasetType.TFDS_PUBLIC}
+  assert 'mnist' in tfds.list_builders()
+  assert 'abstract_reasoning' in tfds.list_builders()
+  # Remove all visibility and check that the datasets are not available.
+  with visibility.set_availables_tmp([]):
+    assert 'mnist' not in tfds.list_builders()
+    assert 'abstract_reasoning' not in tfds.list_builders()

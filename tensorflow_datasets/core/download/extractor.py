@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,47 +56,59 @@ class _Extractor(object):
   def __init__(self, max_workers=None):
     max_workers = max_workers or multiprocessing.cpu_count()
     self._executor = concurrent.futures.ThreadPoolExecutor(
-        max_workers=max_workers)
-    self._copy_executor = concurrent.futures.ThreadPoolExecutor(
-        max_workers=max_workers * 4)
+        max_workers=max_workers * 4
+    )
     self._pbar_path = None
 
   @contextlib.contextmanager
   def tqdm(self):
     """Add a progression bar for the current extraction."""
     with utils.async_tqdm(
-        total=0, desc='Extraction completed...', unit=' file') as pbar_path:
+        total=0, desc='Extraction completed...', unit=' file', mininterval=1.0
+    ) as pbar_path:
       self._pbar_path = pbar_path
       yield
 
-  def extract(self, path, extract_method, to_path):
+  def extract(
+      self,
+      path: epath.PathLike,
+      extract_method: resource_lib.ExtractMethod,
+      to_path: epath.PathLike,
+  ) -> promise.Promise:
     """Returns `promise.Promise` => to_path."""
-    path = os.fspath(path)
-    to_path = os.fspath(to_path)
+    path = epath.Path(path)
+    to_path = epath.Path(to_path)
     if extract_method not in _EXTRACT_METHODS:
       raise ValueError('Unknown extraction method "%s".' % extract_method)
-    future = self._copy_executor.submit(
-        self._extract, from_path=path, method=extract_method, to_path=to_path)
+    future = self._executor.submit(
+        self._extract, from_path=path, method=extract_method, to_path=to_path
+    )
     return promise.Promise.resolve(future)
 
   def _extract(
       self,
-      from_path: epath.PathLike,
-      method,
-      to_path: epath.PathLike,
+      from_path: epath.Path,
+      method: resource_lib.ExtractMethod,
+      to_path: epath.Path,
   ) -> epath.Path:
     """Returns `to_path` once resource has been extracted there."""
-    to_path_tmp = '%s%s_%s' % (to_path, constants.INCOMPLETE_SUFFIX,
-                               uuid.uuid4().hex)
+    tmp_file_name = '%s%s_%s' % (
+        constants.INCOMPLETE_PREFIX,
+        uuid.uuid4().hex,
+        to_path.name,
+    )
+    to_path_tmp = os.fspath(to_path.parent / tmp_file_name)
     max_length_dst_path = 0
     futures = []
+    if self._pbar_path is None:
+      raise ValueError("'_pbar_path' is not initialized")
     try:
       for path, handle in iter_archive(from_path, method):
         path = tf.compat.as_text(path)
         dst_path = path and os.path.join(to_path_tmp, path) or to_path_tmp
         max_length_dst_path = max(max_length_dst_path, len(dst_path))
         file_utils.makedirs_cached(os.path.dirname(dst_path))
-        future = self._copy_executor.submit(_copy, handle.read(), dst_path)
+        future = self._executor.submit(_copy, handle.read(), dst_path)
         futures.append(future)
         self._pbar_path.update_total(1)
 
@@ -113,7 +125,7 @@ class _Extractor(object):
             ' in an error. See the doc to remove the limitation: '
             'https://docs.python.org/3/using/windows.html#removing-the-max-path-limitation'
         )
-      raise ExtractError(msg)
+      raise ExtractError(msg) from err
 
     # `tf.io.gfile.Rename(overwrite=True)` doesn't work for non empty
     # directories, so delete destination first, if it already exists.
@@ -138,8 +150,12 @@ def _copy(src_data, dest_path):
 
 def _normpath(path):
   path = os.path.normpath(path)
-  if (path.startswith('.') or os.path.isabs(path) or path.endswith('~') or
-      os.path.basename(path).startswith('.')):
+  if (
+      path.startswith('.')
+      or os.path.isabs(path)
+      or path.endswith('~')
+      or os.path.basename(path).startswith('.')
+  ):
     return None
   return path
 
@@ -252,5 +268,6 @@ def iter_archive(
   """
   if method == resource_lib.ExtractMethod.NO_EXTRACT:
     raise ValueError(
-        f'Cannot `iter_archive` over {path}. Invalid or unrecognised archive.')
+        f'Cannot `iter_archive` over {path}. Invalid or unrecognised archive.'
+    )
   return _EXTRACT_METHODS[method](path)  # pytype: disable=bad-return-type

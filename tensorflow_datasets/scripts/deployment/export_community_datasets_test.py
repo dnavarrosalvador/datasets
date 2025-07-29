@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import string
 import textwrap
 from typing import Dict, List
 
-import tensorflow_datasets as tfds
 from tensorflow_datasets.scripts.deployment import export_community_datasets
 import toml
 
@@ -45,7 +44,6 @@ def _write_dataset_files(
 
 
 def test_export_community_datasets(tmp_path):
-
   # Create the community dataset repositories
   tfg_path = _write_dataset_files(
       tmp_path,
@@ -67,11 +65,11 @@ def test_export_community_datasets(tmp_path):
 
   # Write a dummy `community-datasets.toml`
   in_path = tmp_path / 'config.toml'
-  in_path.write_text(
-      textwrap.dedent(f"""\
-          [Namespaces]
-          tensorflow_graphics = '{tfg_path}'
-          nlp = '{nlp_path}'
+  in_path.write_text(textwrap.dedent(f"""\
+          [tensorflow_graphics]
+          paths = '{tfg_path}'
+          [nlp]
+          paths = '{nlp_path}'
           """))
 
   # Load registered dataset and export the list.
@@ -95,7 +93,4 @@ def test_export_community_datasets(tmp_path):
 def test_toml_valid():
   """Makes sure that reading the `.toml` file is valid."""
   config = toml.load(export_community_datasets._IN_PATH)
-  _ = {
-      namespace: tfds.core.Path(src_code_path)
-      for namespace, src_code_path in config['Namespaces'].items()
-  }
+  _ = {namespace: ns_config for namespace, ns_config in config.items()}

@@ -33,7 +33,7 @@ public domain.
     [https://keithito.com/LJ-Speech-Dataset/](https://keithito.com/LJ-Speech-Dataset/)
 
 *   **Source code**:
-    [`tfds.audio.Ljspeech`](https://github.com/tensorflow/datasets/tree/master/tensorflow_datasets/audio/ljspeech.py)
+    [`tfds.datasets.ljspeech.Builder`](https://github.com/tensorflow/datasets/tree/master/tensorflow_datasets/datasets/ljspeech/ljspeech_dataset_builder.py)
 
 *   **Versions**:
 
@@ -57,22 +57,22 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'id': tf.string,
-    'speech': Audio(shape=(None,), dtype=tf.int16),
-    'text': Text(shape=(), dtype=tf.string),
-    'text_normalized': Text(shape=(), dtype=tf.string),
+    'id': string,
+    'speech': Audio(shape=(None,), dtype=int16),
+    'text': Text(shape=(), dtype=string),
+    'text_normalized': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature         | Class        | Shape   | Dtype     | Description
-:-------------- | :----------- | :------ | :-------- | :----------
-                | FeaturesDict |         |           |
-id              | Tensor       |         | tf.string |
-speech          | Audio        | (None,) | tf.int16  |
-text            | Text         |         | tf.string |
-text_normalized | Text         |         | tf.string |
+Feature         | Class        | Shape   | Dtype  | Description
+:-------------- | :----------- | :------ | :----- | :----------
+                | FeaturesDict |         |        |
+id              | Tensor       |         | string |
+speech          | Audio        | (None,) | int16  |
+text            | Text         |         | string |
+text_normalized | Text         |         | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

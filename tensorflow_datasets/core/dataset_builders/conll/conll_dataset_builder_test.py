@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,9 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Tests for conll_dataset_builder."""
 import textwrap
-from unittest import mock
 
 from etils import epath
 import pytest
@@ -42,8 +40,6 @@ Air NN I-NP O
 . . O O
 """)
 
-_INPUT_PATH = epath.Path(_FOLDER_PATH, "input_path.txt")
-
 
 class DummyConllDataset(conll_dataset_builder.ConllDatasetBuilder):
   VERSION = tfds.core.Version("1.0.0")
@@ -52,58 +48,63 @@ class DummyConllDataset(conll_dataset_builder.ConllDatasetBuilder):
 
   def _info(self) -> tfds.core.DatasetInfo:
     """Returns the dataset metadata."""
-    return self.create_dataset_info(description="Dummy CoNLL dataset.",)
+    return self.create_dataset_info(
+        description="Dummy CoNLL dataset.",
+    )
 
   def _split_generators(self, dl_manager: tfds.download.DownloadManager):
     """Returns SplitGenerators."""
     del dl_manager
-    return {"train": self._generate_examples(_INPUT_PATH)}
+    return {"train": self._generate_examples("/tmp/input.txt")}
 
 
-def test_generate_example():
-  tf_mock = mock.Mock()
-  tf_mock.gfile.GFile.return_value = _VALID_INPUT
-  expected_examples = []
+def test_generate_example(tmpdir):
+  tmpdir = epath.Path(tmpdir)
+  input_path = tmpdir / "input_path.txt"
+  input_path.write_text(_VALID_INPUT)
 
-  dataset = DummyConllDataset()
+  dataset = DummyConllDataset(data_dir=tmpdir)
+  examples = list(dataset._generate_examples(input_path))
 
-  with tfds.testing.MockFs() as fs:
-    fs.add_file(path=_INPUT_PATH, content=_VALID_INPUT)
-    examples = list(dataset._generate_examples(_INPUT_PATH))
+  expected_examples = [
+      (
+          0,
+          {
+              "tokens": ["Winter", "is"],
+              "pos": ["NN", "VBZ"],
+              "chunks": ["B-NP", "B-VP"],
+              "ner": ["O", "O"],
+          },
+      ),
+      (
+          1,
+          {
+              "tokens": ["Air", "."],
+              "pos": ["NN", "."],
+              "chunks": ["I-NP", "O"],
+              "ner": ["O", "O"],
+          },
+      ),
+  ]
 
-    expected_examples = [
-        (0, {
-            "tokens": ["Winter", "is"],
-            "pos": ["NN", "VBZ"],
-            "chunks": ["B-NP", "B-VP"],
-            "ner": ["O", "O"]
-        }),
-        (1, {
-            "tokens": ["Air", "."],
-            "pos": ["NN", "."],
-            "chunks": ["I-NP", "O"],
-            "ner": ["O", "O"]
-        }),
-    ]
+  assert examples == expected_examples
 
-    assert examples == expected_examples
-
-    for _, example in examples:
-      assert len(example) == len(conll_lib.CONLL_2003_ORDERED_FEATURES)
+  for _, example in examples:
+    assert len(example) == len(conll_lib.CONLL_2003_ORDERED_FEATURES)
 
   assert len(examples) == 2
 
 
-def test_generate_corrupted_example():
-  tf_mock = mock.Mock()
-  tf_mock.gfile.GFile.return_value = _VALID_INPUT
-  dataset = DummyConllDataset()
+def test_generate_corrupted_example(tmpdir):
+  tmpdir = epath.Path(tmpdir)
+  input_path = tmpdir / "input_path.txt"
+  input_path.write_text(_INVALID_INPUT)
+  dataset = DummyConllDataset(data_dir=tmpdir)
 
   error_line = "Winter NN B-NP"
   error_msg = (
       f"Mismatch in the number of features found in line: {error_line}\n\n"
-      "Should be 4, but found 3")
+      "Should be 4, but found 3"
+  )
   with pytest.raises(ValueError, match=error_msg):
-    with tfds.testing.MockFs() as fs:
-      fs.add_file(path=_INPUT_PATH, content=_INVALID_INPUT)
-      list(dataset._generate_examples(_INPUT_PATH))
+    list(dataset._generate_examples(input_path))

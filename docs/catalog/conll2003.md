@@ -12,11 +12,6 @@
 # `conll2003`
 
 
-Note: This dataset has been updated since the last stable release. The new
-versions and config marked with
-<span class="material-icons" title="Available only in the tfds-nightly package">nights_stay</span>
-are only available in the `tfds-nightly` package.
-
 *   **Description**:
 
 The shared task of CoNLL-2003 concerns language-independent named entity
@@ -54,22 +49,22 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'chunks': Sequence(ClassLabel(shape=(), dtype=tf.int64, num_classes=23)),
-    'ner': Sequence(ClassLabel(shape=(), dtype=tf.int64, num_classes=9)),
-    'pos': Sequence(ClassLabel(shape=(), dtype=tf.int64, num_classes=47)),
-    'tokens': Sequence(Text(shape=(), dtype=tf.string)),
+    'chunks': Sequence(ClassLabel(shape=(), dtype=int64, num_classes=23)),
+    'ner': Sequence(ClassLabel(shape=(), dtype=int64, num_classes=9)),
+    'pos': Sequence(ClassLabel(shape=(), dtype=int64, num_classes=47)),
+    'tokens': Sequence(Text(shape=(), dtype=string)),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature | Class                | Shape   | Dtype     | Description
-:------ | :------------------- | :------ | :-------- | :----------
-        | FeaturesDict         |         |           |
-chunks  | Sequence(ClassLabel) | (None,) | tf.int64  |
-ner     | Sequence(ClassLabel) | (None,) | tf.int64  |
-pos     | Sequence(ClassLabel) | (None,) | tf.int64  |
-tokens  | Sequence(Text)       | (None,) | tf.string |
+Feature | Class                | Shape   | Dtype  | Description
+:------ | :------------------- | :------ | :----- | :----------
+        | FeaturesDict         |         |        |
+chunks  | Sequence(ClassLabel) | (None,) | int64  |
+ner     | Sequence(ClassLabel) | (None,) | int64  |
+pos     | Sequence(ClassLabel) | (None,) | int64  |
+tokens  | Sequence(Text)       | (None,) | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):
@@ -131,4 +126,4 @@ dataButton.addEventListener('click', async () => {
 ```
 
 
-## conll2003/conll2003 (default config) <span class="material-icons" title="Available only in the tfds-nightly package">nights_stay</span>
+## conll2003/conll2003 (default config)

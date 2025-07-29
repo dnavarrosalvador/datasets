@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,16 +18,19 @@
 from __future__ import annotations
 
 import collections
+from collections.abc import Mapping
 import json
 import os
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
+from etils import epath
 import numpy as np
-from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
 import tensorflow_datasets.public_api as tfds
 
 _VIDEO_URL = 'https://motchallenge.net/data/'
-_ANNOTATIONS_URL = 'https://github.com/TAO-Dataset/annotations/archive/v1.2.tar.gz'
+_ANNOTATIONS_URL = (
+    'https://github.com/TAO-Dataset/annotations/archive/v1.2.tar.gz'
+)
 
 _DESCRIPTION = """
 The TAO dataset is a large video object detection dataset consisting of
@@ -50,12 +53,12 @@ _CITATION = """
 }
 """
 
-NestedDict = Dict[str, Any]
+NestedDict = Mapping[str, Any]
 
 
 def _build_annotations_index(
-    annotations: NestedDict
-) -> Tuple[NestedDict, NestedDict, NestedDict, NestedDict]:
+    annotations: NestedDict,
+) -> tuple[NestedDict, NestedDict, NestedDict, NestedDict]:
   """Builds several dictionaries to aid in looking up annotations."""
   vids = {x['id']: x for x in annotations['videos']}
   images = {x['id']: x for x in annotations['images']}
@@ -70,7 +73,7 @@ def _build_annotations_index(
   return vids, ann_to_images, track_to_anns, vid_to_tracks
 
 
-def _merge_categories_map(annotations: NestedDict) -> Dict[str, str]:
+def _merge_categories_map(annotations: NestedDict) -> dict[str, str]:
   """Some categories should be renamed into others.
 
   This code segment is based on the TAO provided preprocessing API.
@@ -89,29 +92,34 @@ def _merge_categories_map(annotations: NestedDict) -> Dict[str, str]:
   return merge_map
 
 
-def _maybe_prepare_manual_data(dl_manager: tfds.download.DownloadManager):
+def _maybe_prepare_manual_data(
+    dl_manager: tfds.download.DownloadManager,
+) -> tuple[epath.Path | None, epath.Path | None, epath.Path | None]:
   """Return paths to the manually downloaded data if it is available."""
 
   # The file has a different name each time it is downloaded.
   manually_downloaded_files = [
       '1_AVA_HACS_TRAIN_*.zip',
       '2_AVA_HACS_VAL_*.zip',
+      '3_AVA_HACS_TEST_*.zip',
   ]
   files = []
   for file in manually_downloaded_files:
     file_glob = [_ for _ in dl_manager.manual_dir.glob(file)]
     if not file_glob:  # No manually downloaded files.
-      return None, None
+      return None, None, None
     if len(file_glob) == 1:
       files.append(file_glob[0])
     else:
-      raise ValueError(f'Unexpected multiple files matching pattern: '
-                       f'{file} inside {os.fspath(dl_manager.manual_dir)}. '
-                       f'There should only be one file matching this pattern.')
+      raise ValueError(
+          'Unexpected multiple files matching pattern: '
+          f'{file} inside {os.fspath(dl_manager.manual_dir)}. '
+          'There should only be one file matching this pattern.'
+      )
   return dl_manager.extract(files)
 
 
-def _get_category_id_map(annotations_root) -> Dict[str, int]:
+def _get_category_id_map(annotations_root) -> dict[str, int]:
   """Gets a map from the TAO category id to a tfds category index.
 
   The tfds category index is the index which a category appears in the
@@ -138,16 +146,18 @@ def _get_category_id_map(annotations_root) -> Dict[str, int]:
   id_map = {}
 
   for tfds_id, lvis_id in enumerate(
-      sorted([merge_map.get(x, x) for x in classes])):
+      sorted([merge_map.get(x, x) for x in classes])
+  ):
     id_map[lvis_id] = tfds_id
 
   return id_map
 
 
-def _preprocess_annotations(annotations_file: str,
-                            id_map: Dict[int, int]) -> NestedDict:
+def _preprocess_annotations(
+    annotations_file: str, id_map: dict[str, int]
+) -> NestedDict:
   """Preprocesses the data to group together some category labels."""
-  with tf.io.gfile.GFile(annotations_file, 'r') as f:
+  with epath.Path(annotations_file).open('r') as f:
     annotations = json.load(f)
   for ann in annotations['annotations'] + annotations['tracks']:
     ann['category_id'] = id_map[ann['category_id']]
@@ -175,9 +185,13 @@ def _preprocess_annotations(annotations_file: str,
   return annotations
 
 
-def _create_per_track_annotation(track, track_to_anns: NestedDict,
-                                 anns_to_image: NestedDict, height: int,
-                                 width: int) -> NestedDict:
+def _create_per_track_annotation(
+    track,
+    track_to_anns: NestedDict,
+    anns_to_image: NestedDict,
+    height: int,
+    width: int,
+) -> NestedDict:
   """Prepares annotation for a single track within a video."""
   per_track_anno = {}
   per_track_anno['bboxes'] = []
@@ -193,28 +207,33 @@ def _create_per_track_annotation(track, track_to_anns: NestedDict,
   for ann in track_to_anns[track['id']]:
     # NOTE: Some bbox annotations extend off the boundary of the image.
     # Below we clip them to lie within the image boundaries.
-    ymin = max(0., ann['bbox'][1] / height)
-    ymax = min(1., (ann['bbox'][1] + ann['bbox'][3]) / height)
-    xmin = max(0., ann['bbox'][0] / width)
-    xmax = min(1., (ann['bbox'][0] + ann['bbox'][2]) / width)
+    ymin = max(0.0, ann['bbox'][1] / height)
+    ymax = min(1.0, (ann['bbox'][1] + ann['bbox'][3]) / height)
+    xmin = max(0.0, ann['bbox'][0] / width)
+    xmax = min(1.0, (ann['bbox'][0] + ann['bbox'][2]) / width)
     per_track_anno['bboxes'].append(
-        tfds.features.BBox(ymin=ymin, ymax=ymax, xmin=xmin, xmax=xmax))
+        tfds.features.BBox(ymin=ymin, ymax=ymax, xmin=xmin, xmax=xmax)
+    )
     per_track_anno['frames'].append(anns_to_image[ann['id']]['frame_index'])
 
   # Frame indices should be sorted.
-  assert all(per_track_anno['frames'][i - 1] <= per_track_anno['frames'][i]
-             for i in range(1, len(per_track_anno['frames'])))
+  assert all(
+      per_track_anno['frames'][i - 1] <= per_track_anno['frames'][i]
+      for i in range(1, len(per_track_anno['frames']))
+  )
   return per_track_anno
 
 
 class TaoConfig(tfds.core.BuilderConfig):
-  """"Configuration for Tao video dataset."""
+  """Configuration for Tao video dataset."""
 
-  def __init__(self,
-               *,
-               height: Optional[int] = None,
-               width: Optional[int] = None,
-               **kwargs):
+  def __init__(
+      self,
+      *,
+      height: int | None = None,
+      width: int | None = None,
+      **kwargs,
+  ):
     """The parameters specifying how the dataset will be processed.
 
     This allows the option to preprocess the images to a smaller fixed
@@ -262,46 +281,45 @@ class Tao(tfds.core.BeamBasedBuilder):
           width=None,
       ),
   ]
-  VERSION = tfds.core.Version('1.0.0')
+  VERSION = tfds.core.Version('1.1.0')
   RELEASE_NOTES = {
-      '1.0.0': 'Initial release.',
+      '1.1.0': 'Added test split.',
   }
 
   def _info(self) -> tfds.core.DatasetInfo:
     """Returns the dataset metadata."""
     names_file = tfds.core.tfds_path('video/tao/labels.txt')
-    video_shape = (None, self.builder_config.height, self.builder_config.width,
-                   3)
+    video_shape = (
+        None,
+        self.builder_config.height,
+        self.builder_config.width,
+        3,
+    )
     all_features = {
-        'video':
-            tfds.features.Video(video_shape),  # pytype: disable=wrong-arg-types  # gen-stub-imports
+        'video': tfds.features.Video(video_shape),  # pytype: disable=wrong-arg-types  # gen-stub-imports
         'metadata': {
-            'height':
-                tf.int32,
-            'width':
-                tf.int32,
-            'num_frames':
-                tf.int32,
-            'video_name':
-                tf.string,
-            'neg_category_ids':
-                tfds.features.Tensor(shape=(None,), dtype=tf.int32),
-            'not_exhaustive_category_ids':
-                tfds.features.Tensor(shape=(None,), dtype=tf.int32),
-            'dataset':
-                tf.string,
+            'height': np.int32,
+            'width': np.int32,
+            'num_frames': np.int32,
+            'video_name': np.str_,
+            'neg_category_ids': tfds.features.Tensor(
+                shape=(None,), dtype=np.int32
+            ),
+            'not_exhaustive_category_ids': tfds.features.Tensor(
+                shape=(None,), dtype=np.int32
+            ),
+            'dataset': np.str_,
         },
-        'tracks':
-            tfds.features.Sequence({
-                'bboxes': tfds.features.Sequence(tfds.features.BBoxFeature()),
-                'category': tfds.features.ClassLabel(names_file=names_file),
-                'is_crowd': tf.bool,
-                'track_id': tf.int32,
-                'scale_category': tf.string,
-                # Labels do not occur for all frames. This indicates the
-                # indices of the frames that have labels.
-                'frames': tfds.features.Sequence(tf.int32)
-            }),
+        'tracks': tfds.features.Sequence({
+            'bboxes': tfds.features.Sequence(tfds.features.BBoxFeature()),
+            'category': tfds.features.ClassLabel(names_file=names_file),
+            'is_crowd': np.bool_,
+            'track_id': np.int32,
+            'scale_category': np.str_,
+            # Labels do not occur for all frames. This indicates the
+            # indices of the frames that have labels.
+            'frames': tfds.features.Sequence(np.int32),
+        }),
     }
 
     return tfds.core.DatasetInfo(
@@ -319,27 +337,40 @@ class Tao(tfds.core.BeamBasedBuilder):
     data = dl_manager.download_and_extract({
         'train': _VIDEO_URL + '1-TAO_TRAIN.zip',
         'val': _VIDEO_URL + '2-TAO_VAL.zip',
-        'annotations': _ANNOTATIONS_URL
+        'test': _VIDEO_URL + '3-TAO_TEST.zip',
+        'annotations': _ANNOTATIONS_URL,
     })
 
-    manual_train, manual_val = _maybe_prepare_manual_data(dl_manager)
+    manual_train, manual_val, manual_test = _maybe_prepare_manual_data(
+        dl_manager
+    )
     id_map = _get_category_id_map(data['annotations'] / 'annotations-1.2')
 
     return {
-        tfds.Split.TRAIN:
-            self._generate_examples(
-                data_path=data['train'],
-                manual_path=manual_train,
-                annotations_path=data['annotations'] / 'annotations-1.2' /
-                'train.json',
-                id_map=id_map),
-        tfds.Split.VALIDATION:
-            self._generate_examples(
-                data_path=data['val'],
-                manual_path=manual_val,
-                annotations_path=data['annotations'] / 'annotations-1.2' /
-                'validation.json',
-                id_map=id_map)
+        tfds.Split.TRAIN: self._generate_examples(
+            data_path=data['train'],
+            manual_path=manual_train,
+            annotations_path=data['annotations']
+            / 'annotations-1.2'
+            / 'train.json',
+            id_map=id_map,
+        ),
+        tfds.Split.VALIDATION: self._generate_examples(
+            data_path=data['val'],
+            manual_path=manual_val,
+            annotations_path=data['annotations']
+            / 'annotations-1.2'
+            / 'validation.json',
+            id_map=id_map,
+        ),
+        tfds.Split.TEST: self._generate_examples(
+            data_path=data['test'],
+            manual_path=manual_test,
+            annotations_path=data['annotations']
+            / 'annotations-1.2'
+            / 'test_without_annotations.json',
+            id_map=id_map,
+        ),
     }
 
   def _maybe_resize_video(self, frames_list):
@@ -349,16 +380,18 @@ class Tao(tfds.core.BeamBasedBuilder):
     resized_images = []
     cv2 = tfds.core.lazy_imports.cv2
     for frame in frames_list:
-      with tf.io.gfile.GFile(frame, 'rb') as f:
+      with epath.Path(frame).open('rb') as f:
         image = tfds.core.lazy_imports.PIL_Image.open(f).convert('RGB')
         image = np.asarray(image)
       image = cv2.resize(
-          image, (self.builder_config.width, self.builder_config.height))
+          image, (self.builder_config.width, self.builder_config.height)
+      )
       resized_images.append(image)
     return resized_images
 
-  def _create_metadata(self, video_ann: NestedDict,
-                       num_frames: int) -> NestedDict:
+  def _create_metadata(
+      self, video_ann: NestedDict, num_frames: int
+  ) -> NestedDict:
     """Creates the metadata object for each video data example."""
     metadata = {}
     metadata['num_frames'] = num_frames
@@ -366,16 +399,22 @@ class Tao(tfds.core.BeamBasedBuilder):
     metadata['width'] = self.builder_config.width or video_ann['width']
     metadata['neg_category_ids'] = video_ann['neg_category_ids']
     metadata['not_exhaustive_category_ids'] = video_ann[
-        'not_exhaustive_category_ids']
+        'not_exhaustive_category_ids'
+    ]
     metadata['dataset'] = video_ann['metadata']['dataset']
     metadata['video_name'] = video_ann['name']
     return metadata
 
-  def _generate_examples(self, data_path, manual_path, annotations_path,
-                         id_map):
+  def _generate_examples(
+      self,
+      data_path: epath.PathLike,
+      manual_path: epath.Path | None,
+      annotations_path: epath.Path,
+      id_map: dict[str, int],
+  ):
     """Yields examples."""
     beam = tfds.core.lazy_imports.apache_beam
-    annotations = _preprocess_annotations(annotations_path, id_map)
+    annotations = _preprocess_annotations(os.fspath(annotations_path), id_map)
     outs = _build_annotations_index(annotations)
     vids, ann_to_images, track_to_anns, vid_to_tracks = outs
 
@@ -393,19 +432,29 @@ class Tao(tfds.core.BeamBasedBuilder):
 
       for track in vid_to_tracks[video_id]:
         data_example['tracks'].append(
-            _create_per_track_annotation(track, track_to_anns, ann_to_images,
-                                         video_ann['height'],
-                                         video_ann['width']))
+            _create_per_track_annotation(
+                track,
+                track_to_anns,
+                ann_to_images,
+                video_ann['height'],
+                video_ann['width'],
+            )
+        )
       return video_ann['name'], data_example
 
     filtered_ids = []
     for video_id, video_ann in list(vids.items()):
       # These must be manually downloaded.
-      is_manual = ('HACS' in video_ann['metadata']['dataset'] or
-                   'AVA' in video_ann['metadata']['dataset'])
+      is_manual = (
+          'HACS' in video_ann['metadata']['dataset']
+          or 'AVA' in video_ann['metadata']['dataset']
+      )
       if is_manual and manual_path is None:
         continue
-      path = (manual_path
-              if is_manual else data_path) / 'frames' / vids[video_id]['name']
+      path = (
+          (manual_path if is_manual else data_path)
+          / 'frames'
+          / vids[video_id]['name']
+      )
       filtered_ids.append((video_id, path))
     return beam.Create(filtered_ids) | beam.Map(_process_example)

@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ from tensorflow_datasets.datasets.s3o4d import s3o4d_dataset_builder
 
 class S3o4dTest(testing.DatasetBuilderTestCase):
   """Tests for s3o4d dataset."""
+
   DATASET_CLASS = s3o4d_dataset_builder.Builder
   SPLITS = {
       'bunny_train': 3,  # Number of fake train example

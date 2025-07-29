@@ -50,7 +50,8 @@ ds = tfds.load("yahoo_ltrc")
 
 *   **Versions**:
 
-    *   **`1.0.0`** (default): Initial release.
+    *   `1.0.0`: Initial release.
+    *   **`1.1.0`** (default): Add query and document identifiers.
 
 *   **Download size**: `Unknown size`
 
@@ -85,7 +86,7 @@ ds = tfds.load("yahoo_ltrc")
 
 ## yahoo_ltrc/set1 (default config)
 
-*   **Dataset size**: `792.65 MiB`
+*   **Dataset size**: `795.39 MiB`
 
 *   **Auto-cached**
     ([documentation](https://www.tensorflow.org/datasets/performances#auto-caching)):
@@ -103,18 +104,22 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'float_features': Tensor(shape=(None, 699), dtype=tf.float64),
-    'label': Tensor(shape=(None,), dtype=tf.float64),
+    'doc_id': Tensor(shape=(None,), dtype=int64),
+    'float_features': Tensor(shape=(None, 699), dtype=float64),
+    'label': Tensor(shape=(None,), dtype=float64),
+    'query_id': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature        | Class        | Shape       | Dtype      | Description
-:------------- | :----------- | :---------- | :--------- | :----------
-               | FeaturesDict |             |            |
-float_features | Tensor       | (None, 699) | tf.float64 |
-label          | Tensor       | (None,)     | tf.float64 |
+Feature        | Class        | Shape       | Dtype   | Description
+:------------- | :----------- | :---------- | :------ | :----------
+               | FeaturesDict |             |         |
+doc_id         | Tensor       | (None,)     | int64   |
+float_features | Tensor       | (None, 699) | float64 |
+label          | Tensor       | (None,)     | float64 |
+query_id       | Text         |             | string  |
 
 *   **Examples**
     ([tfds.as_dataframe](https://www.tensorflow.org/datasets/api_docs/python/tfds/as_dataframe)):
@@ -126,7 +131,7 @@ label          | Tensor       | (None,)     | tf.float64 |
 <button id="displaydataframe">Display examples...</button>
 <div id="dataframecontent" style="overflow-x:auto"></div>
 <script>
-const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/yahoo_ltrc-set1-1.0.0.html";
+const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/yahoo_ltrc-set1-1.1.0.html";
 const dataButton = document.getElementById('displaydataframe');
 dataButton.addEventListener('click', async () => {
   // Disable the button after clicking (dataframe loaded only once).
@@ -155,7 +160,7 @@ dataButton.addEventListener('click', async () => {
 
 ## yahoo_ltrc/set2
 
-*   **Dataset size**: `194.31 MiB`
+*   **Dataset size**: `194.92 MiB`
 
 *   **Auto-cached**
     ([documentation](https://www.tensorflow.org/datasets/performances#auto-caching)):
@@ -173,18 +178,22 @@ Split     | Examples
 
 ```python
 FeaturesDict({
-    'float_features': Tensor(shape=(None, 700), dtype=tf.float64),
-    'label': Tensor(shape=(None,), dtype=tf.float64),
+    'doc_id': Tensor(shape=(None,), dtype=int64),
+    'float_features': Tensor(shape=(None, 700), dtype=float64),
+    'label': Tensor(shape=(None,), dtype=float64),
+    'query_id': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature        | Class        | Shape       | Dtype      | Description
-:------------- | :----------- | :---------- | :--------- | :----------
-               | FeaturesDict |             |            |
-float_features | Tensor       | (None, 700) | tf.float64 |
-label          | Tensor       | (None,)     | tf.float64 |
+Feature        | Class        | Shape       | Dtype   | Description
+:------------- | :----------- | :---------- | :------ | :----------
+               | FeaturesDict |             |         |
+doc_id         | Tensor       | (None,)     | int64   |
+float_features | Tensor       | (None, 700) | float64 |
+label          | Tensor       | (None,)     | float64 |
+query_id       | Text         |             | string  |
 
 *   **Examples**
     ([tfds.as_dataframe](https://www.tensorflow.org/datasets/api_docs/python/tfds/as_dataframe)):
@@ -196,7 +205,7 @@ label          | Tensor       | (None,)     | tf.float64 |
 <button id="displaydataframe">Display examples...</button>
 <div id="dataframecontent" style="overflow-x:auto"></div>
 <script>
-const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/yahoo_ltrc-set2-1.0.0.html";
+const url = "https://storage.googleapis.com/tfds-data/visualization/dataframe/yahoo_ltrc-set2-1.1.0.html";
 const dataButton = document.getElementById('displaydataframe');
 dataButton.addEventListener('click', async () => {
   // Disable the button after clicking (dataframe loaded only once).

@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,26 +19,30 @@ This module is only intended to be used until all TFDS `DatasetsBuilder`s are
 defined under the "datasets/" directory and the legacy locations have been
 deprecated (ie: a new major release).
 """
-from typing import Text
 
 from absl import logging
 from tensorflow_datasets.core import registered
 
 
-class LazyBuilderImport():
+class LazyBuilderImport:
   """Lazy load DatasetBuilder from given name from legacy locations."""
 
-  def __init__(self, dataset_name: Text):
+  def __init__(self, dataset_name: str):
     object.__setattr__(self, "_dataset_name", dataset_name)
     object.__setattr__(self, "_dataset_cls", None)
 
   def _get_builder_cls(self):
+    """Returns the DatasetBuilder class."""
     cls = object.__getattribute__(self, "_dataset_cls")
     if not cls:
       builder_name = object.__getattribute__(self, "_dataset_name")
       logging.warning(
-          "DEPRECATED! Do not use a DatasetBuilder class directly, but"
-          " call `tfds.builder_cls('%s')`.", builder_name)
+          (
+              "DEPRECATED! Do not use a DatasetBuilder class directly, but"
+              " call `tfds.builder_cls('%s')`."
+          ),
+          builder_name,
+      )
       cls = registered.imported_builder_cls(builder_name)
       object.__setattr__(self, "_dataset_cls", cls)
     return cls

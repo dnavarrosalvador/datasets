@@ -67,18 +67,18 @@ skip missing entries.
 
 ```python
 FeaturesDict({
-    'document': Text(shape=(), dtype=tf.string),
-    'summary': Text(shape=(), dtype=tf.string),
+    'document': Text(shape=(), dtype=string),
+    'summary': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature  | Class        | Shape | Dtype     | Description
-:------- | :----------- | :---- | :-------- | :----------
-         | FeaturesDict |       |           |
-document | Text         |       | tf.string |
-summary  | Text         |       | tf.string |
+Feature  | Class        | Shape | Dtype  | Description
+:------- | :----------- | :---- | :----- | :----------
+         | FeaturesDict |       |        |
+document | Text         |       | string |
+summary  | Text         |       | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ from __future__ import annotations
 import json
 
 from etils import epath
-from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
+import numpy as np
 import tensorflow_datasets.public_api as tfds
 
 _HOMEPAGE_URL = "https://github.com/google-research-datasets/boolean-questions"
@@ -29,7 +29,7 @@ _TRAIN_DOWNLOAD_URL = "https://storage.googleapis.com/boolq/train.jsonl"
 _VALIDATION_DOWNLOAD_URL = "https://storage.googleapis.com/boolq/dev.jsonl"
 
 
-class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
+class Builder(tfds.core.GeneratorBasedBuilder):
   """The Bool Q dataset."""
 
   VERSION = tfds.core.Version("1.0.0")
@@ -39,7 +39,7 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
         features=tfds.features.FeaturesDict({
             "question": tfds.features.Text(),
             "passage": tfds.features.Text(),
-            "answer": tf.bool,
+            "answer": np.bool_,
             "title": tfds.features.Text(),
         }),
         homepage=_HOMEPAGE_URL,
@@ -64,7 +64,7 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
             gen_kwargs={
                 "file_path": file_paths["validation"],
             },
-        )
+        ),
     ]
 
   def _generate_examples(self, file_path):

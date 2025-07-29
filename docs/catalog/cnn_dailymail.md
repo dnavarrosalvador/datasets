@@ -21,7 +21,7 @@ be summarized - highlights: joined text of highlights with <s> and </s> around
 each highlight, which is the target summary
 
 *   **Additional Documentation**:
-    <a class="button button-with-icon" href="https://paperswithcode.com/dataset/cnn/daily-mail">
+    <a class="button button-with-icon" href="https://paperswithcode.com/dataset/cnn-daily-mail-1">
     Explore on Papers With Code
     <span class="material-icons icon-after" aria-hidden="true"> north_east
     </span> </a>
@@ -70,22 +70,22 @@ Split          | Examples
 
 ```python
 FeaturesDict({
-    'article': Text(shape=(), dtype=tf.string),
-    'highlights': Text(shape=(), dtype=tf.string),
-    'id': Text(shape=(), dtype=tf.string),
-    'publisher': Text(shape=(), dtype=tf.string),
+    'article': Text(shape=(), dtype=string),
+    'highlights': Text(shape=(), dtype=string),
+    'id': Text(shape=(), dtype=string),
+    'publisher': Text(shape=(), dtype=string),
 })
 ```
 
 *   **Feature documentation**:
 
-Feature    | Class        | Shape | Dtype     | Description
-:--------- | :----------- | :---- | :-------- | :----------
-           | FeaturesDict |       |           |
-article    | Text         |       | tf.string |
-highlights | Text         |       | tf.string |
-id         | Text         |       | tf.string |
-publisher  | Text         |       | tf.string |
+Feature    | Class        | Shape | Dtype  | Description
+:--------- | :----------- | :---- | :----- | :----------
+           | FeaturesDict |       |        |
+article    | Text         |       | string |
+highlights | Text         |       | string |
+id         | Text         |       | string |
+publisher  | Text         |       | string |
 
 *   **Supervised keys** (See
     [`as_supervised` doc](https://www.tensorflow.org/datasets/api_docs/python/tfds/load#args)):

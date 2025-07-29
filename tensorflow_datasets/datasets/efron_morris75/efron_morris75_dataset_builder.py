@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import tensorflow_datasets.public_api as tfds
 URL = 'https://raw.githubusercontent.com/pymc-devs/pymc-examples/main/examples/data/efron-morris-75-data.tsv'
 
 
-class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
+class Builder(tfds.core.GeneratorBasedBuilder):
   """DatasetBuilder for efron_morris_75 dataset."""
 
   VERSION = tfds.core.Version('1.0.0')

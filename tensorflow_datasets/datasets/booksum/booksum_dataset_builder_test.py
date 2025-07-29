@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import tensorflow_datasets.public_api as tfds
 
 class BooksumTest(tfds.testing.DatasetBuilderTestCase):
   """Tests for booksum dataset."""
+
   BUILDER_CONFIG_NAMES_TO_TEST = ["book", "chapter"]
 
   DATASET_CLASS = booksum_dataset_builder.Builder

@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ GCS_ROOT_DIR = 'gs://tfds-data'
 GCS_DATASET_INFO_DIR = 'dataset_info'
 GCS_DATASETS_DIR = 'datasets'
 
-_is_gcs_disabled = False
+_is_gcs_disabled = True
 
 
 # Exception raised when GCS isn't available
@@ -87,11 +87,18 @@ def gcs_listdir(dir_name: str) -> Optional[List[str]]:
   return [posixpath.join(dir_name, f.name) for f in root_dir.iterdir()]
 
 
-def gcs_dataset_info_files(dataset_name: str) -> Optional[List[epath.Path]]:
-  """Return paths to the dataset info files of the given dataset in gs://tfds-data.
-  """
+def gcs_dataset_info_path(dataset_name: str) -> Optional[epath.Path]:
+  """Return paths to the dataset info files of the given dataset in gs://tfds-data."""
   path = gcs_path(posixpath.join(GCS_DATASET_INFO_DIR, dataset_name))
   if _is_gcs_disabled or not exists(path):
+    return None
+  return path
+
+
+def gcs_dataset_info_files(dataset_name: str) -> Optional[List[epath.Path]]:
+  """Return paths to the dataset info files of the given dataset in gs://tfds-data."""
+  path = gcs_dataset_info_path(dataset_name)
+  if path is None:
     return None
   return list(path.iterdir())
 
@@ -115,27 +122,28 @@ def download_gcs_folder(
   paths_to_dl = [p for p in gcs_folder.iterdir() if p.name != 'diffs']
 
   with tqdm_utils.async_tqdm(
-      total=len(paths_to_dl), desc='Dl Completed...', unit=' file') as pbar:
+      total=len(paths_to_dl), desc='Dl Completed...', unit=' file'
+  ) as pbar:
 
     def _copy(gcs_path_: epath.Path):
       # Copy 'gs://tfds-data/datasets/ds/1.0.0/file' -> `local_dir/file`
-      tf.io.gfile.copy(
-          os.fspath(gcs_path_),
-          os.path.join(local_folder, gcs_path_.name),
-      )
+      gcs_path_.copy(dst=os.path.join(local_folder, gcs_path_.name))
       pbar.update(1)
 
     with concurrent.futures.ThreadPoolExecutor(
-        max_workers=max_simultaneous_downloads) as executor:
+        max_workers=max_simultaneous_downloads
+    ) as executor:
       futures = [executor.submit(_copy, path) for path in paths_to_dl]
       for future in concurrent.futures.as_completed(futures):
         future.result()
 
 
-def download_gcs_dataset(dataset_name: epath.PathLike,
-                         local_dataset_dir: epath.PathLike,
-                         max_simultaneous_downloads: int = 25,
-                         root_dir: Optional[str] = None):
+def download_gcs_dataset(
+    dataset_name: epath.PathLike,
+    local_dataset_dir: epath.PathLike,
+    max_simultaneous_downloads: int = 25,
+    root_dir: Optional[str] = None,
+):
   """Downloads prepared GCS dataset to local dataset directory."""
   if root_dir:
     gcs_folder = epath.Path(root_dir) / dataset_name
@@ -145,4 +153,5 @@ def download_gcs_dataset(dataset_name: epath.PathLike,
   download_gcs_folder(
       gcs_folder=gcs_folder,
       local_folder=local_dataset_dir,
-      max_simultaneous_downloads=max_simultaneous_downloads)
+      max_simultaneous_downloads=max_simultaneous_downloads,
+  )

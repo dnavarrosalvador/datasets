@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,8 +35,11 @@ from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
 FLAGS = flags.FLAGS
 
 flags.DEFINE_boolean('dry_run', True, 'Dry run')
-flags.DEFINE_string('tfds_dir', str(tfds.core.utils.tfds_write_path()),
-                    'Path to tensorflow_datasets directory')
+flags.DEFINE_string(
+    'tfds_dir',
+    str(tfds.core.utils.tfds_write_path()),
+    'Path to tensorflow_datasets directory',
+)
 
 
 def _extract_metadata_versions(metadata_dir: str) -> List[str]:
@@ -53,7 +56,7 @@ def _extract_metadata_versions(metadata_dir: str) -> List[str]:
   """
   existing_names = []
   for root, _, _ in tf.io.gfile.walk(metadata_dir):
-    full_name = root[len(metadata_dir) + 1:]
+    full_name = root[len(metadata_dir) + 1 :]
     if tfds.core.load.is_full_name(full_name):
       existing_names.append(full_name)
   return existing_names

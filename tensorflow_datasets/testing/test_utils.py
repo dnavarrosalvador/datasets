@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,12 +19,15 @@ from __future__ import annotations
 
 import contextlib
 import dataclasses
+import datetime
 import functools
+import hashlib
+import json
 import os
 import pathlib
 import subprocess
 import tempfile
-from typing import Any, Iterator, Mapping
+from typing import Any, Iterator, Mapping, Sequence
 from unittest import mock
 
 from etils import epath
@@ -38,7 +41,16 @@ from tensorflow_datasets.core import features
 from tensorflow_datasets.core import lazy_imports_lib
 from tensorflow_datasets.core import naming
 from tensorflow_datasets.core import utils
+from tensorflow_datasets.core.utils.lazy_imports_utils import mlcroissant as mlc
 from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
+
+
+_GCS_ACCESS_FNS = {
+    'original_info': utils.gcs_utils.gcs_dataset_info_files,
+    'dummy_info': lambda _: [],
+    'original_datasets': utils.gcs_utils.is_dataset_on_gcs,
+    'dummy_datasets': lambda _: False,
+}
 
 
 @contextlib.contextmanager
@@ -75,6 +87,7 @@ def fake_examples_dir():
 @dataclasses.dataclass
 class _PathState:
   """Track the metadata associated with the path."""
+
   is_gcs: bool
   is_abs: bool
 
@@ -106,7 +119,6 @@ class MockFs(object):
 
   * `/absolute/path` -> `/tmp/mocked_file_system/absolute/path`
   * `gs://path` -> `/tmp/mocked_file_system/gs/path`
-
   """
 
   def __init__(self):
@@ -118,6 +130,7 @@ class MockFs(object):
     return self._cm.__enter__()
 
   def __exit__(self, exc_type, exc_value, traceback):
+    assert self._cm, 'Context manager uninitialized.'
     return self._cm.__exit__(exc_type, exc_value, traceback)
 
   @contextlib.contextmanager
@@ -134,10 +147,11 @@ class MockFs(object):
       with self._mock() as m:
         yield m
       self._tmp_dir = None
-      # TODO(epot): recursivelly record all
+      # TODO(epot): recursively record all.
 
   def _to_tmp(self, p, *, with_state: bool = False):
     """Normalize the path by returning `tmp_path / p`."""
+    assert self._tmp_dir, 'Temp directory uninitialized.'
     # If `p` was a `epath.Path`, it doesn't matter the value of `is_gcs`
     # as returned values will be normalized anyway.
     p_str = os.fspath(p)
@@ -163,15 +177,16 @@ class MockFs(object):
 
   def _to_abs(self, p, *, state: _PathState):
     """Normalize the output to strip the `tmp_path`."""
+    assert self._tmp_dir, 'Temp directory uninitialized.'
     tmp_path = os.fspath(self._tmp_dir)
     assert p.startswith(tmp_path)
-    p = p[len(tmp_path):]  # Strip the tmp path
+    p = p[len(tmp_path) :]  # Strip the tmp path
     if state.is_gcs:
       assert p.startswith('/big' + 'store/')
       p = p.replace('/big' + 'store/', 'gs://', 1)
     elif not state.is_abs:
       assert p.startswith('/')
-      p = p[len('/'):]
+      p = p[len('/') :]
     return p
 
   def _validate_out(self, out):
@@ -180,13 +195,14 @@ class MockFs(object):
       assert not any(elem.startswith('/') for elem in out)
     elif not isinstance(out, (bool, type(None))):
       raise TypeError(
-          f'Unexpected return type {out!r} for MockFs, please open an issue')
+          f'Unexpected return type {out!r} for MockFs, please open an issue'
+      )
     return out
 
   def add_file(self, path, content=None) -> None:
     """Add a file, creating all parent directories."""
     path = os.fspath(path)
-    content = f'Content of {path}' if content is None else content
+    content = content or f'Content of {path}'
     fpath = self._to_tmp(path)
     fpath.parent.mkdir(parents=True, exist_ok=True)  # pytype: disable=attribute-error
     fpath.write_text(content)  # pytype: disable=attribute-error
@@ -206,7 +222,8 @@ class MockFs(object):
             self._to_tmp(p),
             self._to_tmp(p2),
             **kwargs,
-        ))
+        )
+    )
 
   def _mock_glob(self, original_fn, p):
     p, state = self._to_tmp(p, with_state=True)
@@ -215,11 +232,10 @@ class MockFs(object):
 
   def _mock_walk(self, original_fn, p):
     p, state = self._to_tmp(p, with_state=True)
-    for (root, subdirs, filenames) in original_fn(p):
+    for root, subdirs, filenames in original_fn(p):
       yield (self._to_abs(root, state=state), subdirs, filenames)
 
   def _mock(self):
-
     return mock_gfile(
         exists=self._mock_fn,
         listdir=self._mock_fn,
@@ -240,8 +256,11 @@ class MockFs(object):
     print(_get_folder_str(self._tmp_dir))
 
 
-def _get_folder_str(root_dir: pathlib.Path) -> str:
+def _get_folder_str(root_dir: pathlib.Path | None) -> str:
   """Get the tree structure."""
+  if not root_dir:
+    raise ValueError('Root dir undefined. Cannot find folder.')
+
   lines = epy.Lines()
   for p in root_dir.iterdir():
     if p.is_dir():
@@ -331,11 +350,13 @@ def mock_tf(symbol_name: str, *args: Any, **kwargs: Any) -> Iterator[None]:
       assert not args
       for k, v in kwargs.items():
         stack.enter_context(
-            mock.patch.object(getattr(module, symbol_name), k, v))
+            mock.patch.object(getattr(module, symbol_name), k, v)
+        )
     else:
       # Patch the module/object
       stack.enter_context(
-          mock.patch.object(module, symbol_name, *args, **kwargs))
+          mock.patch.object(module, symbol_name, *args, **kwargs)
+      )
     yield
 
 
@@ -391,8 +412,10 @@ def run_in_graph_and_eager_modes(func=None, config=None, use_gpu=True):
     def decorated(self, *args, **kwargs):
       """Run the decorated test method."""
       if not tf.executing_eagerly():
-        raise ValueError('Must be executing eagerly when using the '
-                         'run_in_graph_and_eager_modes decorator.')
+        raise ValueError(
+            'Must be executing eagerly when using the '
+            'run_in_graph_and_eager_modes decorator.'
+        )
 
       with self.subTest('eager_mode'):
         f(self, *args, **kwargs)
@@ -412,13 +435,48 @@ def run_in_graph_and_eager_modes(func=None, config=None, use_gpu=True):
   return decorator
 
 
-class DummyDatasetSharedGenerator(dataset_builder.GeneratorBasedBuilder):
+@contextlib.contextmanager
+def disable_gcs_access() -> Iterator[None]:
+  """Disable GCS access."""
+  with mock.patch(
+      'tensorflow_datasets.core.utils.gcs_utils.gcs_dataset_info_files',
+      _GCS_ACCESS_FNS['dummy_info'],
+  ), mock.patch(
+      'tensorflow_datasets.core.utils.gcs_utils.is_dataset_on_gcs',
+      _GCS_ACCESS_FNS['dummy_datasets'],
+  ), mock.patch(
+      'tensorflow_datasets.core.utils.gcs_utils._is_gcs_disabled',
+      True,
+  ):
+    yield
+
+
+@contextlib.contextmanager
+def enable_gcs_access() -> Iterator[None]:
+  """Enable GCS access."""
+  with mock.patch(
+      'tensorflow_datasets.core.utils.gcs_utils.gcs_dataset_info_files',
+      _GCS_ACCESS_FNS['original_info'],
+  ), mock.patch(
+      'tensorflow_datasets.core.utils.gcs_utils.is_dataset_on_gcs',
+      _GCS_ACCESS_FNS['original_datasets'],
+  ), mock.patch(
+      'tensorflow_datasets.core.utils.gcs_utils._is_gcs_disabled',
+      False,
+  ):
+    yield
+
+
+class DummyDatasetSharedGenerator(
+    dataset_builder.GeneratorBasedBuilder,
+    skip_registration=True,
+):
   """Test DatasetBuilder."""
 
   VERSION = utils.Version('1.0.0')
   RELEASE_NOTES = {
       '1.0.0': 'Release notes 1.0.0',
-      '2.0.0': 'Release notes 2.0.0'
+      '2.0.0': 'Release notes 2.0.0',
   }
   SUPPORTED_VERSIONS = [
       '2.0.0',
@@ -448,7 +506,10 @@ class DummyDatasetSharedGenerator(dataset_builder.GeneratorBasedBuilder):
       yield i, {'x': i}
 
 
-class DummyMnist(dataset_builder.GeneratorBasedBuilder):
+class DummyMnist(
+    dataset_builder.GeneratorBasedBuilder,
+    skip_registration=True,
+):
   """Test DatasetBuilder."""
 
   VERSION = utils.Version('3.0.1')
@@ -489,7 +550,7 @@ class DummyDataset(
     return dataset_info.DatasetInfo(
         builder=self,
         features=features.FeaturesDict({
-            'id': tf.int64,
+            'id': np.int64,
         }),
         supervised_keys=('id', 'id'),
         description='Minimal DatasetBuilder.',
@@ -587,6 +648,8 @@ def _assert_feature_equal(feature0, feature1):
   assert repr(feature0) == repr(feature1)
   assert feature0.shape == feature1.shape
   assert feature0.dtype == feature1.dtype
+  assert feature0.np_dtype == feature1.np_dtype
+  assert feature0.tf_dtype == feature1.tf_dtype
   if isinstance(feature0, features.FeaturesDict):
     _assert_features_equal(dict(feature0), dict(feature1))
   if isinstance(feature0, features.Sequence):
@@ -596,7 +659,10 @@ def _assert_feature_equal(feature0, feature1):
     assert feature0.names == feature1.names
 
 
-class DummyDatasetCollection(dataset_collection_builder.DatasetCollection):
+class DummyDatasetCollection(
+    dataset_collection_builder.DatasetCollection,
+    skip_registration=True,
+):
   """Minimal Dataset Collection builder."""
 
   @property
@@ -607,7 +673,7 @@ class DummyDatasetCollection(dataset_collection_builder.DatasetCollection):
         release_notes={
             '1.0.0': 'notes 1.0.0',
             '1.1.0': 'notes 1.1.0',
-            '2.0.0': 'notes 2.0.0'
+            '2.0.0': 'notes 2.0.0',
         },
         citation="""
         @misc{citekey,
@@ -621,20 +687,200 @@ class DummyDatasetCollection(dataset_collection_builder.DatasetCollection):
   @property
   def datasets(self) -> Mapping[str, Mapping[str, naming.DatasetReference]]:
     return {
-        '1.0.0':
-            naming.references_for({
-                'a': 'a/c:1.2.3',
-                'b': 'b/d:2.3.4',
-            }),
-        '1.1.0':
-            naming.references_for({
-                'a': 'a/c:1.2.3',
-                'c': 'c/e:3.5.7',
-            }),
-        '2.0.0':
-            naming.references_for({
-                'a': 'a/c:1.3.5',
-                'b': 'b/d:2.4.8',
-                'c': 'c/e:3.5.7',
-            }),
+        '1.0.0': naming.references_for({
+            'a': 'a/c:1.2.3',
+            'b': 'b/d:2.3.4',
+        }),
+        '1.1.0': naming.references_for({
+            'a': 'a/c:1.2.3',
+            'c': 'c/e:3.5.7',
+        }),
+        '2.0.0': naming.references_for({
+            'a': 'a/c:1.3.5',
+            'b': 'b/d:2.4.8',
+            'c': 'c/e:3.5.7',
+        }),
     }
+
+
+@contextlib.contextmanager
+def set_current_datetime(now_datetime: datetime.datetime) -> Iterator[None]:
+  """Mocks datetime.datetime.now()."""
+
+  class MockDatetime(datetime.datetime):
+
+    @classmethod
+    def now(cls, tz=None) -> datetime.datetime:
+      return now_datetime
+
+  with mock.patch.object(datetime, 'datetime', new=MockDatetime):
+    yield
+
+
+@contextlib.contextmanager
+def dummy_croissant_file(
+    dataset_name: str = 'DummyDataset',
+    entries: Sequence[dict[str, Any]] | None = None,
+    raw_data_filename: epath.PathLike = 'raw_data.jsonl',
+    croissant_filename: epath.PathLike = 'croissant.json',
+    split_names: Sequence[str] | None = None,
+    version: str = '1.2.0',
+) -> Iterator[epath.Path]:
+  """Yields temporary path to a dummy Croissant file.
+
+  The function creates a temporary directory that stores raw data files and the
+  Croissant JSON-LD.
+
+  Args:
+    dataset_name: The name of the dataset.
+    entries: A list of dictionaries representing the dataset's entries. Each
+      dictionary should contain an 'index', a 'text', and a `split` key. If
+      None, the function will create two entries with indices 0 and 1 and dummy
+      text, and with the first entry belonging to the split `train` and the
+      second to `test`.
+    raw_data_filename: Filename of the raw data file. If `split_names` is True,
+      the function will create a raw data file for each split, including the
+      split name before the file extension.
+    croissant_filename: Filename of the Croissant JSON-LD file.
+    split_names: A list of split names to populate the split record set with. If
+      split_names are defined, they must match the `split` key in the entries.
+      If None, the function will create a split record set with the default
+      split names `train` and `test`. If `split_names` is defined, the `split`
+      key in the entries must match one of the split names.
+    version: The version of the dataset. Defaults to `1.2.0`.
+  """
+  if entries is None:
+    entries = [
+        {
+            'index': i,
+            'text': f'Dummy example {i}',
+            'split': 'train' if i % 2 == 0 else 'test',
+        }
+        for i in range(2)
+    ]
+
+  fields = [
+      mlc.Field(
+          id='jsonl/index',
+          name='jsonl/index',
+          description='The sample index.',
+          data_types=mlc.DataType.INTEGER,
+          source=mlc.Source(
+              file_object='raw_data',
+              extract=mlc.Extract(column='index'),
+          ),
+      ),
+      mlc.Field(
+          id='jsonl/text',
+          name='jsonl/text',
+          description='The dummy sample text.',
+          data_types=mlc.DataType.TEXT,
+          source=mlc.Source(
+              file_object='raw_data',
+              extract=mlc.Extract(column='text'),
+          ),
+      ),
+  ]
+
+  record_sets = [
+      mlc.RecordSet(
+          id='jsonl',
+          name='jsonl',
+          description='Dummy record set.',
+          fields=fields,
+      )
+  ]
+  if split_names:
+    record_sets[0].fields.append(
+        mlc.Field(
+            id='jsonl/split',
+            name='jsonl/split',
+            description='The dummy split.',
+            data_types=mlc.DataType.TEXT,
+            source=mlc.Source(
+                file_object='raw_data',
+                extract=mlc.Extract(file_property='fullpath'),
+                transforms=[mlc.Transform(regex='.*(.+).+jsonl$')],
+            ),
+            references=mlc.Source(field='split/name'),
+        ),
+    )
+    record_sets.append(
+        mlc.RecordSet(
+            id='split',
+            name='split',
+            key='split/name',
+            data_types=[mlc.DataType.SPLIT],
+            description='Dummy split.',
+            fields=[
+                mlc.Field(
+                    id='split/name',
+                    name='split/name',
+                    description='The dummy split name.',
+                    data_types=mlc.DataType.TEXT,
+                )
+            ],
+            data=[{'split/name': split_name} for split_name in split_names],
+        )
+    )
+
+  with tempfile.TemporaryDirectory() as tempdir:
+    tempdir = epath.Path(tempdir)
+
+    # Write raw examples to tempdir/data.
+    raw_data_dir = tempdir / 'data'
+    raw_data_dir.mkdir()
+    if split_names:
+      parts = str(raw_data_filename).split('.')
+      file_name, extension = '.'.join(parts[:-1]), parts[-1]
+      for split_name in split_names:
+        raw_data_file = raw_data_dir / (
+            file_name + '_' + split_name + '.' + extension
+        )
+        split_entries = [
+            entry for entry in entries if entry['split'] == split_name
+        ]
+        raw_data_file.write_text('\n'.join(map(json.dumps, split_entries)))
+      distribution = [
+          mlc.FileSet(
+              id='raw_data',
+              name='raw_data',
+              description='Files with the data.',
+              encoding_formats=['application/jsonlines'],
+              includes=f'data/{file_name}*.{extension}',
+          ),
+      ]
+    else:
+      raw_data_file = raw_data_dir / raw_data_filename
+      raw_data_file.write_text('\n'.join(map(json.dumps, entries)))
+      # Get the actual raw file's hash, set distribution and metadata.
+      raw_data_file_content = raw_data_file.read_text()
+      sha256 = hashlib.sha256(raw_data_file_content.encode()).hexdigest()
+      distribution = [
+          mlc.FileObject(
+              id='raw_data',
+              name='raw_data',
+              description='File with the data.',
+              encoding_formats=['application/jsonlines'],
+              content_url=f'data/{raw_data_filename}',
+              sha256=sha256,
+          ),
+      ]
+    dummy_metadata = mlc.Metadata(
+        name=dataset_name,
+        description='Dummy description.',
+        cite_as=(
+            '@article{dummyarticle, title={title}, author={author},'
+            ' year={2020}}'
+        ),
+        url='https://dummy_url',
+        distribution=distribution,
+        record_sets=record_sets,
+        version=version,
+        license='Public',
+    )
+    # Write Croissant JSON-LD to tempdir.
+    croissant_file = tempdir / croissant_filename
+    croissant_file.write_text(json.dumps(dummy_metadata.to_json(), indent=2))
+
+    yield croissant_file

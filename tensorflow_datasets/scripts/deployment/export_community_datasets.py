@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,12 +22,12 @@ from typing import List
 
 from absl import app
 import tensorflow_datasets as tfds
-import toml
+from tensorflow_datasets.core.community import config as config_lib
 import tqdm
 
 # Community datasets namespaces and code location from where the datasets
 # package index will be constructed.
-_IN_PATH = tfds.core.tfds_path() / 'community-datasets.toml'
+_IN_PATH = tfds.core.tfds_path('community-datasets.toml')
 # Community datasets package indexes which will be updated.
 _OUT_PATH = tfds.core.utils.gcs_utils.GCS_COMMUNITY_INDEX_PATH
 
@@ -56,15 +56,17 @@ def export_community_datasets(
 
 
 def _find_community_ds_packages(
-    config_path: tfds.core.Path,) -> List[DatasetPackage]:
+    config_path: tfds.core.Path,
+) -> List[DatasetPackage]:
   """Find all namepaces/dataset from the config.
 
   Config should contain the instructions in the following format:
 
   ```
-  [Namespace]
-  <namespace0> = 'github://<owner0>/<github_repo0>/tree/<path/to/dataset/dir>'
-  <namespace1> = 'gs://<bucket>/<datasets>/'
+  [namespace0]
+  paths = 'github://<owner0>/<github_repo0>/tree/<path/to/dataset/dir>'
+  [namespace1]
+  paths = 'gs://<bucket>/<datasets>/'
   ```
 
   Args:
@@ -73,21 +75,28 @@ def _find_community_ds_packages(
   Returns:
     ds_packages: list of all found datasets.
   """
-  config = toml.load(config_path)
+  namespace_registry = config_lib.NamespaceRegistry(config_path)
 
   all_packages = []
-  for namespace, src_code_path in tqdm.tqdm(config['Namespaces'].items()):
-    tqdm.tqdm.write(f'Searching datasets for {namespace}: {src_code_path}')
-    for pkg in tfds.core.community.register_package.list_ds_packages_for_namespace(
-        namespace=namespace, path=tfds.core.Path(src_code_path)):
-      tqdm.tqdm.write(str(pkg.name))
-      all_packages.append(pkg)
+  for namespace, config in tqdm.tqdm(
+      namespace_registry.config_per_namespace.items()
+  ):
+    tqdm.tqdm.write(f'Searching datasets for {namespace}: {config}')
+    for src_code_path in config.paths:
+      for (
+          pkg
+      ) in tfds.core.community.register_package.list_ds_packages_for_namespace(
+          namespace=namespace, path=tfds.core.Path(src_code_path)
+      ):
+        tqdm.tqdm.write(str(pkg.name))
+        all_packages.append(pkg)
 
   return sorted(all_packages, key=lambda package: package.name)
 
 
-def _save_community_ds_packages(file_path: tfds.core.Path,
-                                ds_packages: List[DatasetPackage]) -> None:
+def _save_community_ds_packages(
+    file_path: tfds.core.Path, ds_packages: List[DatasetPackage]
+) -> None:
   """Save all loaded datasets in the package index.
 
   Saved file will have the following `.jsonl` format:

@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,15 +16,16 @@
 """Source-based register."""
 
 import collections
+from collections.abc import Iterator, Sequence
 import dataclasses
 import datetime
+import functools
 import hashlib
 import json
 import tempfile
-from typing import Any, Iterator, List, Optional, Type
+from typing import Any, Type
 
 from absl import logging
-
 from etils import epath
 from tensorflow_datasets.core import dataset_builder
 from tensorflow_datasets.core import naming
@@ -52,6 +53,7 @@ class DatasetPackage:
     name: Dataset name
     source: Source that contains the source code (e.g. `github://...`)
   """
+
   name: naming.DatasetName
   source: dataset_sources_lib.DatasetSource
   # Ideally, we should also save the version so `tfds.load('ns:ds/1.0.0')`
@@ -85,6 +87,7 @@ class _InstalledPackage:
     instalation_date: Date of installation of the package
     hash: base64 checksum of the installed files
   """
+
   package: DatasetPackage
   instalation_date: datetime.datetime
   hash: str
@@ -107,9 +110,9 @@ class _InstalledPackage:
     """Factory which creates the cls from json."""
     return cls(
         package=DatasetPackage.from_json(data['package']),
-        # TODO(tfds): py3.7 Should use `datetime.fromisoformat`
-        instalation_date=datetime.datetime.strptime(data['instalation_date'],
-                                                    '%Y-%m-%dT%H:%M:%S.%f'),
+        instalation_date=datetime.datetime.fromisoformat(
+            data['instalation_date']
+        ),
         hash=data['hash'],
     )
 
@@ -122,11 +125,10 @@ class _InstalledPackage:
     }
 
 
-# TODO(tfds): py3.9 Should be `UserDict[naming.DatasetName, _DatasetPackage]`
-class _PackageIndex(collections.UserDict):
+class _PackageIndex(collections.UserDict[naming.DatasetName, DatasetPackage]):
   """Package index.
 
-  Package index is a `Dict[DatasetName, _DatasetPackage]` loaded from cache.
+  Package index is a `Dict[DatasetName, DatasetPackage]` loaded from cache.
   It has an additional `.refresh()` method to update the local cache by
   querying the remote index (stored in `gs://tfds-data`).
 
@@ -151,7 +153,8 @@ class _PackageIndex(collections.UserDict):
     super().__init__()
     self._remote_path: epath.Path = epath.Path(path)
     self._cached_path: epath.Path = (
-        cache.cache_path() / 'community-datasets-list.jsonl')
+        cache.cache_path() / 'community-datasets-list.jsonl'
+    )
 
     # Pre-load the index from the cache
     if self._cached_path.exists():
@@ -178,8 +181,9 @@ class _PackageIndex(collections.UserDict):
     except gcs_utils.gcs_unavailable_exceptions() as e:
       # Do not crash if GCS access not available, but instead silently reuse
       # the cache.
-      logging.info('Could not refresh the package index (GCS unavailable): %s',
-                   e)
+      logging.info(
+          'Could not refresh the package index (GCS unavailable): %s', e
+      )
       return
 
     # If read was sucessful, update the cache with the new dataset list
@@ -218,14 +222,14 @@ class PackageRegister(register_base.BaseRegister):
     """
     self._path = path
 
-  @utils.memoized_property
+  @functools.cached_property
   def _package_index(self) -> _PackageIndex:
-    """`Dict[DatasetName, _DatasetPackage]` containg the community datasets."""
+    """`Dict[DatasetName, DatasetPackage]` containg the community datasets."""
     # Use property to lazy-initialize the cache (and create the tmp dir) only
     # if it is used.
     return _PackageIndex(self._path)
 
-  def list_builders(self) -> List[str]:
+  def list_builders(self) -> Sequence[str]:
     """Returns the list of registered builders."""
     if not self._package_index:  # Package index not loaded nor cached
       self._package_index.refresh()  # Try updating the index
@@ -262,7 +266,7 @@ class PackageRegister(register_base.BaseRegister):
 def list_ds_packages_for_namespace(
     namespace: str,
     path: epath.Path,
-) -> List[DatasetPackage]:
+) -> Sequence[DatasetPackage]:
   """Returns the dataset names found in a specific directory.
 
   Directories that contain code should have the following structure:
@@ -308,7 +312,8 @@ def list_ds_packages_for_namespace(
 
 
 def get_dataset_source(
-    ds_path: epath.Path,) -> Optional[dataset_sources_lib.DatasetSource]:
+    ds_path: epath.Path,
+) -> dataset_sources_lib.DatasetSource | None:
   """Returns a `DatasetSource` instance if the given path corresponds to a dataset.
 
   To determine whether the given path contains a dataset, a simple heuristic is
@@ -342,7 +347,8 @@ def get_dataset_source(
   return dataset_sources_lib.DatasetSource(
       root_path=ds_path,
       filenames=sorted(
-          [fname for fname in all_filenames if is_interesting_file(fname)]),
+          [fname for fname in all_filenames if is_interesting_file(fname)]
+      ),
   )
 
 
@@ -389,7 +395,8 @@ def _download_or_reuse_cache(
     # If still not found, raise an DatasetNotFoundError
     raise registered.DatasetNotFoundError(
         f'Could not find dataset {name}: Dataset not found among the '
-        f'{len(package_index)} datasets of the community index.')
+        f'{len(package_index)} datasets of the community index.'
+    )
 
   # If package was found, download it.
   installed_package = _download_and_cache(package)
@@ -397,10 +404,12 @@ def _download_or_reuse_cache(
 
 
 def _get_last_installed_version(
-    name: naming.DatasetName,) -> Optional[_InstalledPackage]:
+    name: naming.DatasetName,
+) -> _InstalledPackage | None:
   """Checks whether the datasets is installed locally and returns it."""
   root_dir = (
-      cache.module_path() / _IMPORT_MODULE_NAME / name.namespace / name.name)
+      cache.module_path() / _IMPORT_MODULE_NAME / name.namespace / name.name
+  )
   if not root_dir.exists():  # Dataset not found
     return None
 
@@ -413,7 +422,8 @@ def _get_last_installed_version(
       if metadata.exists()
   ]
   all_installed_packages = sorted(
-      all_installed_packages, key=lambda p: p.instalation_date)
+      all_installed_packages, key=lambda p: p.instalation_date
+  )
 
   if not all_installed_packages:  # No valid package found
     return None
@@ -458,7 +468,8 @@ def _download_and_cache(package: DatasetPackage) -> _InstalledPackage:
     if installation_path.exists():  # Package already exists (with same hash)
       # In the future, we should be smarter to allow overwrite.
       raise ValueError(
-          f'Package {package} already installed in {installation_path}.')
+          f'Package {package} already installed in {installation_path}.'
+      )
     installation_path.parent.mkdir(parents=True, exist_ok=True)
     tmp_dir.rename(installation_path)
   finally:

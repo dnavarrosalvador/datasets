@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -73,7 +73,10 @@ def _make_builder_config(module):
 class Gpt3(tfds.core.GeneratorBasedBuilder):
   """GPT-3 Dataset."""
 
-  VERSION = tfds.core.Version("1.0.0")
+  VERSION = tfds.core.Version("1.1.0")
+  RELEASE_NOTES = {
+      "1.1.0": "New commit for the files.",
+  }
   BUILDER_CONFIGS = [_make_builder_config(module) for module in _MODULES]
 
   def _info(self):
@@ -100,7 +103,8 @@ class Gpt3(tfds.core.GeneratorBasedBuilder):
             gen_kwargs={
                 "directory": directory,
                 "task": self.builder_config.name,
-            }),
+            },
+        ),
     ]
 
   def _generate_examples(self, directory, task):

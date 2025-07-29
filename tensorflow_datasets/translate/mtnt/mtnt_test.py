@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ from tensorflow_datasets.translate.mtnt import mtnt
 
 class MtntTest(tfds.testing.DatasetBuilderTestCase):
   """Tests for mtnt dataset."""
+
   DATASET_CLASS = mtnt.Mtnt
   BUILDER_CONFIG_NAMES_TO_TEST = ['en-fr']
   SPLITS = {

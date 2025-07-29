@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,14 +16,12 @@
 """Shapes3D dataset."""
 
 import numpy as np
-from six import moves
-from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
 import tensorflow_datasets.public_api as tfds
 
-_URL = ("https://storage.googleapis.com/3d-shapes/3dshapes.h5")
+_URL = "https://storage.googleapis.com/3d-shapes/3dshapes.h5"
 
 
-class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
+class Builder(tfds.core.GeneratorBasedBuilder):
   """Shapes3d data set."""
 
   VERSION = tfds.core.Version("2.0.0")
@@ -34,32 +32,23 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
   def _info(self):
     return self.dataset_info_from_configs(
         features=tfds.features.FeaturesDict({
-            "image":
-                tfds.features.Image(shape=(64, 64, 3)),
-            "label_floor_hue":
-                tfds.features.ClassLabel(num_classes=10),
-            "label_wall_hue":
-                tfds.features.ClassLabel(num_classes=10),
-            "label_object_hue":
-                tfds.features.ClassLabel(num_classes=10),
-            "label_scale":
-                tfds.features.ClassLabel(num_classes=8),
-            "label_shape":
-                tfds.features.ClassLabel(num_classes=4),
-            "label_orientation":
-                tfds.features.ClassLabel(num_classes=15),
-            "value_floor_hue":
-                tfds.features.Tensor(shape=[], dtype=tf.float32),
-            "value_wall_hue":
-                tfds.features.Tensor(shape=[], dtype=tf.float32),
-            "value_object_hue":
-                tfds.features.Tensor(shape=[], dtype=tf.float32),
-            "value_scale":
-                tfds.features.Tensor(shape=[], dtype=tf.float32),
-            "value_shape":
-                tfds.features.Tensor(shape=[], dtype=tf.float32),
-            "value_orientation":
-                tfds.features.Tensor(shape=[], dtype=tf.float32),
+            "image": tfds.features.Image(shape=(64, 64, 3)),
+            "label_floor_hue": tfds.features.ClassLabel(num_classes=10),
+            "label_wall_hue": tfds.features.ClassLabel(num_classes=10),
+            "label_object_hue": tfds.features.ClassLabel(num_classes=10),
+            "label_scale": tfds.features.ClassLabel(num_classes=8),
+            "label_shape": tfds.features.ClassLabel(num_classes=4),
+            "label_orientation": tfds.features.ClassLabel(num_classes=15),
+            "value_floor_hue": tfds.features.Tensor(shape=[], dtype=np.float32),
+            "value_wall_hue": tfds.features.Tensor(shape=[], dtype=np.float32),
+            "value_object_hue": tfds.features.Tensor(
+                shape=[], dtype=np.float32
+            ),
+            "value_scale": tfds.features.Tensor(shape=[], dtype=np.float32),
+            "value_shape": tfds.features.Tensor(shape=[], dtype=np.float32),
+            "value_orientation": tfds.features.Tensor(
+                shape=[], dtype=np.float32
+            ),
         }),
         homepage="https://github.com/deepmind/3d-shapes",
     )
@@ -70,7 +59,8 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
     # There is no predefined train/val/test split for this dataset.
     return [
         tfds.core.SplitGenerator(
-            name=tfds.Split.TRAIN, gen_kwargs=dict(filepath=filepath)),
+            name=tfds.Split.TRAIN, gen_kwargs=dict(filepath=filepath)
+        ),
     ]
 
   def _generate_examples(self, filepath):
@@ -97,7 +87,8 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
       labels_array[:, i] = _discretize(values_array[:, i])  # pylint: disable=unsupported-assignment-operation
 
     for i, (image, labels, values) in enumerate(
-        moves.zip(image_array, labels_array, values_array)):
+        zip(image_array, labels_array, values_array)
+    ):
       record = {
           "image": image,
           "label_floor_hue": labels[0],

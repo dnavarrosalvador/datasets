@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,30 +15,30 @@
 
 """Some python utils function and classes."""
 
+from __future__ import annotations
+
 import base64
+from collections.abc import Iterator, Sequence
 import contextlib
 import functools
 import io
 import itertools
 import logging
-import operator
 import os
-import random
+import re
 import shutil
-import string
 import sys
 import textwrap
 import threading
 import typing
-from typing import Any, Callable, Dict, Iterable, Iterator, List, NoReturn, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Callable, NoReturn, Type, TypeVar
 import uuid
 
 from absl import logging as absl_logging
 from etils import epath
-from six.moves import urllib
 from tensorflow_datasets.core import constants
 from tensorflow_datasets.core.utils import type_utils
-from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
+
 
 Tree = type_utils.Tree
 
@@ -53,6 +53,8 @@ T = TypeVar('T')
 U = TypeVar('U')
 
 Fn = TypeVar('Fn', bound=Callable[..., Any])
+# Regular expression to match strings that are not valid Python/TFDS names:
+_INVALID_TFDS_NAME_CHARACTER = re.compile(r'[^a-zA-Z0-9_]')
 
 
 def is_notebook() -> bool:
@@ -119,7 +121,7 @@ def disable_logging():
     logger.disabled = logger_disabled
 
 
-class NonMutableDict(Dict[T, U]):
+class NonMutableDict(dict[T, U]):
   """Dict where keys can only be added but not modified.
 
   Raises an error if a key is overwritten. The error message can be customized
@@ -140,7 +142,7 @@ class NonMutableDict(Dict[T, U]):
       raise ValueError(self._error_msg.format(key=key))
     return super(NonMutableDict, self).__setitem__(key, value)
 
-  def update(self, other):
+  def update(self, other):  # pytype: disable=signature-mismatch  # overriding-parameter-count-checks
     if any(k in self.keys() for k in other):
       raise ValueError(self._error_msg.format(key=set(self) & set(other)))
     return super(NonMutableDict, self).update(other)
@@ -151,23 +153,6 @@ class classproperty(property):  # pylint: disable=invalid-name
 
   def __get__(self, obj, objtype=None):
     return self.fget.__get__(None, objtype)()  # pytype: disable=attribute-error
-
-
-class memoized_property(property):  # pylint: disable=invalid-name
-  """Descriptor that mimics @property but caches output in member variable."""
-
-  def __get__(self, obj, objtype=None):
-    # See https://docs.python.org/3/howto/descriptor.html#properties
-    if obj is None:
-      return self
-    if self.fget is None:  # pytype: disable=attribute-error
-      raise AttributeError('unreadable attribute')
-    attr = '__cached_' + self.fget.__name__  # pytype: disable=attribute-error
-    cached = getattr(obj, attr, None)
-    if cached is None:
-      cached = self.fget(obj)  # pytype: disable=attribute-error
-      setattr(obj, attr, cached)
-    return cached
 
 
 if typing.TYPE_CHECKING:
@@ -214,8 +199,7 @@ def zip_nested(arg0, *args, **kwargs):
   # Could add support for more exotic data_struct, like OrderedDict
   if isinstance(arg0, dict):
     return {
-        k: zip_nested(*a, dict_only=dict_only)
-        for k, a in zip_dict(arg0, *args)
+        k: zip_nested(*a, dict_only=dict_only) for k, a in zip_dict(arg0, *args)
     }
   elif not dict_only:
     if isinstance(arg0, list):
@@ -224,14 +208,17 @@ def zip_nested(arg0, *args, **kwargs):
   return (arg0,) + args
 
 
-def flatten_nest_dict(d: type_utils.TreeDict[T]) -> Dict[str, T]:
+def flatten_nest_dict(d: type_utils.TreeDict[T]) -> dict[str, T]:
   """Return the dict with all nested keys flattened joined with '/'."""
   # Use NonMutableDict to ensure there is no collision between features keys
   flat_dict = NonMutableDict()
   for k, v in d.items():
     if isinstance(v, dict):
-      flat_dict.update(
-          {f'{k}/{k2}': v2 for k2, v2 in flatten_nest_dict(v).items()})
+      for k2, v2 in flatten_nest_dict(v).items():
+        flat_dict[f'{k}/{k2}'] = v2
+    elif isinstance(v, list) and v and isinstance(v[0], dict):
+      for k2 in v[0]:
+        flat_dict[f'{k}/{k2}'] = [v[i][k2] for i in range(len(v))]
     else:
       flat_dict[k] = v
   return flat_dict
@@ -241,7 +228,7 @@ def flatten_nest_dict(d: type_utils.TreeDict[T]) -> Dict[str, T]:
 # users to compile from source.
 def flatten_with_path(
     structure: Tree[T],
-) -> Iterator[Tuple[Tuple[Union[str, int], ...], T]]:  # pytype: disable=invalid-annotation
+) -> Iterator[tuple[tuple[str | int, ...], T]]:  # pytype: disable=invalid-annotation
   """Convert a TreeDict into a flat list of paths and their values.
 
   ```py
@@ -287,17 +274,27 @@ def pack_as_nest_dict(flat_d, nest_d):
   for k, v in nest_d.items():
     if isinstance(v, dict):
       v_flat = flatten_nest_dict(v)
-      sub_d = {
-          k2: flat_d.pop('{}/{}'.format(k, k2)) for k2, _ in v_flat.items()
-      }
+      sub_d = {k2: flat_d.pop(f'{k}/{k2}', None) for k2, _ in v_flat.items()}
       # Recursively pack the dictionary
       nest_out_d[k] = pack_as_nest_dict(sub_d, v)
+    elif isinstance(v, list) and v and isinstance(v[0], dict):
+      first_inner_key = list(v[0].keys())[0]
+      list_size = len(flat_d[f'{k}/{first_inner_key}'])
+      nest_out_d[k] = [{} for _ in range(list_size)]
+      for k2 in v[0].keys():
+        subvals = flat_d.pop(f'{k}/{k2}', [])
+        assert (
+            len(subvals) == len(v) == list_size
+        ), f'{subvals}, {v}, {list_size}'
+        for i in range(list_size):
+          nest_out_d[k][i][k2] = subvals[i]
     else:
-      nest_out_d[k] = flat_d.pop(k)
+      nest_out_d[k] = flat_d.pop(k, None)
   if flat_d:  # At the end, flat_d should be empty
     raise ValueError(
         'Flat dict strucure do not match the nested dict. Extra keys: '
-        '{}'.format(list(flat_d.keys())))
+        f'{list(flat_d.keys())}'
+    )
   return nest_out_d
 
 
@@ -307,31 +304,37 @@ def nullcontext(enter_result: T = None) -> Iterator[T]:
   yield enter_result
 
 
-def _get_incomplete_path(filename):
-  """Returns a temporary filename based on filename."""
-  random_suffix = ''.join(
-      random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
-  return filename + '.incomplete' + random_suffix
+def _tmp_file_prefix() -> str:
+  return f'{constants.INCOMPLETE_PREFIX}{uuid.uuid4().hex}'
+
+
+def _tmp_file_name(
+    path: epath.PathLike,
+    subfolder: str | None = None,
+) -> epath.Path:
+  """Returns the temporary file name for the given path.
+
+  Args:
+    path: The path to the file.
+    subfolder: The subfolder to use. If None, then the parent of the path will
+      be used.
+  """
+  path = epath.Path(path)
+  file_name = f'{_tmp_file_prefix()}.{path.name}'
+  if subfolder:
+    return path.parent / subfolder / file_name
+  else:
+    return path.parent / file_name
 
 
 @contextlib.contextmanager
-def incomplete_dir(dirname: epath.PathLike) -> Iterator[str]:
-  """Create temporary dir for dirname and rename on exit."""
-  dirname = os.fspath(dirname)
-  tmp_dir = _get_incomplete_path(dirname)
-  tf.io.gfile.makedirs(tmp_dir)
-  try:
-    yield tmp_dir
-    tf.io.gfile.rename(tmp_dir, dirname)
-  finally:
-    if tf.io.gfile.exists(tmp_dir):
-      tf.io.gfile.rmtree(tmp_dir)
-
-
-@contextlib.contextmanager
-def incomplete_file(path: epath.Path,) -> Iterator[epath.Path]:
+def incomplete_file(
+    path: epath.Path,
+    subfolder: str | None = None,
+) -> Iterator[epath.Path]:
   """Writes to path atomically, by writing to temp file and renaming it."""
-  tmp_path = path.parent / f'{path.name}.incomplete.{uuid.uuid4().hex}'
+  tmp_path = _tmp_file_name(path, subfolder=subfolder)
+  tmp_path.parent.mkdir(exist_ok=True)
   try:
     yield tmp_path
     tmp_path.replace(path)
@@ -341,18 +344,43 @@ def incomplete_file(path: epath.Path,) -> Iterator[epath.Path]:
 
 
 @contextlib.contextmanager
-def atomic_write(path, mode):
+def incomplete_files(
+    path: epath.Path,
+) -> Iterator[epath.Path]:
   """Writes to path atomically, by writing to temp file and renaming it."""
-  tmp_path = '%s%s_%s' % (path, constants.INCOMPLETE_SUFFIX, uuid.uuid4().hex)
-  with tf.io.gfile.GFile(tmp_path, mode) as file_:
+  tmp_file_prefix = _tmp_file_prefix()
+  tmp_path = path.parent / f'{tmp_file_prefix}.{path.name}'
+  try:
+    yield tmp_path
+    # Rename all tmp files to their final name.
+    for tmp_file in path.parent.glob(f'{tmp_file_prefix}.*'):
+      file_name = tmp_file.name.removeprefix(tmp_file_prefix + '.')
+      tmp_file.replace(path.parent / file_name)
+  finally:
+    # Eventually delete the tmp_path if exception was raised
+    for tmp_file in path.parent.glob(f'{tmp_file_prefix}.*'):
+      tmp_file.unlink(missing_ok=True)
+
+
+def is_incomplete_file(path: epath.Path) -> bool:
+  """Returns whether the given filename suggests that it's incomplete."""
+  regex = rf'{re.escape(constants.INCOMPLETE_PREFIX)}[0-9a-fA-F]{{32}}\..+'
+  return bool(re.search(rf'^{regex}$', path.name))
+
+
+@contextlib.contextmanager
+def atomic_write(path: epath.PathLike, mode: str):
+  """Writes to path atomically, by writing to temp file and renaming it."""
+  tmp_path = _tmp_file_name(path)
+  with tmp_path.open(mode=mode) as file_:
     yield file_
-  tf.io.gfile.rename(tmp_path, path, overwrite=True)
+  tmp_path.replace(path)
 
 
 def reraise(
     e: Exception,
-    prefix: Optional[str] = None,
-    suffix: Optional[str] = None,
+    prefix: str | None = None,
+    suffix: str | None = None,
 ) -> NoReturn:
   """Reraise an exception with an additional message."""
   prefix = prefix or ''
@@ -365,7 +393,9 @@ def reraise(
       type(e).__str__ is not BaseException.__str__
       # This should never happens unless the user plays with Exception
       # internals
-      or not hasattr(e, 'args') or not isinstance(e.args, tuple)):
+      or not hasattr(e, 'args')
+      or not isinstance(e.args, tuple)
+  ):
     msg = f'{prefix}{e}{suffix}'
     # Could try to dynamically create a
     # `type(type(e).__name__, (ReraisedError, type(e)), {})`, but should be
@@ -387,8 +417,8 @@ def reraise(
   # If there is more than 1 args, concatenate the message with other args
   else:
     e.args = tuple(
-        p for p in (prefix,) + e.args + (suffix,)
-        if not isinstance(p, str) or p)
+        p for p in (prefix,) + e.args + (suffix,) if not isinstance(p, str) or p
+    )
     raise  # pylint: disable=misplaced-bare-raise
 
 
@@ -437,7 +467,7 @@ def get_class_path(cls, use_tfds_prefix=True):
     cls = cls.__class__
   module_path = cls.__module__
   if use_tfds_prefix and module_path.startswith('tensorflow_datasets'):
-    module_path = 'tfds' + module_path[len('tensorflow_datasets'):]
+    module_path = 'tfds' + module_path[len('tensorflow_datasets') :]
   return '.'.join([module_path, cls.__name__])
 
 
@@ -470,7 +500,6 @@ def build_synchronize_decorator() -> Callable[[Fn], Fn]:
   lock = threading.Lock()
 
   def lock_decorator(fn: Fn) -> Fn:
-
     @functools.wraps(fn)
     def lock_decorated(*args, **kwargs):
       with lock:
@@ -481,28 +510,18 @@ def build_synchronize_decorator() -> Callable[[Fn], Fn]:
   return lock_decorator
 
 
-def basename_from_url(url: str) -> str:
-  """Returns file name of file at given url."""
-  filename = urllib.parse.urlparse(url).path
-  filename = os.path.basename(filename)
-  # Replace `%2F` (html code for `/`) by `_`.
-  # This is consistent with how Chrome rename downloaded files.
-  filename = filename.replace('%2F', '_')
-  return filename or 'unknown_name'
-
-
-def list_info_files(dir_path: epath.PathLike) -> List[str]:
+def list_info_files(dir_path: epath.PathLike) -> Sequence[str]:
   """Returns name of info files within dir_path."""
-  from tensorflow_datasets.core import file_adapters  # pylint: disable=g-import-not-at-top  # pytype: disable=import-error
-  path = os.fspath(dir_path)
-  return [
-      fname for fname in tf.io.gfile.listdir(path)
-      if not tf.io.gfile.isdir(os.path.join(path, fname)) and
-      not file_adapters.is_example_file(fname)
-  ]
+  path = epath.Path(dir_path)
+  info_files = []
+  for file_path in path.glob('*.json'):
+    info_files.append(file_path.name)
+  return info_files
 
 
-def get_base64(write_fn: Union[bytes, Callable[[io.BytesIO], None]],) -> str:
+def get_base64(
+    write_fn: bytes | Callable[[io.BytesIO], None],
+) -> str:
   """Extracts the base64 string of an object by writing into a tmp buffer."""
   if isinstance(write_fn, bytes):  # Value already encoded
     bytes_value = write_fn
@@ -524,6 +543,19 @@ def add_sys_path(path: epath.PathLike) -> Iterator[None]:
     sys.path.remove(path)
 
 
-def prod(iterable: Iterable[int], *, start=1) -> int:
-  """Backport of python 3.8 `math.prod`."""
-  return functools.reduce(operator.mul, iterable, start)
+def make_valid_name(name: str) -> str:
+  """Sanitizes a string to follow the Python lexical definitions.
+
+  The function removes all forbidden characters outside of A-Za-z0-9_ and
+  replaces them with an underscore.
+
+  Warning: if you want to convert a name to a valid TFDS name, prefer
+  `conversion_utils.to_tfds_name` instead.
+
+  Args:
+    name: The input string to sanitize.
+
+  Returns:
+    The sanitized string.
+  """
+  return re.sub(_INVALID_TFDS_NAME_CHARACTER, '_', name)

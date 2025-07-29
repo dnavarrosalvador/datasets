@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-r"""Copy the info files from placer to GCS bucket.
+r"""Copy the info files from one directory to another.
+
+If no destination is specified, the default is TFDS GCS bucket.
 """
 
 import os
@@ -27,10 +29,13 @@ from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
 flags.DEFINE_boolean('dry_run', True, 'If True, just print, do nothing.')
 flags.DEFINE_boolean('overwrite', False, 'If True, overwrites the data.')
 flags.DEFINE_string(
-    'from_directory', tfds.core.constants.DATA_DIR,
-    'Where to get the info files from (datasets/ dir on placer).')
-flags.DEFINE_string('to_directory', None,
-                    'Path where dataset info files will be copied.')
+    'from_directory',
+    tfds.core.constants.DATA_DIR,
+    'Where to get the info files from (datasets/ dir).',
+)
+flags.DEFINE_string(
+    'to_directory', None, 'Path where dataset info files will be copied.'
+)
 
 FLAGS = flags.FLAGS
 

@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 """Base decoders."""
 
 import abc
+import enum
 import functools
 
-from tensorflow_datasets.core.utils import tree_utils
 from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
+from tensorflow_datasets.core.utils.lazy_imports_utils import tree
 
 
 class Decoder(abc.ABC):
@@ -45,7 +46,12 @@ class Decoder(abc.ABC):
   """
 
   def __init__(self):
-    self.feature = None
+    self._feature = None
+
+  @property
+  def feature(self):
+    assert self._feature, 'Feature uninitialized. Call setup() first.'
+    return self._feature
 
   def setup(self, *, feature):
     """Transformation contructor.
@@ -58,13 +64,13 @@ class Decoder(abc.ABC):
       feature: `tfds.features.FeatureConnector`, the feature to which is applied
         this transformation.
     """
-    self.feature = feature
+    self._feature = feature
 
   @property
   def dtype(self):
     """Returns the `dtype` after decoding."""
     tensor_info = self.feature.get_tensor_info()
-    return tree_utils.map_structure(lambda t: t.dtype, tensor_info)
+    return tree.map_structure(lambda t: t.dtype, tensor_info)
 
   @abc.abstractmethod
   def decode_example(self, serialized_example):
@@ -79,6 +85,18 @@ class Decoder(abc.ABC):
     """
     raise NotImplementedError('Abstract class')
 
+  def decode_example_np(self, serialized_example):
+    """Decode the example feature field for NumPy (eg: image).
+
+    Args:
+      serialized_example: `np.array` as decoded, the dtype/shape should be
+        identical to `feature.get_serialized_info()`.
+
+    Returns:
+      example: Decoded example. Defaults to `decode_example`.
+    """
+    return self.decode_example(serialized_example)
+
   def decode_batch_example(self, serialized_example):
     """See `FeatureConnector.decode_batch_example` for details."""
     return tf.map_fn(
@@ -89,9 +107,15 @@ class Decoder(abc.ABC):
         name='sequence_decode',
     )
 
+  def decode_ragged_example(self, serialized_example):
+    """See `FeatureConnector.decode_ragged_example` for details."""
+    return tf.ragged.map_flat_values(
+        self.decode_batch_example, serialized_example
+    )
+
 
 class SkipDecoding(Decoder):
-  """Transformation which skip the decoding entirelly.
+  """Transformation which skips the decoding entirely.
 
   Example of usage:
 
@@ -112,9 +136,13 @@ class SkipDecoding(Decoder):
   @property
   def dtype(self):
     tensor_info = self.feature.get_serialized_info()
-    return tree_utils.map_structure(lambda t: t.dtype, tensor_info)
+    return tree.map_structure(lambda t: t.dtype, tensor_info)
 
   def decode_example(self, serialized_example):
+    """Forward the serialized feature field."""
+    return serialized_example
+
+  def decode_example_np(self, serialized_example):
     """Forward the serialized feature field."""
     return serialized_example
 
@@ -138,8 +166,9 @@ class DecoderFn(Decoder):
 
   def decode_example(self, serialized_example):
     """Decode the example using the function."""
-    return self._fn(serialized_example, self.feature, *self._args,
-                    **self._kwargs)
+    return self._fn(
+        serialized_example, self.feature, *self._args, **self._kwargs
+    )
 
 
 def make_decoder(output_dtype=None):
@@ -175,7 +204,6 @@ def make_decoder(output_dtype=None):
   """  # pylint: disable=g-docstring-has-escape
 
   def decorator(fn):
-
     @functools.wraps(fn)
     def decorated(*args, **kwargs):
       return DecoderFn(fn, output_dtype, *args, **kwargs)
@@ -183,3 +211,30 @@ def make_decoder(output_dtype=None):
     return decorated
 
   return decorator
+
+
+class DeserializeMethod(enum.Enum):
+  """How to deserialize the bytes that are read before returning.
+
+  When reading examples from a source (e.g., a file), we consider 2 phases in
+  parsing the raw data:
+
+  1. Deserialize: deserializes raw bytes into an object. Typically it will be
+     deserialized into a `tf.train.Example`.
+
+  2. Decode: A `tf.train.Example` might encode information (e.g., a bytes
+     feature encodes an image or a int64 list encodes a tensor). The second
+     phase decodes the encoded information.
+
+  DESERIALIZE_AND_DECODE: deserialize the raw bytes to tf example (if file
+    format doesn't have a custom encoding) and then decode the features. Note
+    that how and what is decoded can typically be overriden with `decoders`.
+  DESERIALIZE_NO_DECODE: parse the raw bytes to tf example (if file format
+    doesn't have a custom encoding). If this parse method is used, then all
+    decoders are ignored.
+  RAW_BYTES: don't parse nor decode, but return the raw bytes.
+  """
+
+  DESERIALIZE_AND_DECODE = 'deserialize_and_decode'
+  DESERIALIZE_NO_DECODE = 'deserialize_no_decode'
+  RAW_BYTES = 'raw_bytes'

@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import collections
 import csv
 
 from etils import epath
+import numpy as np
 from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
 import tensorflow_datasets.public_api as tfds
 
@@ -92,8 +93,18 @@ sense to model with the logarithm transform).
 """
 
 _MONTHS = [
-    'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov',
-    'dec'
+    'jan',
+    'feb',
+    'mar',
+    'apr',
+    'may',
+    'jun',
+    'jul',
+    'aug',
+    'sep',
+    'oct',
+    'nov',
+    'dec',
 ]
 
 _DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
@@ -128,8 +139,8 @@ class ForestFires(tfds.core.GeneratorBasedBuilder):
         builder=self,
         description=_DESCRIPTION,
         features=tfds.features.FeaturesDict({
-            'area': tf.float32,
-            'features': {name: dtype for name, dtype in features().items()}
+            'area': np.float32,
+            'features': {name: dtype for name, dtype in features().items()},
         }),
         supervised_keys=('area', 'features'),
         homepage='https://archive.ics.uci.edu/ml/datasets/Forest+Fires',

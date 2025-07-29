@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,19 +21,20 @@ Note that this is an experimental new feature, so the API may change.
 from __future__ import annotations
 
 import functools
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, Iterator, List, Optional, Union
 
 from tensorflow_datasets.core import beam_utils
 from tensorflow_datasets.core import dataset_builder
 from tensorflow_datasets.core import dataset_utils
-from tensorflow_datasets.core import lazy_imports_lib
 from tensorflow_datasets.core import load as load_lib
 from tensorflow_datasets.core import naming
+from tensorflow_datasets.core import registered
 from tensorflow_datasets.core import split_builder as split_builder_lib
 from tensorflow_datasets.core import splits as splits_lib
 from tensorflow_datasets.core import transform as transform_lib
 from tensorflow_datasets.core.download import download_manager
 from tensorflow_datasets.core.utils import read_config as read_config_lib
+from tensorflow_datasets.core.utils.lazy_imports_utils import apache_beam as beam
 from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
 
 Key = transform_lib.Key
@@ -49,10 +50,12 @@ class ViewConfig(dataset_builder.BuilderConfig):
       *,
       name: str,
       input_dataset: Union[None, str, naming.DatasetReference] = None,
-      ex_transformations: Optional[List[
-          transform_lib.ExampleTransformFn]] = None,
-      ds_transformations: Optional[List[Callable[[tf.data.Dataset],
-                                                 tf.data.Dataset]]] = None,
+      ex_transformations: Optional[
+          List[transform_lib.ExampleTransformFn]
+      ] = None,
+      ds_transformations: Optional[
+          List[Callable[[tf.data.Dataset], tf.data.Dataset]]
+      ] = None,
       **kwargs,
   ):
     """Initialize a ViewConfig.
@@ -75,8 +78,9 @@ class ViewConfig(dataset_builder.BuilderConfig):
       input_dataset = naming.DatasetReference.from_tfds_name(input_dataset)
     self.input_dataset = input_dataset
     if ex_transformations and ds_transformations:
-      raise ValueError("It is not supported to use both TF data "
-                       "and example transformations!")
+      raise ValueError(
+          "It is not supported to use both TF data and example transformations!"
+      )
     self.ex_transformations = ex_transformations
     self.ds_transformations = ds_transformations
     super().__init__(name=name, **kwargs)
@@ -85,6 +89,7 @@ class ViewConfig(dataset_builder.BuilderConfig):
       self,
       data_dir: Optional[str] = None,
   ) -> dataset_builder.DatasetBuilder:
+    assert self.input_dataset, "Input dataset must be specified."
     tfds_name = self.input_dataset.tfds_name(include_version=True)
     data_dir = self.input_dataset.data_dir or data_dir
     return load_lib.builder(name=tfds_name, data_dir=data_dir)
@@ -112,16 +117,18 @@ def _transform_per_example(
     ds = builder.as_dataset(split=split_shard, read_config=row_read_config)
     for example in dataset_utils.as_numpy(ds):
       key = example.pop("tfds_id")
-      yield transform_lib.apply_transformations(
-          key=key, example=example, transformations=transformations)
+      yield from transform_lib.apply_transformations(
+          key=key, example=example, transformations=transformations
+      )
 
 
 def _transform_example(
-    example: Example,
-    transformations: List[transform_lib.ExampleTransformFn]) -> KeyExample:
+    example: Example, transformations: List[transform_lib.ExampleTransformFn]
+) -> Iterator[KeyExample]:
   key = example.pop("tfds_id")
-  return transform_lib.apply_transformations(
-      key=key, example=example, transformations=transformations)
+  yield from transform_lib.apply_transformations(
+      key=key, example=example, transformations=transformations
+  )
 
 
 def _transform_per_example_beam(
@@ -130,17 +137,20 @@ def _transform_per_example_beam(
     transformations: List[transform_lib.ExampleTransformFn],
     workers_per_shard: int = 1,
 ) -> split_builder_lib.SplitGenerator:
-  beam = lazy_imports_lib.lazy_imports.apache_beam
   split = split_info.name
   read_config = read_config_lib.ReadConfig(add_tfds_id=True)
-  return (f"read_tfds_dataset@{split}" >> beam_utils.ReadFromTFDS(
-      builder=builder,
-      split=split,
-      read_config=read_config,
-      workers_per_shard=workers_per_shard)
-          | f"convert_to_numpy@{split}" >> beam.Map(dataset_utils.as_numpy)
-          | f"transform_examples@{split}" >> beam.Map(
-              _transform_example, transformations=transformations))
+  return (
+      f"read_tfds_dataset@{split}"
+      >> beam_utils.ReadFromTFDS(
+          builder=builder,
+          split=split,
+          read_config=read_config,
+          workers_per_shard=workers_per_shard,
+      )
+      | f"convert_to_numpy@{split}" >> beam.Map(dataset_utils.as_numpy)
+      | f"transform_examples@{split}"
+      >> beam.ParDo(_transform_example, transformations=transformations)
+  )
 
 
 def _transform_dataset(
@@ -168,7 +178,8 @@ def _transform_dataset(
 
 
 class ViewBuilder(
-    dataset_builder.GeneratorBasedBuilder, skip_registration=True):
+    dataset_builder.GeneratorBasedBuilder, skip_registration=True
+):
   """[Experimental] Base builder for views.
 
   Note that this is an experimental new feature, so the API may change.
@@ -176,6 +187,7 @@ class ViewBuilder(
   `ViewBuilder` can be used to define a new dataset as the transformation of an
   existing dataset.
   """
+
   # The dataset that this view transforms. The `input_dataset` in `ViewConfig`
   # takes precedence if specified.
   INPUT_DATASET: Union[None, str, naming.DatasetReference] = None
@@ -196,16 +208,16 @@ class ViewBuilder(
   # means that some redundant reads are done.
   BEAM_WORKERS_PER_SHARD = 1
 
-  @property
-  @functools.lru_cache()
+  @functools.cached_property
   def view_config(self) -> Optional[ViewConfig]:
     if isinstance(self.builder_config, ViewConfig):
       return self.builder_config
     return None
 
   def _src_dataset(self) -> naming.DatasetReference:
-    if self.view_config and self.view_config.input_dataset:
-      return self.view_config.input_dataset
+    input_dataset = self.view_config and self.view_config.input_dataset
+    if input_dataset:
+      return input_dataset
     elif self.INPUT_DATASET is not None:
       if isinstance(self.INPUT_DATASET, str):
         return naming.DatasetReference.from_tfds_name(self.INPUT_DATASET)
@@ -214,16 +226,28 @@ class ViewBuilder(
 
   def _src_dataset_builder(self) -> dataset_builder.DatasetBuilder:
     tfds_name = self._src_dataset().tfds_name(include_version=True)
-    data_dir = self._src_dataset().data_dir or self._data_dir_root
-    return load_lib.builder(name=tfds_name, data_dir=data_dir)
+    # First try to load the dataset from the data_dir where this dataset is
+    # downloaded to. If that fails, load it from the default data dir.
+    try:
+      data_dir = self._src_dataset().data_dir or self._data_dir_root
+      builder = load_lib.builder(name=tfds_name, data_dir=data_dir)
+      if builder.is_prepared():
+        return builder
+    except registered.DatasetNotFoundError:
+      pass
+    return load_lib.builder(name=tfds_name)
 
   def _example_transformations(self) -> List[transform_lib.ExampleTransformFn]:
-    if self.view_config and self.view_config.ex_transformations:
-      return self.view_config.ex_transformations
+    ex_transformations = (
+        self.view_config and self.view_config.ex_transformations
+    )
+    if ex_transformations:
+      return ex_transformations
     return self.EX_TRANSFORMATIONS
 
   def _data_transformations(
-      self) -> List[Callable[[tf.data.Dataset], tf.data.Dataset]]:
+      self,
+  ) -> List[Callable[[tf.data.Dataset], tf.data.Dataset]]:
     if self.view_config and self.view_config.ds_transformations:
       return self.view_config.ds_transformations
     return self.DS_TRANSFORMATIONS
@@ -239,7 +263,8 @@ class ViewBuilder(
           builder=builder,
           split_info=split_info,
           ex_transformations=self._example_transformations(),
-          ds_transformations=self._data_transformations())
+          ds_transformations=self._data_transformations(),
+      )
     return split_generators
 
   def _generate_examples(
@@ -250,27 +275,34 @@ class ViewBuilder(
       ds_transformations: List[Callable[[tf.data.Dataset], tf.data.Dataset]],
   ) -> split_builder_lib.SplitGenerator:
     if ex_transformations and ds_transformations:
-      raise ValueError("It is not supported to have toth example and dataset "
-                       "transformations!")
+      raise ValueError(
+          "It is not supported to have toth example and dataset "
+          "transformations!"
+      )
     if ex_transformations:
       if self.USE_BEAM:
         return _transform_per_example_beam(
             builder=builder,
             split_info=split_info,
             transformations=ex_transformations,
-            workers_per_shard=self.BEAM_WORKERS_PER_SHARD)
+            workers_per_shard=self.BEAM_WORKERS_PER_SHARD,
+        )
       else:
         return _transform_per_example(
             builder=builder,
             split_info=split_info,
-            transformations=ex_transformations)
+            transformations=ex_transformations,
+        )
     elif ds_transformations:
       if self.USE_BEAM:
         # TODO(weide): add support for using Beam with tf.data transformations.
-        raise ValueError("Using Apache Beam in combination with tf.data "
-                         "transformations is not yet supported!")
+        raise ValueError(
+            "Using Apache Beam in combination with tf.data "
+            "transformations is not yet supported!"
+        )
       return _transform_dataset(
           builder=builder,
           split_info=split_info,
-          transformations=ds_transformations)
+          transformations=ds_transformations,
+      )
     raise ValueError("No transformations were specified!")

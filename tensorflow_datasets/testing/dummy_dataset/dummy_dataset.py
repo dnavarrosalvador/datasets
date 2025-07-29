@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ from __future__ import annotations
 import os
 
 from etils import epath
-from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
+import numpy as np
 import tensorflow_datasets.public_api as tfds
 
 
@@ -32,7 +32,7 @@ class DummyDataset(tfds.core.GeneratorBasedBuilder):
   def _info(self):
     return tfds.core.DatasetInfo(
         builder=self,
-        features=tfds.features.FeaturesDict({'x': tf.int64}),
+        features=tfds.features.FeaturesDict({'x': np.int64}),
     )
 
   def _split_generators(self, dl_manager):

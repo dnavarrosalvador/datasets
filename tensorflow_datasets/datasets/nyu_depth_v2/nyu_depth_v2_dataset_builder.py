@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import tensorflow_datasets.public_api as tfds
 _URL = 'http://datasets.lids.mit.edu/fastdepth/data/nyudepthv2.tar.gz'
 
 
-class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
+class Builder(tfds.core.GeneratorBasedBuilder):
   """NYU Depth V2 Dataset."""
 
   VERSION = tfds.core.Version('0.0.1')
@@ -33,7 +33,7 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
     return self.dataset_info_from_configs(
         features=tfds.features.FeaturesDict({
             'image': tfds.features.Image(shape=(480, 640, 3)),
-            'depth': tfds.features.Tensor(shape=(480, 640), dtype=tf.float16),
+            'depth': tfds.features.Tensor(shape=(480, 640), dtype=np.float16),
         }),
         supervised_keys=('image', 'depth'),
         homepage='https://cs.nyu.edu/~silberman/datasets/nyu_depth_v2.html',
@@ -67,5 +67,5 @@ class Builder(tfds.core.GeneratorBasedBuilder, tfds.core.ConfigBasedBuilder):
         with h5py.File(os.path.join(root_dir, directory, file_name), 'r') as f:
           yield directory + '_' + file_name, {
               'image': np.transpose(f['rgb'], (1, 2, 0)),
-              'depth': f['depth'][:].astype('float16')
+              'depth': f['depth'][:].astype('float16'),
           }

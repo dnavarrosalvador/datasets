@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2022 The TensorFlow Datasets Authors.
+# Copyright 2025 The TensorFlow Datasets Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ from __future__ import annotations
 import abc
 from typing import Any
 
-import six
 from tensorflow_datasets.core import dataset_info
 from tensorflow_datasets.core.utils.lazy_imports_utils import tensorflow as tf
 
@@ -38,8 +37,7 @@ def extract_keys(feature_dict, feature_cls):
   return [k for k, f in feature_dict.items() if isinstance(f, feature_cls)]
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Visualizer(object):
+class Visualizer(object, metaclass=abc.ABCMeta):
   """Visualizer."""
 
   @abc.abstractmethod
@@ -54,8 +52,12 @@ class Visualizer(object):
     """
 
   @abc.abstractmethod
-  def show(self, ds: tf.data.Dataset, ds_info: dataset_info.DatasetInfo,
-           **options_kwargs: Any):
+  def show(
+      self,
+      ds: tf.data.Dataset,
+      ds_info: dataset_info.DatasetInfo,
+      **options_kwargs: Any,
+  ):
     """Display the dataset.
 
     Args:
