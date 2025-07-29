@@ -137,6 +137,7 @@ class Video(sequence_feature.Sequence):
             use_colormap=use_colormap,
         ),
         length=shape[0] if shape else None,
+        doc=doc,
     )
 
   def _ffmpeg_decode(self, path_or_fobj):
