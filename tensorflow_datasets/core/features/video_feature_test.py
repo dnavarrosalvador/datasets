@@ -26,6 +26,7 @@ from tensorflow_datasets import testing
 from tensorflow_datasets.core import features
 
 
+
 class VideoFeatureTest(testing.FeatureExpectationsTestCase):
 
   @property
@@ -34,9 +35,10 @@ class VideoFeatureTest(testing.FeatureExpectationsTestCase):
 
   def test_video_numpy(self):
     np_video = np.random.randint(256, size=(128, 64, 64, 3), dtype=np.uint8)
-
+    doc = 'This is a test video.'
+    feature = features.Video(shape=(None, 64, 64, 3), doc=doc)
     self.assertFeature(
-        feature=features.Video(shape=(None, 64, 64, 3)),
+        feature=feature,
         shape=(None, 64, 64, 3),
         dtype=tf.uint8,
         tests=[
@@ -47,6 +49,12 @@ class VideoFeatureTest(testing.FeatureExpectationsTestCase):
         ],
         test_attributes=dict(_encoding_format='png', _extra_ffmpeg_args=[]),
     )
+
+    # Test that the documentation is preserved after reloading the feature.
+    tmp_dir = self.create_tempdir()
+    feature.save_config(tmp_dir)
+    new_feature = features.Video.from_config(tmp_dir)
+    self.assertEqual(new_feature.doc.desc, doc)
 
   def test_video_with_none_shape(self):
     np_video = np.random.randint(256, size=(128, 64, 64, 3), dtype=np.uint8)
@@ -134,6 +142,7 @@ class VideoFeatureTest(testing.FeatureExpectationsTestCase):
               ),
           ],
       )
+
 
 if __name__ == '__main__':
   testing.test_main()
